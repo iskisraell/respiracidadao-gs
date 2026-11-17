@@ -1,0 +1,289 @@
+{
+  "dataset": {
+    "nome": "UCI Air Quality (Vito et al., 2008)",
+    "registros_brutos": 9357,
+    "registros_limpos": 6941,
+    "variavel_alvo": "CO(GT) [mg/m³]",
+    "distribuicao_risco": {
+      "atencao": 2718,
+      "normal": 2531,
+      "critico": 1692
+    },
+    "estatisticas_descritivas": {
+      "CO(GT)": {
+        "count": 6941.0,
+        "mean": 2.1825,
+        "std": 1.4412,
+        "min": 0.1,
+        "25%": 1.1,
+        "50%": 1.9,
+        "75%": 2.9,
+        "max": 11.9
+      },
+      "PT08.S1(CO)": {
+        "count": 6941.0,
+        "mean": 1119.9133,
+        "std": 218.7338,
+        "min": 647.0,
+        "25%": 956.0,
+        "50%": 1085.0,
+        "75%": 1254.0,
+        "max": 2040.0
+      },
+      "C6H6(GT)": {
+        "count": 6941.0,
+        "mean": 10.5545,
+        "std": 7.4652,
+        "min": 0.2,
+        "25%": 4.9,
+        "50%": 8.8,
+        "75%": 14.6,
+        "max": 63.7
+      },
+      "NO2(GT)": {
+        "count": 6941.0,
+        "mean": 113.8741,
+        "std": 47.475,
+        "min": 2.0,
+        "25%": 79.0,
+        "50%": 110.0,
+        "75%": 142.0,
+        "max": 333.0
+      },
+      "T": {
+        "count": 6941.0,
+        "mean": 17.7553,
+        "std": 8.8449,
+        "min": -1.9,
+        "25%": 11.2,
+        "50%": 16.8,
+        "75%": 23.7,
+        "max": 44.6
+      }
+    }
+  },
+  "item_02_normal": {
+    "variavel": "CO(GT)",
+    "media": 2.1825,
+    "desvio_padrao": 1.4412,
+    "mediana": 1.9,
+    "p_menor_media": 0.5,
+    "classificacao_a": "Evento equiprovável (50/50 sob simetria normal)",
+    "p_maior_mediana": 0.5777,
+    "classificacao_b": "Evento provável / frequente"
+  },
+  "item_03_testes_hipotese": {
+    "variavel": "CO(GT)",
+    "media_pop": 2.1825,
+    "sigma_pop": 1.4411,
+    "teste_3a_unilateral_esquerda": {
+      "n": 20,
+      "alpha": 0.06,
+      "media_amostral": 2.31,
+      "z_calculado": 0.3958,
+      "z_critico": -1.5548,
+      "p_valor": 0.6539,
+      "rejeita_h0": false,
+      "decisao": "Não rejeitar H0"
+    },
+    "teste_3b_unilateral_direita": {
+      "n": 25,
+      "alpha": 0.09,
+      "media_amostral": 1.86,
+      "z_calculado": -1.1189,
+      "z_critico": 1.3408,
+      "p_valor": 0.8684,
+      "rejeita_h0": false,
+      "decisao": "Não rejeitar H0"
+    }
+  },
+  "item_04_regressao_simples": {
+    "x": "PT08.S1(CO)",
+    "y": "CO(GT)",
+    "covariancia": 276.4609,
+    "pearson_r": 0.877,
+    "pearson_p_valor": 0.0,
+    "intercepto_b0": -4.2888,
+    "inclinacao_b1": 0.005778,
+    "equacao": "CO(GT) = -4.2888 + 0.00578 * PT08.S1(CO)",
+    "r2": 0.7692,
+    "teste_f": 23119.89,
+    "f_p_valor": 0.0,
+    "previsao_exemplo": {
+      "PT08.S1(CO)": 1350.0,
+      "co_previsto": 3.512
+    }
+  },
+  "item_05_regressao_multipla": {
+    "variaveis_explicativas": [
+      "PT08.S1(CO)",
+      "C6H6(GT)",
+      "NO2(GT)",
+      "T"
+    ],
+    "alvo": "CO(GT)",
+    "matriz_covariancia": {
+      "CO(GT)": {
+        "CO(GT)": 2.0769,
+        "PT08.S1(CO)": 276.4609,
+        "C6H6(GT)": 10.0056,
+        "NO2(GT)": 46.1034,
+        "T": 0.2337
+      },
+      "PT08.S1(CO)": {
+        "CO(GT)": 276.4609,
+        "PT08.S1(CO)": 47844.455,
+        "C6H6(GT)": 1432.7531,
+        "NO2(GT)": 6524.1247,
+        "T": 54.7065
+      },
+      "C6H6(GT)": {
+        "CO(GT)": 10.0056,
+        "PT08.S1(CO)": 1432.7531,
+        "C6H6(GT)": 55.7296,
+        "NO2(GT)": 213.7957,
+        "T": 12.4797
+      },
+      "NO2(GT)": {
+        "CO(GT)": 46.1034,
+        "PT08.S1(CO)": 6524.1247,
+        "C6H6(GT)": 213.7957,
+        "NO2(GT)": 2253.8772,
+        "T": -89.9976
+      },
+      "T": {
+        "CO(GT)": 0.2337,
+        "PT08.S1(CO)": 54.7065,
+        "C6H6(GT)": 12.4797,
+        "NO2(GT)": -89.9976,
+        "T": 78.2324
+      }
+    },
+    "matriz_correlacao": {
+      "CO(GT)": {
+        "CO(GT)": 1.0,
+        "PT08.S1(CO)": 0.877,
+        "C6H6(GT)": 0.93,
+        "NO2(GT)": 0.6738,
+        "T": 0.0183
+      },
+      "PT08.S1(CO)": {
+        "CO(GT)": 0.877,
+        "PT08.S1(CO)": 1.0,
+        "C6H6(GT)": 0.8774,
+        "NO2(GT)": 0.6283,
+        "T": 0.0283
+      },
+      "C6H6(GT)": {
+        "CO(GT)": 0.93,
+        "PT08.S1(CO)": 0.8774,
+        "C6H6(GT)": 1.0,
+        "NO2(GT)": 0.6032,
+        "T": 0.189
+      },
+      "NO2(GT)": {
+        "CO(GT)": 0.6738,
+        "PT08.S1(CO)": 0.6283,
+        "C6H6(GT)": 0.6032,
+        "NO2(GT)": 1.0,
+        "T": -0.2143
+      },
+      "T": {
+        "CO(GT)": 0.0183,
+        "PT08.S1(CO)": 0.0283,
+        "C6H6(GT)": 0.189,
+        "NO2(GT)": -0.2143,
+        "T": 1.0
+      }
+    },
+    "coeficientes": {
+      "const": -0.5483,
+      "PT08.S1(CO)": 0.00105,
+      "C6H6(GT)": 0.14521,
+      "NO2(GT)": 0.00295,
+      "T": -0.01752
+    },
+    "equacao": "CO(GT) = -0.5483 + 0.00105*PT08.S1(CO) + 0.1452*C6H6(GT) + 0.00295*NO2(GT) + (-0.01752)*T",
+    "r2": 0.9025,
+    "r2_ajustado": 0.9024,
+    "teste_f": 16050.73,
+    "f_p_valor": 0.0,
+    "previsoes": [
+      {
+        "cenario": "Atenção Urbana",
+        "entrada": {
+          "PT08.S1(CO)": 1180.0,
+          "C6H6(GT)": 11.5,
+          "NO2(GT)": 115.0,
+          "T": 27.0
+        },
+        "co_previsto": 2.2241
+      },
+      {
+        "cenario": "Crítico Queimada",
+        "entrada": {
+          "PT08.S1(CO)": 1520.0,
+          "C6H6(GT)": 24.0,
+          "NO2(GT)": 185.0,
+          "T": 34.0
+        },
+        "co_previsto": 4.4793
+      }
+    ]
+  },
+  "item_06_regressao_logistica": {
+    "variaveis_explicativas": [
+      "PT08.S1(CO)",
+      "C6H6(GT)",
+      "NO2(GT)",
+      "T"
+    ],
+    "alvo_binario": "alerta_critico (1 se CO(GT) >= 3.0 mg/m³)",
+    "intercepto_b0": -13.6002,
+    "coeficientes": {
+      "PT08.S1(CO)": 0.00328,
+      "C6H6(GT)": 0.66764,
+      "NO2(GT)": 0.01391,
+      "T": -0.13029
+    },
+    "equacao_logit": "logit(P) = -13.6002 + (0.00328)*PT08.S1(CO) + (0.66764)*C6H6(GT) + (0.01391)*NO2(GT) + (-0.13029)*T",
+    "acuracia_teste": 0.943,
+    "matriz_confusao": [
+      [
+        1269,
+        44
+      ],
+      [
+        55,
+        368
+      ]
+    ],
+    "precision_critico": 0.8932,
+    "recall_critico": 0.87,
+    "f1_critico": 0.8814,
+    "classificacoes_exemplo": [
+      {
+        "cenario": "Atenção Urbana",
+        "entrada": {
+          "PT08.S1(CO)": 1180.0,
+          "C6H6(GT)": 11.5,
+          "NO2(GT)": 115.0,
+          "T": 27.0
+        },
+        "prob_critico": 0.0185,
+        "classe_predita": 0
+      },
+      {
+        "cenario": "Crítico Queimada",
+        "entrada": {
+          "PT08.S1(CO)": 1520.0,
+          "C6H6(GT)": 24.0,
+          "NO2(GT)": 185.0,
+          "T": 34.0
+        },
+        "prob_critico": 0.9961,
+        "classe_predita": 1
+      }
+    ]
+  }
+}
