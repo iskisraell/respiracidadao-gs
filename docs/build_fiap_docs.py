@@ -135,7 +135,7 @@ def build_all():
                         "headers": ["Parte do produto", "O que faz", "Disciplina e evidência"],
                         "rows": [
                             ["Sensor", "Mede 4 coisas, acende a luz certa e envia a leitura em JSON", "02 AICSS: firmware, circuito Wokwi, 3 prints dos estados"],
-                            ["Central (API)", "Recebe, valida, classifica, guarda em CSV e banco, responde ao app", "05 Python: FastAPI, 16 testes automáticos"],
+                            ["Central (API)", "Recebe, valida, classifica, guarda em CSV e banco, responde ao app", "05 Python: FastAPI, 20 testes automáticos"],
                             ["Central na nuvem", "A mesma central sem servidor ligado: função + banco gerenciado", "07 Cloud: Lambda, PostgreSQL, script de publicação"],
                             ["Proteções", "Limite de envios, chave para apagar, texto limpo, selo de integridade", "03 Cybersecurity: testes que provam cada proteção"],
                             ["Modelo da central", f"Acerta {round(campo['accuracy'] * 100)} de cada 100 horas com as 4 medidas do sensor", "06 ML: 6 modelos comparados, Random Forest ajustada"],
@@ -304,7 +304,7 @@ def build_all():
                             ["R1. Enxurrada de envios", "Alta / Alto", "Limite de 30 envios por minuto por endereço, resposta 429"],
                             ["R2. Apagar dados sem permissão", "Média / Crítico", "Chave X-API-Key, comparada de um jeito que não deixa adivinhar pelo tempo de resposta; sem chave configurada, a rota fica fechada"],
                             ["R3. Script ou fórmula em relato", "Alta / Médio", "Tags e sinais < > removidos antes de gravar; células de CSV que começam com = + - @ ganham prefixo"],
-                            ["R4. Histórico adulterado", "Baixa / Alto", "Selo HMAC-SHA256 (chave em RESPIRA_SEAL_KEY ou gerada no primeiro uso em data/runtime/seal.key, fora do banco) cobrindo todos os campos da leitura, conferido em GET /security/verify/{id}"],
+                            ["R4. Histórico adulterado", "Baixa / Alto", "Selo HMAC-SHA256 (chave em RESPIRA_SEAL_KEY ou gerada no primeiro uso em data/runtime/seal.key, fora do banco; se não conseguir ler nem criar a chave, a central não sobe) cobrindo todos os campos da leitura, inclusive a hora da medida, conferido em GET /security/verify/{id}"],
                             ["R5. Leitura absurda para enganar o modelo", "Média / Alto", "Cada campo tem faixa válida (validada com Pydantic); fora da faixa vira 400 e não chega ao modelo"],
                             ["R6. Engenharia social", "Alta / Alto", "Canal oficial único, treino da equipe e MFA para quem administra"],
                         ],
@@ -334,7 +334,7 @@ def build_all():
             {
                 "title": "5. PROTEÇÕES FUNCIONANDO",
                 "body": [
-                    "Cada proteção abaixo tem um teste automático em apps/api/tests/test_api.py. Os 16 testes passam. Também rodamos cada ataque à mão contra a central ligada e guardamos a saída do terminal.",
+                    "Cada proteção abaixo tem um teste automático em apps/api/tests/test_api.py. Os 20 testes passam. Também rodamos cada ataque à mão contra a central ligada e guardamos a saída do terminal.",
                 ],
                 "bullets": [
                     {"text": "Limite de envios: com limite de teste em 10, os envios 11 e 12 voltam 429 e o evento rate_limit_blocked vai para o registro.", "level": 0},
@@ -348,8 +348,8 @@ def build_all():
                 "title": "6. PROVAS NO TERMINAL",
                 "images": [
                     {"path": str(evid / "03_limite_chave.png"), "caption": "Figura 1: Envios além do limite voltam 429. Apagar sem chave ou com chave errada volta 401.", "width": 160},
-                    {"path": str(evid / "03_selo.png"), "caption": "Figura 2: Selo íntegro, edição direta no banco, selo quebrado.", "width": 160},
-                    {"path": str(evid / "03_pytest.png"), "caption": "Figura 3: Os 16 testes automáticos passando.", "width": 160},
+                    {"path": str(evid / "03_selo.png"), "caption": "Figura 2: Selo íntegro, edição direta no banco, selo quebrado. Desfeita a edição, o selo volta a bater.", "width": 160},
+                    {"path": str(evid / "03_pytest.png"), "caption": "Figura 3: Os 20 testes automáticos passando.", "width": 160},
                 ],
             },
             {
@@ -425,7 +425,7 @@ def build_all():
                 ],
                 "body": [
                     "As saídas abaixo são da central rodando de verdade: os 3 cenários do sensor, um POST manual com resposta 201, um JSON incompleto recusado com 400, as linhas do CSV e os indicadores calculados.",
-                    "Para rodar: uvicorn app.main:app --app-dir apps/api --port 8000. Os cenários do sensor rodam com python packages/iot-aicss/run_3_cenarios.py, e os 16 testes automáticos com pytest apps/api/tests.",
+                    "Para rodar: uvicorn app.main:app --app-dir apps/api --port 8000. Os cenários do sensor rodam com python packages/iot-aicss/run_3_cenarios.py, e os 20 testes automáticos com pytest apps/api/tests.",
                     "Limitações: CSV é ótimo para abrir numa planilha e ruim para muitas escritas ao mesmo tempo. Para vários bairros, a central vai para a nuvem com PostgreSQL. A classificação por limiar não vê tendência; quem olha o histórico é o modelo da central.",
                     "ODS 3 e ODS 11.",
                 ],

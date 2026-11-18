@@ -28,6 +28,7 @@ CSV_HEADERS = [
     "ia_risco_prob",
     "hash_integridade",
     "criado_em",
+    "medido_em",
 ]
 
 
@@ -82,7 +83,8 @@ class OccurrenceStore:
                     ia_risco TEXT,
                     ia_risco_prob REAL,
                     hash_integridade TEXT NOT NULL,
-                    criado_em TEXT NOT NULL
+                    criado_em TEXT NOT NULL,
+                    medido_em TEXT
                 )
                 """
             )
@@ -98,9 +100,17 @@ class OccurrenceStore:
                 )
                 """
             )
+            cols = {r[1] for r in conn.execute("PRAGMA table_info(ocorrencias)")}
+            if "medido_em" not in cols:
+                conn.execute("ALTER TABLE ocorrencias ADD COLUMN medido_em TEXT")
             conn.commit()
 
     def _init_csv(self) -> None:
+        if self.csv_path.exists():
+            with self.csv_path.open(newline="", encoding="utf-8") as f:
+                header = next(csv.reader(f), [])
+            if header != CSV_HEADERS:
+                self.csv_path.rename(self.csv_path.with_suffix(".antigo.csv"))
         if not self.csv_path.exists():
             with self.csv_path.open("w", newline="", encoding="utf-8") as f:
                 csv.writer(f).writerow(CSV_HEADERS)
@@ -108,6 +118,7 @@ class OccurrenceStore:
     def insert(self, data: dict) -> dict:
         criado_em = datetime.now(timezone.utc).isoformat()
         payload = {**data, "criado_em": criado_em}
+        payload["medido_em"] = data.get("medido_em") or criado_em
         digest = compute_record_hash(payload)
         payload["hash_integridade"] = digest
 
@@ -117,8 +128,8 @@ class OccurrenceStore:
                 INSERT INTO ocorrencias (
                     dispositivo_id, tipo, latitude, longitude, metrica, valor, gas_co,
                     temperatura_c, umidade_pct, relato, ia_sentimento, ia_confianca,
-                    ia_fonte, nivel_risco, alerta, ia_risco, ia_risco_prob, hash_integridade, criado_em
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ia_fonte, nivel_risco, alerta, ia_risco, ia_risco_prob, hash_integridade, criado_em, medido_em
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     payload["dispositivo_id"],
@@ -140,6 +151,7 @@ class OccurrenceStore:
                     payload.get("ia_risco_prob"),
                     digest,
                     criado_em,
+                    payload.get("medido_em"),
                 ),
             )
             record_id = int(cur.lastrowid)

@@ -319,3 +319,36 @@ def test_seal_is_keyed_even_without_env(client):
     assert c.get("/health").json()["selo_com_chave"] is True
     key_file = runtime_dir / "seal.key"
     assert key_file.exists() and (key_file.stat().st_mode & 0o777) == 0o600
+
+
+def test_seal_refuses_to_run_without_key(tmp_path, monkeypatch):
+    """Sem chave no ambiente e sem onde gravar uma, a central não sobe com selo fraco."""
+    import app.security as sec_mod
+
+    blocked = tmp_path / "somente_leitura"
+    blocked.mkdir()
+    blocked.chmod(0o500)
+    monkeypatch.delenv("RESPIRA_SEAL_KEY", raising=False)
+    monkeypatch.setenv("RESPIRA_SEAL_KEY_FILE", str(blocked / "sub" / "seal.key"))
+    try:
+        with pytest.raises(RuntimeError):
+            sec_mod._load_seal_key()
+        empty = tmp_path / "vazia.key"
+        empty.write_text("")
+        monkeypatch.setenv("RESPIRA_SEAL_KEY_FILE", str(empty))
+        with pytest.raises(RuntimeError):
+            sec_mod._load_seal_key()
+    finally:
+        blocked.chmod(0o700)
+
+
+def test_medido_em_is_stored_and_checked(client):
+    c, _, _ = client
+    base = {"dispositivo_id": "esp32-escola-01", "valor": 900}
+    old = c.post("/ocorrencias", json={**base, "medido_em": "2026-01-10T08:00:00-03:00"})
+    assert old.status_code == 201
+    assert old.json()["medido_em"] == "2026-01-10T11:00:00+00:00"
+    assert c.post("/ocorrencias", json={**base, "medido_em": "2099-01-01T00:00:00Z"}).status_code in (400, 422)
+    assert c.post("/ocorrencias", json={**base, "medido_em": "ontem"}).status_code in (400, 422)
+    sem = c.post("/ocorrencias", json=base).json()
+    assert sem["medido_em"] == sem["criado_em"]

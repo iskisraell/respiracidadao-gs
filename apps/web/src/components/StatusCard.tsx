@@ -19,13 +19,14 @@ export function StatusCard({ place }: { place: Place }) {
   }
 
   const demo = r.tipo === "demo";
-  if (minutesSince(r.criado_em) > STALE_MIN && !demo) {
+  const medido = r.medido_em ?? r.criado_em;
+  if (minutesSince(medido) > STALE_MIN && !demo) {
     return (
       <section className="status vazio" aria-live="polite">
         <p className="status-place">{place.nome} · {place.bairro}</p>
         <h2>Sem leitura recente</h2>
         <p>
-          <CloudOff size={16} aria-hidden="true" /> A última medida chegou {ago(r.criado_em)} e marcava {LEVEL_NAME[place.nivel].toLowerCase()}.
+          <CloudOff size={16} aria-hidden="true" /> A última medida é de {ago(medido)} e marcava {LEVEL_NAME[place.nivel].toLowerCase()}.
           O sensor pode estar sem internet. A luz dele continua funcionando no local: confira por lá antes de decidir.
         </p>
       </section>
@@ -63,8 +64,11 @@ export function StatusCard({ place }: { place: Place }) {
           </ul>
         </div>
         <div>
-          <h3>O que o sensor mediu {ago(r.criado_em)}</h3>
+          <h3>O que o sensor mediu {ago(medido)}</h3>
           <Sensors r={r} />
+          {place.sensor_simulado && !demo && (
+            <p className="muted sim-note">Sensor em simulador (Wokwi). A placa física ainda vai ser comparada com um medidor oficial.</p>
+          )}
           <SecondOpinion r={r} />
         </div>
       </div>

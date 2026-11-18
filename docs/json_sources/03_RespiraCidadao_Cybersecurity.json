@@ -104,7 +104,7 @@
             [
               "R4. Histórico adulterado",
               "Baixa / Alto",
-              "Selo HMAC-SHA256 (chave em RESPIRA_SEAL_KEY ou gerada no primeiro uso em data/runtime/seal.key, fora do banco) cobrindo todos os campos da leitura, conferido em GET /security/verify/{id}"
+              "Selo HMAC-SHA256 (chave em RESPIRA_SEAL_KEY ou gerada no primeiro uso em data/runtime/seal.key, fora do banco; se não conseguir ler nem criar a chave, a central não sobe) cobrindo todos os campos da leitura, inclusive a hora da medida, conferido em GET /security/verify/{id}"
             ],
             [
               "R5. Leitura absurda para enganar o modelo",
@@ -175,7 +175,7 @@
     {
       "title": "5. PROTEÇÕES FUNCIONANDO",
       "body": [
-        "Cada proteção abaixo tem um teste automático em apps/api/tests/test_api.py. Os 16 testes passam. Também rodamos cada ataque à mão contra a central ligada e guardamos a saída do terminal."
+        "Cada proteção abaixo tem um teste automático em apps/api/tests/test_api.py. Os 20 testes passam. Também rodamos cada ataque à mão contra a central ligada e guardamos a saída do terminal."
       ],
       "bullets": [
         {
@@ -210,12 +210,12 @@
         },
         {
           "path": "/home/agent/projects/respiracidadao-gs/docs/evidencias/03_selo.png",
-          "caption": "Figura 2: Selo íntegro, edição direta no banco, selo quebrado.",
+          "caption": "Figura 2: Selo íntegro, edição direta no banco, selo quebrado. Desfeita a edição, o selo volta a bater.",
           "width": 160
         },
         {
           "path": "/home/agent/projects/respiracidadao-gs/docs/evidencias/03_pytest.png",
-          "caption": "Figura 3: Os 16 testes automáticos passando.",
+          "caption": "Figura 3: Os 20 testes automáticos passando.",
           "width": 160
         }
       ]

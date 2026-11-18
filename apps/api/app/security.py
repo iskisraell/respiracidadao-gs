@@ -30,15 +30,18 @@ def _load_seal_key() -> bytes:
     key_file = Path(os.getenv("RESPIRA_SEAL_KEY_FILE", data_dir / "seal.key"))
     try:
         if key_file.exists():
-            return key_file.read_text(encoding="utf-8").strip().encode("utf-8")
+            key = key_file.read_text(encoding="utf-8").strip()
+            if not key:
+                raise RuntimeError(f"Arquivo de chave do selo vazio: {key_file}")
+            return key.encode("utf-8")
         key_file.parent.mkdir(parents=True, exist_ok=True)
         key = secrets.token_hex(32)
         fd = os.open(str(key_file), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             f.write(key)
         return key.encode("utf-8")
-    except OSError:
-        return b""
+    except OSError as exc:
+        raise RuntimeError(f"Sem chave do selo: defina RESPIRA_SEAL_KEY ou libere escrita em {key_file}") from exc
 
 
 SEAL_KEY = _load_seal_key()
@@ -67,7 +70,7 @@ def contains_markup(value: Optional[str]) -> bool:
 
 
 def compute_record_hash(payload: dict) -> str:
-    """Selo de integridade de uma leitura: HMAC-SHA256 com RESPIRA_SEAL_KEY, ou SHA-256 sem a chave."""
+    """Selo de integridade de uma leitura: HMAC-SHA256 com a chave do selo (nunca sem chave)."""
     def num(key: str):
         v = payload.get(key)
         return None if v is None or v == "" else round(float(v), 4)
@@ -91,11 +94,10 @@ def compute_record_hash(payload: dict) -> str:
         "ia_confianca": num("ia_confianca"),
         "ia_fonte": payload.get("ia_fonte"),
         "criado_em": payload.get("criado_em"),
+        "medido_em": payload.get("medido_em"),
     }
     encoded = json.dumps(canonical, sort_keys=True, ensure_ascii=False).encode("utf-8")
-    if SEAL_KEY:
-        return hmac.new(SEAL_KEY, encoded, hashlib.sha256).hexdigest()
-    return hashlib.sha256(encoded).hexdigest()
+    return hmac.new(SEAL_KEY, encoded, hashlib.sha256).hexdigest()
 
 
 class SlidingWindowRateLimiter:

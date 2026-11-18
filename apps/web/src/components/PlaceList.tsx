@@ -12,7 +12,7 @@ export function PlaceList({ places, selected, onSelect }: { places: Place[]; sel
         {places.map((p) => {
           const Icon = PLACE_ICON[p.tipo];
           const r = p.ultima_leitura;
-          const stale = !!r && r.tipo !== "demo" && minutesSince(r.criado_em) > 30;
+          const stale = !!r && r.tipo !== "demo" && minutesSince(r.medido_em ?? r.criado_em) > 30;
           const nivel = stale ? undefined : p.nivel;
           const word = nivel ? LEVEL_NAME[nivel] : r ? "Sem leitura recente" : "Sem leitura";
           return (

@@ -85,7 +85,7 @@
             [
               "Central (API)",
               "Recebe, valida, classifica, guarda em CSV e banco, responde ao app",
-              "05 Python: FastAPI, 16 testes automáticos"
+              "05 Python: FastAPI, 20 testes automáticos"
             ],
             [
               "Central na nuvem",

@@ -14,6 +14,7 @@ export interface Reading {
   ia_risco_prob: number | null;
   hash_integridade: string;
   criado_em: string;
+  medido_em?: string | null;
 }
 
 export interface Report {
@@ -32,6 +33,7 @@ export interface Place {
   nivel: Level | null;
   orientacao: { titulo: string; frase: string; acoes: string[] } | null;
   ultima_leitura: Reading | null;
+  sensor_simulado?: boolean;
   historico: { valor: number; nivel: Level; criado_em: string }[];
   relatos: Report[];
 }

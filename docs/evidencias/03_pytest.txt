@@ -15,4 +15,8 @@ test_predict_returns_three_verdicts PASSED
 test_places_show_latest_reading_and_guidance PASSED
 test_relatos_are_sanitized_and_flag_urgency PASSED
 test_hourly_pattern_points_to_afternoon_window PASSED
-============================= 16 passed in 25.33s ==============================
+test_demo_readings_never_hide_real_ones PASSED
+test_seal_is_keyed_even_without_env PASSED
+test_seal_refuses_to_run_without_key PASSED
+test_medido_em_is_stored_and_checked PASSED
+============================= 20 passed in 28.12s

@@ -41,9 +41,9 @@ export function HowItWorks() {
         <h3>Dá para confiar?</h3>
         {s && regra ? (
           <div className="trust">
-            <p><strong>{outOf100(regra.accuracy)}</strong> de cada 100 horas a luz do sensor acerta sozinha.</p>
-            <p><strong>{outOf100(s.teste_accuracy)}</strong> de cada 100 horas a central acerta.</p>
-            <p><strong>{outOf100(s.split_temporal_accuracy)}</strong> de cada 100 quando testamos em meses que a central nunca tinha visto.</p>
+            <p><strong>{outOf100(regra.accuracy)}</strong> de cada 100 horas da base de teste a luz do sensor acertou sozinha.</p>
+            <p><strong>{outOf100(s.teste_accuracy)}</strong> de cada 100 horas da base de teste a central acertou.</p>
+            <p><strong>{outOf100(s.split_temporal_accuracy)}</strong> de cada 100 horas quando testamos em meses que a central nunca tinha visto.</p>
           </div>
         ) : (
           <p className="muted">Carregando os números…</p>

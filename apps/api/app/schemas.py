@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta, timezone
 from typing import Literal, Optional
 from pydantic import AliasChoices, BaseModel, Field, field_validator
 
@@ -16,7 +17,7 @@ class OcorrenciaIn(BaseModel):
     temperatura_c: Optional[float] = Field(default=None, ge=-40.0, le=85.0)
     umidade_pct: Optional[float] = Field(default=None, ge=0.0, le=100.0)
     relato: Optional[str] = Field(default="", max_length=500)
-    medido_em: Optional[str] = Field(default=None, max_length=64)
+    medido_em: Optional[str] = Field(default=None, max_length=64, description="Hora da medida no sensor (ISO 8601); sem ela vale a hora de chegada")
 
     @field_validator("dispositivo_id", mode="before")
     @classmethod
@@ -27,6 +28,21 @@ class OcorrenciaIn(BaseModel):
         if not cleaned:
             raise ValueError("Campo obrigatório não pode ser vazio.")
         return cleaned
+
+    @field_validator("medido_em")
+    @classmethod
+    def check_medido_em(cls, v):
+        if v is None or not str(v).strip():
+            return None
+        try:
+            dt = datetime.fromisoformat(str(v).strip().replace("Z", "+00:00"))
+        except ValueError as exc:
+            raise ValueError("medido_em deve ser data ISO 8601, ex.: 2026-11-18T10:00:00-03:00") from exc
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        if dt > datetime.now(timezone.utc) + timedelta(minutes=5):
+            raise ValueError("medido_em está no futuro")
+        return dt.astimezone(timezone.utc).isoformat()
 
 
 class OcorrenciaOut(BaseModel):
@@ -50,6 +66,7 @@ class OcorrenciaOut(BaseModel):
     ia_risco_prob: Optional[float]
     hash_integridade: str
     criado_em: str
+    medido_em: Optional[str] = None
 
 
 class PredictIn(BaseModel):

@@ -121,7 +121,10 @@ def run_tests():
         assert post({**base, "tipo_dispositivo": "drone"})["statusCode"] == 400
         assert post({**base, "gas_co": "alto"})["statusCode"] == 400
         assert post({**base, "dispositivo_id": "   "})["statusCode"] == 400
+        assert post({**base, "relato": "x" * 501})["statusCode"] == 400  # igual à API: rejeita, não corta
         assert len(BANCO_MEMORIA) == antes
+        sem_metrica = {k: v for k, v in base.items() if k != "metrica"}
+        assert post(sem_metrica)["statusCode"] == 201  # metrica padrão gas_voc, igual à API
 
         # 7) Falha/resposta estranha da IA nao derruba a ingestao
         class _Resp:

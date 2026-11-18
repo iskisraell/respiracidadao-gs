@@ -39,14 +39,14 @@ Abra http://localhost:5173. Para ver os três níveis sem sensor, use "Modo demo
 
 ```bash
 .venv/bin/pip install pytest httpx
-.venv/bin/pytest apps/api/tests                       # 16 testes da central
+.venv/bin/pytest apps/api/tests                       # 20 testes da central
 .venv/bin/python packages/cloud-serverless/teste_local.py   # 8 verificações da função na nuvem
 ```
 
 ## Quanto dá para confiar
 
 - A luz do sensor segue uma regra simples e acerta 84 de cada 100 horas.
-- A central acerta 87 de cada 100 com as quatro medidas do sensor. Nas 1.389 horas de teste, nenhuma hora de ar bom virou ar ruim, nem o contrário.
+- Na base de teste, a central acertou 87 de cada 100 horas com as quatro medidas do sensor. Nas 1.389 horas de teste, nenhuma hora de ar bom virou ar ruim, nem o contrário.
 - O sensor ainda roda no simulador Wokwi. A placa física precisa ser montada e comparada com um medidor oficial antes de valer como medida.
 - A base é de uma cidade italiana. Em cada bairro novo o sensor precisa de algumas semanas ao lado de uma estação oficial para recalibrar.
 

@@ -208,7 +208,7 @@ def rota_ingestao(evento):
         logger.warning("LEITURA DESCARTADA - corpo deve ser um objeto JSON")
         return resposta(400, {"erro": "corpo deve ser um objeto JSON"})
 
-    obrigatorios = ["dispositivo_id", "metrica", "valor"]
+    obrigatorios = ["dispositivo_id", "valor"]
     faltando = [c for c in obrigatorios if payload.get(c) is None or str(payload.get(c)).strip() == ""]
     if faltando:
         logger.warning("LEITURA DESCARTADA - campos ausentes: %s", faltando)
@@ -222,7 +222,7 @@ def rota_ingestao(evento):
     erros = [e for e in (erro_valor, erro_lat, erro_lon, *(err for _, err in extras.values())) if e]
     if tipo_disp not in TIPOS_VALIDOS:
         erros.append(f"tipo_dispositivo deve ser um de {sorted(TIPOS_VALIDOS)}")
-    metrica = str(payload["metrica"]).strip()
+    metrica = str(payload.get("metrica") or "gas_voc").strip()  # mesmo padrão da API local
     if metrica not in LIMIARES:
         erros.append(f"metrica deve ser um de {sorted(LIMIARES)}")
     if not DISPOSITIVO_RE.match(str(payload["dispositivo_id"]).strip()):
@@ -232,12 +232,15 @@ def rota_ingestao(evento):
         v = numeros.get(campo)
         if v is not None and not (minimo <= v <= maximo):
             erros.append(f"{campo} fora da faixa {minimo} a {maximo}")
+    relato_bruto = payload.get("relato")
+    if relato_bruto is not None and len(str(relato_bruto)) > LIMITE_RELATO:
+        erros.append(f"relato passa de {LIMITE_RELATO} caracteres")
     if erros:
         logger.warning("LEITURA DESCARTADA - campos invalidos: %s", erros)
         return resposta(400, {"erro": "campos invalidos", "detalhes": erros})
 
     relato = payload.get("relato")
-    relato = _limpar_texto(relato)[:LIMITE_RELATO] if relato is not None else None
+    relato = _limpar_texto(relato) if relato is not None else None
     dados = {
         "dispositivo_id": str(payload["dispositivo_id"]).strip(),
         "tipo_dispositivo": tipo_disp,

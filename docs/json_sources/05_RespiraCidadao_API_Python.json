@@ -134,7 +134,7 @@
       ],
       "body": [
         "As saídas abaixo são da central rodando de verdade: os 3 cenários do sensor, um POST manual com resposta 201, um JSON incompleto recusado com 400, as linhas do CSV e os indicadores calculados.",
-        "Para rodar: uvicorn app.main:app --app-dir apps/api --port 8000. Os cenários do sensor rodam com python packages/iot-aicss/run_3_cenarios.py, e os 16 testes automáticos com pytest apps/api/tests.",
+        "Para rodar: uvicorn app.main:app --app-dir apps/api --port 8000. Os cenários do sensor rodam com python packages/iot-aicss/run_3_cenarios.py, e os 20 testes automáticos com pytest apps/api/tests.",
         "Limitações: CSV é ótimo para abrir numa planilha e ruim para muitas escritas ao mesmo tempo. Para vários bairros, a central vai para a nuvem com PostgreSQL. A classificação por limiar não vê tendência; quem olha o histórico é o modelo da central.",
         "ODS 3 e ODS 11."
       ]

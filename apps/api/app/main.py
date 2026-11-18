@@ -127,6 +127,7 @@ def _ingest_occurrence(payload: OcorrenciaIn, client_ip: str, source_tag: str = 
             "alerta": alerta,
             "ia_risco": ia_risco,
             "ia_risco_prob": ia_risco_prob,
+            "medido_em": payload.medido_em,
         }
     )
 
@@ -148,6 +149,10 @@ def _ingest_occurrence(payload: OcorrenciaIn, client_ip: str, source_tag: str = 
     return record
 
 
+# Nesta versão os sensores rodam no simulador Wokwi; mude para false quando a placa física estiver calibrada.
+SENSORES_SIMULADOS = os.getenv("RESPIRA_SENSORES_SIMULADOS", "true").strip().lower() not in {"0", "false", "no"}
+
+
 @app.get("/health")
 def health():
     return {
@@ -159,6 +164,7 @@ def health():
         "nn_carregado": models.nn_model is not None,
         "limiares": THRESHOLDS,
         "selo_com_chave": bool(SEAL_KEY),
+        "sensores_simulados": SENSORES_SIMULADOS,
     }
 
 
@@ -216,8 +222,9 @@ def list_places():
                 "nivel": nivel,
                 "orientacao": GUIDANCE.get(nivel) if nivel else None,
                 "ultima_leitura": ultima,
+                "sensor_simulado": SENSORES_SIMULADOS,
                 "historico": [
-                    {"valor": h["valor"], "nivel": h["nivel_risco"], "criado_em": h["criado_em"]}
+                    {"valor": h["valor"], "nivel": h["nivel_risco"], "criado_em": h.get("medido_em") or h["criado_em"]}
                     for h in reversed(historico)
                 ],
                 "relatos": store.list_relatos(local_id=place["id"], limit=5),
