@@ -18,7 +18,7 @@ def code(src: str):
 cells = [
     md(
         """
-# RespiraCidadão: Redes Neurais & Deep Learning (GS 2026.2)
+# RespiraCidadão: Redes Neurais & Deep Learning
 
 Turma 1TIAPZ1, grupo Perceptron.
 

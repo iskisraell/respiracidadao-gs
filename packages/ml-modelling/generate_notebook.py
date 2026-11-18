@@ -18,7 +18,7 @@ def code(src: str):
 cells = [
     md(
         """
-# RespiraCidadão: Machine Learning & Modelling (GS 2026.2)
+# RespiraCidadão: Machine Learning & Modelling
 
 Turma 1TIAPZ1, grupo Perceptron.
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Empacota os entregaveis finais por disciplina em deliverables/*.zip."""
+"""Empacota cada entrega em deliverables/<entrega>.zip."""
 
 import zipfile
 from pathlib import Path
@@ -31,8 +31,8 @@ def main():
     make_zip("01-ai-challenges-dossie.zip", [
         (DOCS / "01-ai-challenges" / "01_RespiraCidadao_Dossie_Integrador.pdf", "01_RespiraCidadao_Dossie_Integrador.pdf"),
         (DOCS / "01-ai-challenges" / "01_RespiraCidadao_Dossie_Integrador.docx", "01_RespiraCidadao_Dossie_Integrador.docx"),
-        (DOCS / "assets" / "arquitetura_uml_respiracidadao.png", "arquitetura_uml_respiracidadao.png"),
-        (DOCS / "ROTEIROS_VIDEOS_E_GUIA_POSTAGEM.md", "ROTEIROS_VIDEOS_E_GUIA_POSTAGEM.md"),
+        (DOCS / "assets", "imagens"),
+        (DOCS / "ENTREGAS.md", "ENTREGAS_E_ROTEIROS.md"),
     ])
 
     make_zip("02-aicss-iot.zip", [
@@ -44,6 +44,7 @@ def main():
         (PKGS / "iot-aicss" / "receiver_csv.py", "codigo/receiver_csv.py"),
         (PKGS / "iot-aicss" / "run_3_cenarios.py", "codigo/run_3_cenarios.py"),
         (PKGS / "iot-aicss" / "README.md", "README.md"),
+        (PKGS / "iot-aicss" / "evidencias", "evidencias"),
     ])
 
     make_zip("03-cognitive-cybersecurity.zip", [
@@ -82,6 +83,9 @@ def main():
         (PKGS / "cloud-serverless" / "simulador_dispositivo.py", "simulador_dispositivo.py"),
         (PKGS / "cloud-serverless" / "servidor_local.py", "servidor_local.py"),
         (PKGS / "cloud-serverless" / "teste_local.py", "teste_local.py"),
+        (PKGS / "cloud-serverless" / "deploy_aws.sh", "deploy_aws.sh"),
+        (PKGS / "cloud-serverless" / "run_sql.py", "run_sql.py"),
+        (PKGS / "cloud-serverless" / "requirements.txt", "requirements.txt"),
         (PKGS / "cloud-serverless" / "README.md", "README.md"),
     ])
 

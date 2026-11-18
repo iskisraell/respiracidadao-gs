@@ -1,8 +1,8 @@
 {
-  "title": "MACHINE LEARNING & MODELLING",
+  "title": "RESPIRACIDADÃO: O MODELO DA CENTRAL",
   "subtitle": [
-    "Relatório Técnico de Classificação de Risco Respiratório",
-    "GS 2026.2 - Machine Learning and Modelling"
+    "Como a central decide se o ar está bom, carregado ou ruim",
+    "Resumo técnico que acompanha os slides"
   ],
   "meta": [
     {
@@ -26,92 +26,174 @@
   "filename": "06_RespiraCidadao_ML_Resumo",
   "sections": [
     {
-      "title": "1. BASE REAL, ALVO E PREVENÇÃO DE DATA LEAKAGE",
+      "title": "1. DADOS E ALVO",
       "body": [
-        "Utilizamos a base real UCI Air Quality (6941 observações completas). O alvo multiclasse (normal, atencao, critico) deriva de CO(GT), variável removida das 11 entradas para eliminar vazamento.",
-        "Split estratificado 80/20 e StandardScaler encapsulado em Pipeline garantem que estatísticas de teste nunca influenciem o treino."
+        "Base real UCI Air Quality: 9357 horas medidas numa cidade italiana, 6941 completas depois de tirar as falhas de sensor (-200).",
+        "O alvo é o nível do ar pelo monóxido medido em laboratório: abaixo de 1,5 mg/m³ bom, até 3,0 carregado, acima ruim. As entradas são só as 4 medidas que nosso ESP32 tem: dois sensores de gás, temperatura e umidade. O valor de laboratório nunca entra como entrada, então não há vazamento.",
+        "Separamos 80% para treino e 20% para teste antes de qualquer ajuste, com proporção de classes igual nos dois. A padronização fica dentro do Pipeline e só aprende com o treino."
       ],
       "images": [
         {
           "path": "/home/agent/projects/respiracidadao-gs/packages/ml-modelling/charts/01_eda_classes_box.png",
-          "caption": "Figura 1: Proporção das classes (36,5%, 39,2% e 24,4%) e comportamento de C6H6(GT).",
+          "caption": "Figura 1: Quantas horas em cada nível e como a medida de gases se separa entre eles.",
           "width": 150
         }
       ]
     },
     {
-      "title": "2. COMPARAÇÃO DE MODELOS, TUNING E FEATURE IMPORTANCE",
+      "title": "2. SEIS MODELOS NO MESMO TESTE",
       "tables": [
         {
           "headers": [
             "Modelo",
-            "Train Acc",
-            "Test Acc",
-            "Test F1-Macro",
-            "Gap"
+            "Treino",
+            "Teste",
+            "F1 médio",
+            "Diferença"
           ],
           "rows": [
             [
-              "RandomForest (default)",
-              "100.00%",
-              "89.34%",
-              "89.54%",
-              "10.66%"
+              "LogisticRegression (baseline)",
+              "86,5%",
+              "87,3%",
+              "87,5%",
+              "-0,7 pp"
             ],
             [
               "GradientBoosting",
-              "92.16%",
-              "89.06%",
-              "89.28%",
-              "3.11%"
+              "89,4%",
+              "87,1%",
+              "87,4%",
+              "+2,3 pp"
             ],
             [
-              "KNN (k=9)",
-              "90.63%",
-              "88.77%",
-              "88.97%",
-              "1.87%"
+              "RandomForest (default)",
+              "100,0%",
+              "87,0%",
+              "87,3%",
+              "+13,0 pp"
             ],
             [
-              "LogisticRegression (Baseline)",
-              "87.72%",
-              "88.55%",
-              "88.71%",
-              "-0.84%"
+              "KNN (k=15)",
+              "87,8%",
+              "86,9%",
+              "87,2%",
+              "+0,9 pp"
             ],
             [
-              "DecisionTree (depth=10)",
-              "92.15%",
-              "86.47%",
-              "86.76%",
-              "5.68%"
+              "DecisionTree (depth=8)",
+              "88,8%",
+              "86,1%",
+              "86,3%",
+              "+2,8 pp"
             ],
             [
-              "RandomForest (Tuned CV=5)",
-              "98.67%",
-              "89.06%",
-              "89.22%",
-              "9.61%"
+              "RandomForest (tuned, CV=5)",
+              "88,6%",
+              "87,1%",
+              "87,4%",
+              "+1,5 pp"
             ]
           ],
           "col_widths": [
             68,
-            28,
-            28,
+            26,
+            26,
             30,
-            26
+            30
           ]
         }
+      ],
+      "body": [
+        "A Random Forest sem ajuste decorou o treino (100%) e caiu no teste. Com busca aleatória de hiperparâmetros e validação cruzada em 5 partes (F1 médio de 0,870), ela ficou com 87,1% no teste e só 1,5 ponto de diferença para o treino.",
+        "A regressão logística ficou 2 horas à frente em 1.389. Na prática é empate. Ficamos com a floresta porque ela não supõe fronteira reta entre os níveis e mostra quanto cada medida pesa."
       ],
       "images": [
         {
           "path": "/home/agent/projects/respiracidadao-gs/packages/ml-modelling/charts/02_confusao_feature_importance.png",
-          "caption": "Figura 2: Matriz de Confusão do Random Forest Otimizado e Importância das Variáveis.",
+          "caption": "Figura 2: Onde o modelo erra e quanto cada medida pesa.",
           "width": 150
+        }
+      ]
+    },
+    {
+      "title": "3. POR QUE SÓ AS MEDIDAS DO SENSOR",
+      "tables": [
+        {
+          "headers": [
+            "Opção",
+            "Acerta de cada 100 horas",
+            "Funciona num bairro?"
+          ],
+          "rows": [
+            [
+              "Regra simples do sensor (sem internet)",
+              "84",
+              "Sim, até sem rede"
+            ],
+            [
+              "Modelo com as 4 medidas do sensor",
+              "87",
+              "Sim"
+            ],
+            [
+              "Modelo com 11 medidas de laboratório",
+              "88",
+              "Não. Exige equipamento de estação oficial"
+            ],
+            [
+              "4 medidas, testado em meses mais recentes",
+              "85",
+              "É o número mais honesto para quem instala hoje"
+            ]
+          ],
+          "col_widths": [
+            76,
+            44,
+            60
+          ]
         }
       ],
       "body": [
-        "O RandomForestClassifier otimizado com RandomizedSearchCV (CV=5, F1-Macro=0.8921) atingiu 89.06% de acurácia em teste, com apenas 1 confusão direta entre Normal e Crítico em 1389 amostras de teste."
+        "Entre as 1389 horas de teste, nenhuma hora de ar bom virou ar ruim e nenhuma de ar ruim virou bom. Os erros ficam entre níveis vizinhos."
+      ]
+    },
+    {
+      "title": "4. APLICAÇÃO NO PRODUTO E LIMITES",
+      "tables": [
+        {
+          "headers": [
+            "Leitura nunca vista",
+            "Veredito",
+            "Certeza"
+          ],
+          "rows": [
+            [
+              "Manhã limpa perto da UBS",
+              "Bom",
+              "100%"
+            ],
+            [
+              "Trânsito pesado no fim da tarde",
+              "Carregado",
+              "95%"
+            ],
+            [
+              "Fumaça de queimada perto da escola",
+              "Ruim",
+              "93%"
+            ]
+          ],
+          "col_widths": [
+            90,
+            45,
+            45
+          ]
+        }
+      ],
+      "body": [
+        "A central roda o modelo a cada leitura e o app mostra \"A central conferiu e concorda: Ruim, com 93% de certeza.\" Quando discorda da luz do sensor, o app mostra os dois níveis e diz para seguir o mais cuidadoso.",
+        "Limite: dados de outro país e clima. Em cada bairro novo o sensor fica algumas semanas ao lado de uma estação oficial (CETESB) para recalibrar. Sensores de gás também envelhecem e precisam de troca."
       ]
     }
   ]

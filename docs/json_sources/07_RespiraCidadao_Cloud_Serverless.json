@@ -1,8 +1,8 @@
 {
-  "title": "PLATAFORMAS COGNITIVAS & CLOUD SERVERLESS",
+  "title": "RESPIRACIDADÃO: A CENTRAL NA NUVEM",
   "subtitle": [
-    "Ingestão Serverless AWS Lambda, CloudWatch, Hugging Face e RDS PostgreSQL",
-    "GS 2026.2 - Cloud Computing"
+    "Função serverless, banco gerenciado e IA de texto",
+    "AWS Lambda, CloudWatch, Hugging Face e RDS PostgreSQL"
   ],
   "meta": [
     {
@@ -26,47 +26,67 @@
   "filename": "07_RespiraCidadao_Cloud_Serverless",
   "sections": [
     {
-      "title": "1. CENÁRIO, LIMIARES E ARQUITETURA SERVERLESS",
+      "title": "1. CENÁRIO E LIMIARES",
       "body": [
-        "A camada serverless recebe ocorrências de campo (ESP32, drone ou app), grava telemetria e alertas no CloudWatch Logs, interpreta o relato cidadão via Hugging Face Router (cardiffnlp/twitter-xlm-roberta-base-sentiment) e persiste tudo no Amazon RDS PostgreSQL.",
-        "Requisito crítico AWS: a função Lambda permanece fora da VPC para acessar o endpoint externo da Hugging Face sem custo de NAT Gateway."
+        "Uma prefeitura não quer manter um servidor ligado em cada bairro. A central na nuvem só existe quando chega leitura: o sensor manda o JSON para uma URL, uma função Lambda valida, classifica, pede à IA de texto uma leitura do relato (quando houver) e grava no PostgreSQL. Tudo que dá errado vira aviso no CloudWatch.",
+        "Limiares: gas_voc atenção 830 e crítico 1140; gas_co atenção 1010 e crítico 1280. Tipos aceitos: esp32 e app. ODS 3 e ODS 11.",
+        "A função fica fora da VPC para alcançar a Hugging Face sem pagar NAT Gateway. O banco aceita conexão pública com senha e SSL obrigatório. Serve para demonstração; em produção o banco vai para rede privada."
       ],
       "tables": [
         {
           "headers": [
-            "Rota Lambda Function URL",
-            "Comportamento Implementado"
+            "Rota da Function URL",
+            "Comportamento"
           ],
           "rows": [
             [
               "GET /health",
-              "Retorna status da função, modelo HF configurado e flag ia_ativa."
+              "Estado da função e se a IA de texto está ligada"
             ],
             [
               "POST /ocorrencias",
-              "Valida obrigatoriedade/tipo (400 + WARNING se inválido), classifica, consulta IA e grava no RDS (201)."
+              "Valida campos e tipos (400 e WARNING no CloudWatch se inválido), classifica, chama a IA, grava no RDS e devolve 201"
             ],
             [
               "GET /ocorrencias",
-              "Lista últimas ocorrências persistidas ordenadas da mais recente à mais antiga."
+              "Últimas leituras gravadas, da mais nova para a mais antiga"
             ]
           ],
           "col_widths": [
-            54,
-            126
+            50,
+            130
           ]
         }
       ]
     },
     {
-      "title": "2. RESILIÊNCIA DE IA, TESTE LOCAL E EVIDÊNCIAS AWS",
+      "title": "2. IA DE TEXTO SEM DERRUBAR A GRAVAÇÃO",
       "body": [
-        "A chamada à IA usa apenas urllib para https://router.huggingface.co/hf-inference/models/{modelo} com token em HF_TOKEN. Se houver timeout, ausência de token ou HTTP inesperado, a função registra WARNING e conclui a gravação no banco usando a regra local determinística.",
-        "Validação local automatizada: packages/cloud-serverless/teste_local.py executou 8/8 cenários com sucesso, além do simulador simulador_dispositivo.py em fluxo progressivo de queimada."
+        "A função chama https://router.huggingface.co/hf-inference/models/cardiffnlp/twitter-xlm-roberta-base-sentiment com o token em HF_TOKEN, usando só urllib. Sem token, com timeout ou resposta estranha, ela registra WARNING e grava a leitura do mesmo jeito. Uma queimada não pode esperar a IA de texto voltar."
       ]
     },
     {
-      "title": "3. IMPLEMENTADO LOCALMENTE VS PENDENTE NA CONTA AWS",
+      "title": "3. TESTADO SEM AWS",
+      "bullets": [
+        {
+          "text": "teste_local.py: 8 de 8 verificações passam: saúde da função, leitura bom e ruim gravadas, listagem, e recusa com 400 para JSON quebrado, valor não numérico, tipo de aparelho inválido e campo faltando, sem gravar nada.",
+          "level": 0
+        },
+        {
+          "text": "Banco: rodamos tabela_ocorrencias.sql num PostgreSQL local, gravamos 3 leituras pelo próprio handler da Lambda e o GET devolveu as 3.",
+          "level": 0
+        },
+        {
+          "text": "simulador_dispositivo.py --cenario queimada --lugar escola manda leituras que sobem até o vermelho, igual ao que a função vai receber.",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "title": "4. O QUE FALTA E COMO FAZER",
+      "body": [
+        "Não temos conta AWS ainda. Escrevemos deploy_aws.sh para que publicar seja um comando: ele cria o banco (db.t3.micro), roda a tabela, empacota e publica a função com a Function URL e imprime os comandos de teste. Funciona no AWS Academy Learner Lab (usa a LabRole) ou numa conta própria no nível gratuito."
+      ],
       "tables": [
         {
           "headers": [
@@ -76,25 +96,40 @@
           ],
           "rows": [
             [
-              "Código da Lambda, SQL, simulador e README",
-              "Implementado e validado localmente",
-              "Entregues no pacote 07"
+              "Código da função, SQL, simulador, README",
+              "Pronto e testado",
+              "No pacote"
             ],
             [
-              "Function URL e endpoint do RDS (sem senha)",
-              "Pendente: exige o deploy na conta AWS do grupo",
-              "Passo a passo no README do pacote"
+              "URL da função e endpoint do RDS (sem senha)",
+              "Sai no fim do deploy_aws.sh",
+              "Copiar para o README"
             ],
             [
-              "4 prints (variáveis, simulador, CloudWatch, SELECT no RDS)",
-              "Pendente: gerados após o deploy",
-              "Capturar durante o vídeo de até 5 min"
+              "Print das variáveis de ambiente",
+              "Depois do deploy",
+              "Console Lambda, Configuração"
+            ],
+            [
+              "Print do simulador enviando",
+              "Depois do deploy",
+              "Terminal com simulador_dispositivo.py"
+            ],
+            [
+              "Print do CloudWatch",
+              "Depois do deploy",
+              "Grupo de logs da função"
+            ],
+            [
+              "Print do SELECT no RDS",
+              "Depois do deploy",
+              "python run_sql.py --consultas"
             ]
           ],
           "col_widths": [
-            64,
-            64,
-            52
+            68,
+            50,
+            62
           ]
         }
       ]

@@ -1,8 +1,8 @@
 {
-  "title": "REDES NEURAIS ARTIFICIAIS & DEEP LEARNING",
+  "title": "RESPIRACIDADÃO: A SEGUNDA OPINIÃO",
   "subtitle": [
-    "Classificador Neural AirQualityMLP em PyTorch para Risco Respiratório",
-    "GS 2026.2 - Redes Neurais & Deep Learning"
+    "Rede neural em PyTorch que confere o veredito da central",
+    "As 8 etapas do projeto"
   ],
   "meta": [
     {
@@ -26,117 +26,128 @@
   "filename": "08_RespiraCidadao_Redes_Neurais",
   "sections": [
     {
-      "title": "1. ETAPAS 1 A 4: PROBLEMA, BASE REAL, SPLIT E ARQUITETURA MLP",
+      "title": "1. ETAPAS 1 A 4: PROBLEMA, DADOS, PREPARO E ARQUITETURA",
       "bullets": [
         {
-          "text": "Etapa 1 (Problema): prever o risco respiratório (normal, atencao, critico) a partir de 11 variáveis contínuas de sensores para antecipar alertas em escolas e UBS.",
+          "text": "Etapa 1, problema: dizer se o ar está bom, carregado ou ruim a partir das 4 medidas do sensor, para avisar escola e UBS antes da crise.",
           "level": 0
         },
         {
-          "text": "Etapa 2 (Dataset): UCI Air Quality real com 6.941 leituras limpas, sem dados sintéticos.",
+          "text": "Etapa 2, dados: UCI Air Quality real, 6941 horas completas. Nada sintético.",
           "level": 0
         },
         {
-          "text": "Etapa 3 (Preparação): split estratificado 70% treino (4.858), 15% validação (1.041) e 15% teste (1.042), com StandardScaler ajustado apenas no treino.",
+          "text": "Etapa 3, preparo: 70% treino (4.858), 15% validação (1.041) e 15% teste (1.042), com a mesma proporção de níveis. A padronização aprende só com o treino.",
           "level": 0
         },
         {
-          "text": "Etapa 4 (Justificativa MLP): dados tabulares pontuais com lacunas temporais tornam MLP mais rápida e adequada do que CNN (grade 2D) ou RNN (sequência contínua).",
+          "text": "Etapa 4, arquitetura: AirQualityMLP (4 -> 64 -> 32 -> 3, BatchNorm1d + ReLU + Dropout 0.25). Os dados são 4 números por hora, sem imagem nem sequência longa, então uma rede densa (MLP) basta. CNN e RNN resolveriam problemas que não temos.",
           "level": 0
         }
       ]
     },
     {
-      "title": "2. ETAPAS 5 A 7: TREINAMENTO, REGULARIZAÇÃO E AVALIAÇÃO",
+      "title": "2. ETAPAS 5 A 7: TREINO, REGULARIZAÇÃO E AVALIAÇÃO",
       "tables": [
         {
           "headers": [
             "Experimento",
             "Épocas",
-            "Train Acc",
-            "Test Acc",
-            "F1-Macro",
-            "Gap Overfit"
+            "Treino",
+            "Teste",
+            "F1 médio",
+            "Diferença"
           ],
           "rows": [
             [
-              "Baseline MLP (128-64, sem Dropout/ES, lr=3e-3)",
-              "60",
-              "93.56%",
-              "88.96%",
-              "89.29%",
-              "4.60%"
+              "Regra do ESP32 (gas_voc)",
+              "0",
+              "sem treino",
+              "82,4%",
+              "82,9%",
+              "não se aplica"
             ],
             [
-              "Regularized MLP (64-32, BatchNorm+Dropout 0.25+ES, lr=1e-3)",
-              "60",
-              "89.71%",
-              "89.64%",
-              "89.85%",
-              "0.07%"
+              "A baseline (128-64, sem regularização)",
+              "150",
+              "90,9%",
+              "85,7%",
+              "86,2%",
+              "5,2 pp"
+            ],
+            [
+              "B regularizado (64-32, BN + Dropout + ES)",
+              "34",
+              "87,2%",
+              "86,1%",
+              "86,5%",
+              "1,1 pp"
             ]
           ],
           "col_widths": [
-            68,
+            64,
             18,
-            23,
-            23,
             24,
-            24
+            24,
+            24,
+            26
           ]
         }
       ],
       "images": [
         {
           "path": "/home/agent/projects/respiracidadao-gs/packages/neural-networks/charts/01_curvas_treinamento.png",
-          "caption": "Figura 1: Evolução de Loss e Acurácia (Baseline MLP vs Regularized MLP).",
+          "caption": "Figura 1: Perda e acerto por época, rede sem e com regularização.",
           "width": 150
         },
         {
           "path": "/home/agent/projects/respiracidadao-gs/packages/neural-networks/charts/02_matriz_confusao_nn.png",
-          "caption": "Figura 2: Matriz de Confusão do modelo PyTorch no conjunto de teste.",
+          "caption": "Figura 2: Onde a rede regularizada erra no teste.",
           "width": 150
         }
       ],
       "body": [
-        "A introdução de BatchNorm1d, Dropout (0,25) e weight decay (1e-4) derrubou o overfitting de 4,60% para apenas 0,07%, elevando a acurácia em teste para 89,64% (F1-Macro 89,85%) com zero erros graves entre Normal e Crítico. O Early Stopping (paciência de 8 épocas) restaura o melhor estado de validação, mas não chegou a interromper o treino dentro das 60 épocas."
+        "A rede A, maior e sem freio, chegou a 90,9% no treino e 85,7% no teste: 5,2 pontos de diferença, sinal de que decorava. A rede B tem metade dos neurônios, BatchNorm, Dropout de 0,25, weight decay e parada antecipada com paciência de 15 épocas. Parou na época 34, voltou ao melhor estado (época 19) e ficou com 86,1% no teste e 1,1 ponto de diferença.",
+        "Nas 1042 horas de teste, nenhuma hora de ar bom virou ruim e nenhuma ruim virou bom. A regra simples do sensor acerta 82%; a rede ganha uns 4 pontos sobre ela."
       ]
     },
     {
-      "title": "3. ETAPA 8: DEMONSTRAÇÃO NÃO VISTA, LIMITAÇÕES E LGPD",
+      "title": "3. ETAPA 8: DEMONSTRAÇÃO, LIMITES E DADOS PESSOAIS",
       "tables": [
         {
           "headers": [
-            "Cenário Não Visto",
-            "Classe Predita",
-            "Probabilidades (Normal / Atenção / Crítico)"
+            "Leitura nunca vista",
+            "Veredito",
+            "Bom / Carregado / Ruim"
           ],
           "rows": [
             [
-              "Manhã limpa (Normal)",
-              "NORMAL",
-              "99.1% / 0.9% / 0.0%"
+              "Manhã limpa perto da UBS",
+              "Bom",
+              "97,0% / 3,0% / 0,0%"
             ],
             [
-              "Tráfego intenso (Atenção)",
-              "ATENCAO",
-              "2.0% / 96.8% / 1.2%"
+              "Trânsito pesado no fim da tarde",
+              "Carregado",
+              "4,3% / 94,8% / 0,9%"
             ],
             [
-              "Fumaça crítica de queimada (Crítico)",
-              "CRITICO",
-              "0.0% / 0.9% / 99.1%"
+              "Fumaça de queimada perto da escola",
+              "Ruim",
+              "0,2% / 20,6% / 79,2%"
             ]
           ],
           "col_widths": [
-            56,
-            36,
-            88
+            70,
+            30,
+            80
           ]
         }
       ],
       "body": [
-        "Integração ao produto: os pesos air_quality_mlp.pt rodam em tempo real no endpoint POST /predict e no painel React. Limitações: sensibilidade a deriva química exige recalibração periódica com dados locais brasileiros. Segurança e LGPD: apenas telemetria ambiental anônima entra na rede neural."
+        "No produto, os pesos (air_quality_mlp.pt) rodam na central a cada leitura, ao lado da Random Forest. Na tela Como funciona, o card \"Segunda opinião\" mostra o veredito da rede para a leitura que a pessoa montar.",
+        "Limites: base de outra cidade; precisa de recalibração em cada bairro. A rede acerta um pouco menos que a floresta, por isso é segunda opinião e não a voz principal.",
+        "Acessibilidade, segurança, LGPD e sustentabilidade: a rede só recebe 4 números ambientais, nunca dado de pessoa. Treina numa CPU comum e o arquivo de pesos tem 17 KB. O resultado chega ao usuário como cor e palavra, não como probabilidade crua."
       ]
     }
   ]

@@ -47,7 +47,7 @@ models = ModelBundle(ROOT_DIR)
 app = FastAPI(
     title="RespiraCidadão API",
     version="1.0.0",
-    description="API integradora CitizenTech para monitoramento de fumaça, qualidade do ar e risco respiratório.",
+    description="Central do RespiraCidadão: recebe leituras dos sensores, decide o nível do ar e serve o app.",
 )
 
 app.add_middleware(

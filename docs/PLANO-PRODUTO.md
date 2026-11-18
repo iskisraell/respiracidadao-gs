@@ -55,9 +55,9 @@ Tudo no produto existe para essa frase ser verdadeira, rápida e confiável.
 - [x] `receiver_csv.py` e `run_3_cenarios.py` no contrato novo, um sensor por lugar.
 - [x] Kit de nuvem: Lambda no contrato novo, `deploy_aws.sh`, `run_sql.py`, SSL no banco, caminho do banco testado num PostgreSQL local.
 
-### 5. Entregas
-- [ ] Reescrever os textos de cada entrega na voz do produto, com prints reais e gráficos.
-- [ ] Regerar PDF/DOCX, slides e zips. README do repositório com cara de produto.
+### 5. Entregas [feito]
+- [x] Reescrever os textos de cada entrega na voz do produto, com prints reais e gráficos.
+- [x] Regerar PDF/DOCX, slides e zips. README do repositório com cara de produto.
 
 ### 6. Revisão e envio
 - [ ] Council (GPT-6.1 Terra high + Gemini 4 Hydrogen high) sobre o projeto inteiro.

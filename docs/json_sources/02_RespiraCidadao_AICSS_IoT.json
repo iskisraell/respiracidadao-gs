@@ -1,8 +1,8 @@
 {
-  "title": "RESPIRACIDADÃO: SISTEMA IOT E SENSORES",
+  "title": "RESPIRACIDADÃO: O SENSOR",
   "subtitle": [
-    "Monitoramento Local de Fumaça e Microclima com ESP32",
-    "GS 2026.2 - AI Computer Systems & Sensors"
+    "Um ESP32 que avisa na hora, mesmo sem internet",
+    "Sistema IoT com sensores e atuadores"
   ],
   "meta": [
     {
@@ -26,94 +26,137 @@
   "filename": "02_RespiraCidadao_AICSS_IoT",
   "sections": [
     {
-      "title": "1. PROBLEMA, PÚBLICO E RELEVÂNCIA (ODS 3 E 11)",
+      "title": "1. O PROBLEMA E POR QUE UM SENSOR NO LUGAR",
       "body": [
-        "Comunidades periféricas e escolas ficam expostas a plumas de fumaça e gases tóxicos sem estações oficiais próximas. Um nó ESP32 de baixo custo fornece aviso visual e sonoro imediato no local e envia telemetria JSON estruturada para análise em nuvem."
+        "Escolas e UBS da periferia ficam longe das estações oficiais de qualidade do ar. Quando a fumaça chega, ninguém no prédio sabe até alguém começar a tossir. Um sensor pequeno na parede resolve a parte mais urgente: avisa quem está ali, na hora, com luz e som, e manda a leitura para a central do bairro.",
+        "ODS 3 (saúde e bem-estar) e ODS 11 (cidades sustentáveis)."
       ]
     },
     {
-      "title": "2. HARDWARE, SENSORES E CONTRATO JSON",
+      "title": "2. O CIRCUITO",
       "tables": [
         {
           "headers": [
-            "Componente",
+            "Peça",
             "Pino",
-            "Justificativa Técnica"
+            "Por que está ali"
           ],
           "rows": [
             [
-              "Sensor MQ-2 (ADC Wokwi)",
+              "Sensor de fumaça e gases (potenciômetro no Wokwi)",
               "GPIO 34",
-              "Detecta fumaça e gases combustíveis de 0 a 400 ppm."
+              "Medida principal. Decide a cor da luz."
             ],
             [
-              "Sensor DHT22",
+              "Sensor de monóxido (potenciômetro no Wokwi)",
+              "GPIO 35",
+              "Segunda medida de gás, usada pela central."
+            ],
+            [
+              "DHT22",
               "GPIO 15",
-              "Mede temperatura (°C) e umidade relativa (%) que modulam dispersão."
+              "Temperatura e umidade. Ar quente e seco segura a fumaça perto do chão."
             ],
             [
-              "LEDs Verde/Amarelo/Vermelho",
-              "GPIO 26/27/14",
-              "Sinalização visual imediata para normal, atenção e crítico."
+              "LEDs verde, amarelo e vermelho (220 Ω)",
+              "GPIO 26, 27, 14",
+              "Mostram o nível para quem passa."
             ],
             [
-              "Buzzer Piezoelétrico",
-              "GPIO 12",
-              "Alerta sonoro de acessibilidade (180 ms atenção, 1800 Hz crítico)."
+              "Buzzer",
+              "GPIO 25",
+              "Bip curto em ar carregado, alarme longo em ar ruim. Serve a quem não está olhando."
             ]
           ],
           "col_widths": [
-            55,
+            62,
             30,
-            95
+            88
           ]
         }
       ],
       "body": [
-        "Contrato JSON enviado via HTTP POST para /ocorrencias (alinhado com 05 Python e 07 Cloud): {dispositivo_id, tipo, latitude, longitude, metrica, valor, temperatura_c, umidade_pct, relato}."
+        "A regra da luz usa só a medida de fumaça e gases: abaixo de 830 fica verde, de 830 a 1140 amarelo, acima de 1140 vermelho. Escolhemos esses cortes na base real de 6.941 horas. Sozinha, a regra acerta 84 de cada 100 horas, e funciona sem rede.",
+        "A cada 3 segundos o ESP32 monta um JSON e envia por HTTP POST para a central: {dispositivo_id, tipo, latitude, longitude, metrica: \"gas_voc\", valor, gas_co, temperatura_c, umidade_pct}. É o mesmo contrato da API em Python e da função na nuvem. O sensor não manda relato; relato é coisa de pessoa."
       ]
     },
     {
-      "title": "3. EVIDÊNCIA DOS 3 COMPORTAMENTOS E LIMITAÇÕES",
+      "title": "3. OS TRÊS COMPORTAMENTOS",
       "tables": [
         {
           "headers": [
-            "Cenário",
-            "Entrada (fumaca_ppm)",
-            "Atuador Local",
-            "Resposta API & CSV"
+            "Situação",
+            "Leitura",
+            "No sensor",
+            "Na central"
           ],
           "rows": [
             [
-              "1. Normal",
-              "68,4 ppm | 23,5°C | 58%",
-              "LED Verde | Buzzer mudo",
-              "HTTP 201 | nivel_risco=normal | gravado CSV"
+              "Ar bom (UBS de manhã)",
+              "706 / 925 / 18 / 55%",
+              "LED verde, buzzer mudo",
+              "201, Bom, 100% de certeza"
             ],
             [
-              "2. Atenção",
-              "168,0 ppm | 31,2°C | 34%",
-              "LED Amarelo | Pulso 180ms",
-              "HTTP 201 | nivel_risco=atencao | gravado CSV"
+              "Ar carregado (praça, fim de tarde)",
+              "980 / 1120 / 24 / 42%",
+              "LED amarelo, bip de 150 ms",
+              "201, Carregado, 95%"
             ],
             [
-              "3. Crítico",
-              "312,5 ppm | 36,8°C | 21%",
-              "LED Vermelho | Sirene 1800Hz",
-              "HTTP 201 | nivel_risco=critico | alerta=True"
+              "Ar ruim (queimada perto da escola)",
+              "1280 / 1383 / 31 / 34%",
+              "LED vermelho, alarme de 1800 Hz",
+              "201, Ruim, 93%"
             ]
           ],
           "col_widths": [
-            28,
-            48,
+            42,
             52,
-            52
+            44,
+            42
           ]
         }
       ],
       "body": [
-        "Implementado vs Simulado: firmware C++/Arduino, circuito Wokwi (diagram.json + libraries.txt), receptor CSV (receiver_csv.py) e script de teste (run_3_cenarios.py) foram implementados; a leitura química foi simulada via potenciômetro ADC no Wokwi.",
-        "Limitações: o sensor MQ-2 real requer pré-aquecimento de 24h e calibração Rs/R0 em campo, além de depender de Wi-Fi para o envio remoto."
+        "Leitura na ordem: fumaça e gases / monóxido / temperatura / umidade. Os prints abaixo são do simulador Wokwi rodando o firmware deste pacote."
+      ]
+    },
+    {
+      "title": "4. PRINTS DO SIMULADOR",
+      "images": [
+        {
+          "path": "/home/agent/projects/respiracidadao-gs/packages/iot-aicss/evidencias/wokwi_1_ar_bom.png",
+          "caption": "Figura 1: Ar bom. LED verde aceso e JSON no monitor serial.",
+          "width": 150
+        },
+        {
+          "path": "/home/agent/projects/respiracidadao-gs/packages/iot-aicss/evidencias/wokwi_2_ar_carregado.png",
+          "caption": "Figura 2: Ar carregado. LED amarelo.",
+          "width": 150
+        },
+        {
+          "path": "/home/agent/projects/respiracidadao-gs/packages/iot-aicss/evidencias/wokwi_3_ar_ruim.png",
+          "caption": "Figura 3: Ar ruim. LED vermelho e alarme.",
+          "width": 150
+        }
+      ]
+    },
+    {
+      "title": "5. O QUE É REAL E O QUE É SIMULADO",
+      "bullets": [
+        {
+          "text": "Real: firmware em C++, circuito do Wokwi (diagram.json), receptor Python que grava CSV (receiver_csv.py) e o script que reproduz os 3 cenários (run_3_cenarios.py), testado contra a API e contra o receptor.",
+          "level": 0
+        },
+        {
+          "text": "Simulado: os dois sensores de gás são potenciômetros. Um sensor de verdade precisa de aquecimento e calibração ao lado de uma estação oficial antes de valer o número.",
+          "level": 0
+        },
+        {
+          "text": "Limite do Wokwi gratuito: a simulação não alcança um servidor fora do navegador. Nesse caso o sensor imprime \"SEM REDE: alerta local ativo\" e continua acendendo a luz certa. É o comportamento que queremos numa queda de Wi-Fi.",
+          "level": 0
+        }
       ]
     }
   ]
