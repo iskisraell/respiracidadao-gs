@@ -60,9 +60,9 @@ Tudo no produto existe para essa frase ser verdadeira, rápida e confiável.
 - [x] Regerar PDF/DOCX, slides e zips. README do repositório com cara de produto.
 
 ### 6. Revisão e envio
-- [ ] Council (GPT-6.1 Terra high + Gemini 4 Hydrogen high) sobre o projeto inteiro.
-- [ ] Corrigir bloqueadores e "should".
-- [ ] Commit, push, PR, Drive atualizado, relatório final.
+- [x] Council (GPT-6.1 Terra high + Gemini 4 Hydrogen high) sobre o projeto inteiro: 4 rodadas de código (Terra 4 → 6 → 7 → 8; Gemini 7,5 → 9,2 → 9,6 → 9,5) e 3 rodadas de professor nas entregas (6,9 → 7,6 → 8,8).
+- [x] Corrigir bloqueadores e "should".
+- [x] Commit, push, PR (#1), Drive atualizado, relatório final.
 
 ## Decisões registradas
 
