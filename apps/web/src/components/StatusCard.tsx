@@ -1,4 +1,4 @@
-import { CheckCircle2, CloudOff, ShieldCheck } from "lucide-react";
+import { CheckCircle2, CloudOff, FlaskConical, ShieldCheck } from "lucide-react";
 import type { Place, Reading } from "../types";
 import { LEVEL_NAME, LIMITS, ago, minutesSince, pct, sensorLevel } from "../format";
 import { History } from "./History";
@@ -18,7 +18,19 @@ export function StatusCard({ place }: { place: Place }) {
     );
   }
 
-  const stale = minutesSince(r.criado_em) > STALE_MIN;
+  const demo = r.tipo === "demo";
+  if (minutesSince(r.criado_em) > STALE_MIN && !demo) {
+    return (
+      <section className="status vazio" aria-live="polite">
+        <p className="status-place">{place.nome} · {place.bairro}</p>
+        <h2>Sem leitura recente</h2>
+        <p>
+          <CloudOff size={16} aria-hidden="true" /> A última medida chegou {ago(r.criado_em)} e marcava {LEVEL_NAME[place.nivel].toLowerCase()}.
+          O sensor pode estar sem internet. A luz dele continua funcionando no local: confira por lá antes de decidir.
+        </p>
+      </section>
+    );
+  }
   const { titulo, frase, acoes } = place.orientacao;
 
   return (
@@ -32,9 +44,9 @@ export function StatusCard({ place }: { place: Place }) {
         <span className="badge">{LEVEL_NAME[place.nivel]}</span>
       </div>
 
-      {stale && (
+      {demo && (
         <p className="note warn">
-          <CloudOff size={16} aria-hidden="true" /> A última medida chegou {ago(r.criado_em)}. O sensor pode estar sem internet; a luz dele continua funcionando no local.
+          <FlaskConical size={16} aria-hidden="true" /> Leitura de demonstração, gerada pelo modo demonstração. Não é uma medida real deste lugar.
         </p>
       )}
 
@@ -90,8 +102,8 @@ function SecondOpinion({ r }: { r: Reading }) {
     <p className="note">
       <ShieldCheck size={16} aria-hidden="true" />
       {agrees
-        ? `A central conferiu e concorda: ${LEVEL_NAME[r.ia_risco]}, com ${pct(r.ia_risco_prob)} de certeza.`
-        : `A central acha que está ${LEVEL_NAME[r.ia_risco]} (${pct(r.ia_risco_prob)} de certeza). Na dúvida, siga o nível mais cuidadoso.`}
+        ? `A central conferiu e concorda: ${LEVEL_NAME[r.ia_risco]}, com ${pct(r.ia_risco_prob)} de confiança.`
+        : `A central acha que está ${LEVEL_NAME[r.ia_risco]} (${pct(r.ia_risco_prob)} de confiança). Na dúvida, siga o nível mais cuidadoso.`}
     </p>
   );
 }

@@ -11,13 +11,13 @@ export function BestTime({ pattern }: { pattern: HourPattern }) {
   return (
     <section className="card">
       <h3>
-        <Sun size={18} aria-hidden="true" /> Melhor horário para atividade ao ar livre
+        <Sun size={18} aria-hidden="true" /> Horário que costuma ter ar melhor
       </h3>
       <p className="big">
         {inicio}h às {fim}h
       </p>
       <p className="muted">
-        Às {pior_hora}h, o ar ruim é {vezes} vezes mais comum. Os picos acompanham o trânsito da manhã e do fim da tarde.
+        Às {pior_hora}h, o ar ruim foi {vezes} vezes mais comum. Média de 6.941 horas medidas numa cidade italiana em 2004 e 2005; vale como ponto de partida até o sensor deste lugar juntar o próprio histórico.
       </p>
       <div className="hours" role="img" aria-label={`Ar ruim é mais comum às ${pior_hora}h e menos comum entre ${inicio}h e ${fim}h`}>
         {pattern.horas.map((h) => (

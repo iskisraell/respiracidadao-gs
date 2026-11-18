@@ -7,7 +7,7 @@ import { TryReading } from "./TryReading";
 const STEPS = [
   { icon: Cpu, title: "O sensor mede", text: "Uma caixinha na parede mede fumaça, monóxido, temperatura e umidade a cada poucos segundos." },
   { icon: Lightbulb, title: "A luz avisa na hora", text: "Verde, amarelo ou vermelho no próprio local. Funciona mesmo sem internet." },
-  { icon: Server, title: "A central confere", text: "A medida chega à central, que compara com 6.941 horas de medição real e diz o nível com uma porcentagem de certeza." },
+  { icon: Server, title: "A central confere", text: "A medida chega à central, que compara com 6.941 horas de medição real e diz o nível com uma porcentagem de confiança." },
   { icon: Smartphone, title: "Você vê o que fazer", text: "No app, cada lugar mostra a cor, uma frase simples e as ações do momento." },
   { icon: Users, title: "Vizinhos completam", text: "Quem vê fumaça conta. O relato aparece no lugar e a central marca os urgentes." },
 ];
@@ -48,7 +48,7 @@ export function HowItWorks() {
         ) : (
           <p className="muted">Carregando os números…</p>
         )}
-        <p>Quando erra, erra para o nível vizinho. Em nenhum teste a central chamou de "bom" uma hora que era "ruim", nem o contrário.</p>
+        <p>Quando erra, erra para o nível vizinho. Nas 1.389 horas de teste, a central nunca chamou de "bom" uma hora que era "ruim", nem o contrário.</p>
         <p className="muted">
           Os níveis seguem o monóxido de carbono medido por um aparelho de referência: abaixo de 1,5 mg/m³ é bom, de 1,5 a 3 é atenção, acima de 3 é ruim.
         </p>
@@ -60,7 +60,7 @@ export function HowItWorks() {
         <h3>Seus dados</h3>
         <ul className="plain">
           <li>O relato não pede nome, telefone nem localização. Guardamos só o texto e o lugar escolhido.</li>
-          <li>Cada medida recebe um selo digital na hora em que chega. Se alguém mudar o registro depois, o selo deixa de bater.</li>
+          <li>Cada medida recebe um selo digital na hora em que chega. Se alguém mudar a medida no banco sem a chave do selo, o selo deixa de bater.</li>
           <li>Ninguém consegue inundar a central: cada endereço pode mandar até 30 envios por minuto.</li>
         </ul>
       </section>
@@ -68,6 +68,7 @@ export function HowItWorks() {
       <section className="card">
         <h3>O que ainda não resolvemos</h3>
         <ul className="plain">
+          <li>Por enquanto o sensor roda num simulador. A placa física ainda precisa ser montada e comparada com um medidor oficial antes de valer como medida.</li>
           <li>A central aprendeu com dados de outra cidade. Em cada bairro novo, o sensor precisa ficar algumas semanas ao lado de uma estação oficial para calibrar.</li>
           <li>Sensores de gás perdem precisão com o tempo e precisam de troca ou recalibração.</li>
           <li>A dica de horário é uma média. Num dia de queimada, vale o que o sensor está medindo agora.</li>

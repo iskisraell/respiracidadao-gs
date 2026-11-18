@@ -58,7 +58,7 @@ export function TryReading() {
             <li key={who} className={lvl}>
               <small>{who}</small>
               <strong>{lvl ? LEVEL_NAME[lvl] : "indisponível"}</strong>
-              {p != null && <small>{pct(p)} de certeza</small>}
+              {p != null && <small>{pct(p)} de confiança</small>}
             </li>
           ))}
         </ul>

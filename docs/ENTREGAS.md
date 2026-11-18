@@ -38,7 +38,7 @@ Abra http://localhost:5173. Se a lista de lugares estiver vazia, clique em "Modo
 1. **0:00 a 0:50, a cena.** Leia a frase da diretora às 7h40. Diga para quem é: coordenação de escola e UBS, famílias com criança, idoso ou alguém com asma, e o vizinho que viu fumaça. ODS 3, 10 e 11.
 2. **0:50 a 2:00, o caminho de uma leitura.** Mostre o diagrama `docs/assets/arquitetura_uml_respiracidadao.png` e conte em uma frase o papel de cada parte: sensor (02), central (05), nuvem (07), proteções (03), modelo (06), segunda opinião (08), estatística (09).
 3. **2:00 a 5:00, demonstração.**
-   - Tela Agora: clique na Escola Jardim Primavera (vermelha). Leia "Ar ruim agora", o que fazer e a linha "A central conferiu e concorda: Ruim, com 93% de certeza".
+   - Tela Agora: clique na Escola Jardim Primavera (vermelha). Leia "Ar ruim agora", o que fazer e a linha "A central conferiu e concorda: Ruim, com 93% de confiança".
    - Mostre o melhor horário (14h às 17h) e explique que vem de 6.941 horas reais.
    - Escreva um relato ("cheiro de queimada no portão") e mostre ele aparecer marcado como urgente.
    - Tela Como funciona: mexa nos controles de "Teste uma leitura" até virar vermelho e mostre a central e a segunda opinião concordando.

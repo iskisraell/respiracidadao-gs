@@ -85,7 +85,7 @@ async def validation_error_handler(request: Request, exc: RequestValidationError
     )
 
 
-def _ingest_occurrence(payload: OcorrenciaIn, client_ip: str, source_tag: str = "api") -> dict:
+def _ingest_occurrence(payload: OcorrenciaIn, client_ip: str, source_tag: str = "api", tipo: Optional[str] = None) -> dict:
     """Valida, classifica (regra local + Random Forest + sentimento do relato) e grava em SQLite e CSV."""
     clean_relato = sanitize_text(payload.relato)
     nivel_risco, alerta = classify_threshold(payload.metrica, payload.valor)
@@ -108,7 +108,7 @@ def _ingest_occurrence(payload: OcorrenciaIn, client_ip: str, source_tag: str = 
     record = store.insert(
         {
             "dispositivo_id": payload.dispositivo_id,
-            "tipo": payload.tipo,
+            "tipo": tipo or payload.tipo,
             "latitude": payload.latitude,
             "longitude": payload.longitude,
             "metrica": payload.metrica,
@@ -286,8 +286,9 @@ DEMO_PLAN = {"normal": "ubs-vila-esperanca", "atencao": "praca-da-se", "critico"
 
 @app.post("/simulate")
 def simulate_scenarios(body: SimulateRequest, request: Request):
-    """Modo demonstração: grava uma leitura típica de cada nível como se viesse do sensor do lugar."""
+    """Modo demonstração: grava uma leitura típica de cada nível, marcada como tipo "demo"."""
     client_ip = get_client_ip(request)
+    _enforce_rate_limit(client_ip)
     if body.local_id and body.local_id not in PLACE_BY_ID:
         raise HTTPException(status_code=404, detail="Lugar não encontrado.")
     keys = ["normal", "atencao", "critico"] if body.cenario == "todos" else [body.cenario]
@@ -298,7 +299,7 @@ def simulate_scenarios(body: SimulateRequest, request: Request):
             dispositivo_id=place["dispositivo_id"], tipo=body.tipo, metrica="gas_voc",
             latitude=place["latitude"], longitude=place["longitude"], **TYPICAL_READING[k],
         )
-        rec = _ingest_occurrence(item, client_ip=client_ip, source_tag=f"demo-{k}")
+        rec = _ingest_occurrence(item, client_ip=client_ip, source_tag=f"demo-{k}", tipo="demo")
         resultados.append({"cenario": k, "local_id": place["id"], "registro": rec})
     return {"executados": len(resultados), "resultados": resultados}
 

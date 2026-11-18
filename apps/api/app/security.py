@@ -19,6 +19,9 @@ RATE_LIMIT_MAX_REQUESTS = int(os.getenv("RATE_LIMIT_MAX_REQUESTS", "30"))
 RATE_LIMIT_WINDOW_SEC = int(os.getenv("RATE_LIMIT_WINDOW_SEC", "60"))
 # Only honour X-Forwarded-For when the API sits behind a trusted reverse proxy.
 # Otherwise any client could spoof the header and bypass the per-IP rate limiter.
+# Chave do selo de integridade. Com ela o selo é HMAC-SHA256: quem altera o banco sem a chave
+# não consegue refazer o selo. Sem ela, cai para SHA-256 puro (detecta alteração acidental).
+SEAL_KEY = os.getenv("RESPIRA_SEAL_KEY", "").strip().encode("utf-8")
 TRUST_PROXY = os.getenv("RESPIRA_TRUST_PROXY", "").strip().lower() in {"1", "true", "yes"}
 
 _CONTROL_CHARS = re.compile(r"[\x00-\x08\x0b-\x1f\x7f]")
@@ -39,19 +42,30 @@ def contains_markup(value: Optional[str]) -> bool:
 
 
 def compute_record_hash(payload: dict) -> str:
-    """Compute deterministic SHA-256 integrity digest for a persisted occurrence."""
+    """Selo de integridade de uma leitura: HMAC-SHA256 com RESPIRA_SEAL_KEY, ou SHA-256 sem a chave."""
+    def num(key: str):
+        v = payload.get(key)
+        return None if v is None or v == "" else round(float(v), 4)
+
     canonical = {
         "dispositivo_id": payload.get("dispositivo_id"),
         "tipo": payload.get("tipo"),
+        "latitude": num("latitude"),
+        "longitude": num("longitude"),
         "metrica": payload.get("metrica"),
-        "valor": round(float(payload.get("valor", 0.0)), 4),
-        "gas_co": payload.get("gas_co"),
+        "valor": num("valor"),
+        "gas_co": num("gas_co"),
+        "temperatura_c": num("temperatura_c"),
+        "umidade_pct": num("umidade_pct"),
         "nivel_risco": payload.get("nivel_risco"),
         "ia_risco": payload.get("ia_risco"),
+        "ia_risco_prob": num("ia_risco_prob"),
         "relato": payload.get("relato", ""),
         "criado_em": payload.get("criado_em"),
     }
     encoded = json.dumps(canonical, sort_keys=True, ensure_ascii=False).encode("utf-8")
+    if SEAL_KEY:
+        return hmac.new(SEAL_KEY, encoded, hashlib.sha256).hexdigest()
     return hashlib.sha256(encoded).hexdigest()
 
 

@@ -121,7 +121,7 @@ def build_all():
             {
                 "title": "2. COMO A INFORMAÇÃO CHEGA ATÉ A PESSOA",
                 "body": [
-                    "Um sensor na parede mede fumaça, monóxido, temperatura e umidade. Se o ar piora, a luz muda de cor e o alarme toca na hora, mesmo sem internet. A leitura vai para a central, que confere com um modelo treinado em 6.941 horas reais de medição e devolve o nível com uma porcentagem de certeza. O app mostra a cor, uma frase e o que fazer.",
+                    "Um sensor na parede mede fumaça, monóxido, temperatura e umidade. Se o ar piora, a luz muda de cor e o alarme toca na hora, mesmo sem internet. A leitura vai para a central, que confere com um modelo treinado em 6.941 horas reais de medição e devolve o nível com uma porcentagem de confiança. O app mostra a cor, uma frase e o que fazer.",
                 ],
                 "images": [{"path": arch_png, "caption": "Figura 1: Caminho de uma leitura, do sensor ao app.", "width": 165}],
                 "tables": [
@@ -146,7 +146,7 @@ def build_all():
                     "O app tem duas telas. \"Agora\" mostra cada lugar com sua cor, o que fazer, o melhor horário para atividade ao ar livre e o que os vizinhos estão contando. \"Como funciona\" explica o caminho da informação, deixa testar uma leitura e diz o que ainda não resolvemos.",
                 ],
                 "images": [
-                    {"path": str(assets / "app_agora.png"), "caption": "Figura 2: Tela Agora com a escola em ar ruim e a central concordando com 93% de certeza.", "width": 160},
+                    {"path": str(assets / "app_agora.png"), "caption": "Figura 2: Tela Agora com a escola em ar ruim e a central concordando com 93% de confiança.", "width": 160},
                     {"path": str(assets / "app_horario_relatos.png"), "caption": "Figura 3: Melhor horário calculado da base real e relato de vizinho marcado como urgente.", "width": 160},
                     {"path": str(wokwi / "wokwi_3_ar_ruim.png"), "caption": "Figura 4: O sensor no simulador Wokwi com o LED vermelho aceso.", "width": 160},
                 ],
@@ -222,7 +222,7 @@ def build_all():
                     {
                         "headers": ["Situação", "Leitura", "No sensor", "Na central"],
                         "rows": [
-                            ["Ar bom (UBS de manhã)", "706 / 925 / 18 / 55%", "LED verde, buzzer mudo", "201, Bom, 100% de certeza"],
+                            ["Ar bom (UBS de manhã)", "706 / 925 / 18 / 55%", "LED verde, buzzer mudo", "201, Bom, 100% de confiança"],
                             ["Ar carregado (praça, fim de tarde)", "980 / 1120 / 24 / 42%", "LED amarelo, bip de 150 ms", "201, Carregado, 95%"],
                             ["Ar ruim (queimada perto da escola)", "1280 / 1383 / 31 / 34%", "LED vermelho, alarme de 1800 Hz", "201, Ruim, 93%"],
                         ],
@@ -290,7 +290,7 @@ def build_all():
                             ["R1. Enxurrada de envios", "Alta / Alto", "Limite de 30 envios por minuto por endereço, resposta 429"],
                             ["R2. Apagar dados sem permissão", "Média / Crítico", "Chave X-API-Key comparada em tempo constante; sem chave configurada, a rota fica fechada"],
                             ["R3. Script ou fórmula em relato", "Alta / Médio", "Texto escapado antes de gravar; células de CSV que começam com = + - @ ganham prefixo"],
-                            ["R4. Histórico adulterado", "Baixa / Alto", "Selo SHA-256 em cada leitura, conferido em GET /security/verify/{id}"],
+                            ["R4. Histórico adulterado", "Baixa / Alto", "Selo HMAC-SHA256 (chave RESPIRA_SEAL_KEY fora do banco) cobrindo todos os campos da leitura, conferido em GET /security/verify/{id}"],
                             ["R5. Leitura absurda para enganar o modelo", "Média / Alto", "Faixas válidas por campo (Pydantic); fora da faixa vira 400 e não chega ao modelo"],
                             ["R6. Engenharia social", "Alta / Alto", "Canal oficial único, treino da equipe e MFA para quem administra"],
                         ],
@@ -473,7 +473,7 @@ def build_all():
                     }
                 ],
                 "body": [
-                    "A central roda o modelo a cada leitura e o app mostra \"A central conferiu e concorda: Ruim, com 93% de certeza.\" Quando discorda da luz do sensor, o app mostra os dois níveis e diz para seguir o mais cuidadoso.",
+                    "A central roda o modelo a cada leitura e o app mostra \"A central conferiu e concorda: Ruim, com 93% de confiança.\" Quando discorda da luz do sensor, o app mostra os dois níveis e diz para seguir o mais cuidadoso.",
                     "Limite: dados de outro país e clima. Em cada bairro novo o sensor fica algumas semanas ao lado de uma estação oficial (CETESB) para recalibrar. Sensores de gás também envelhecem e precisam de troca.",
                 ],
             },

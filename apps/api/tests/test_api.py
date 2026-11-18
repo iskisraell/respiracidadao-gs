@@ -172,6 +172,16 @@ def test_integrity_detects_tampering(client):
     assert ver["hash_armazenado"] != ver["hash_recalculado"]
     assert c.get("/security/verify/9999").status_code == 404
 
+    # O selo cobre também temperatura e umidade.
+    rec2 = c.post(
+        "/ocorrencias",
+        json={"dispositivo_id": "esp32-hash", "metrica": "gas_voc", "valor": 700.0, "temperatura_c": 20, "umidade_pct": 50},
+    ).json()
+    with sqlite3.connect(runtime_dir / "ocorrencias.db") as conn:
+        conn.execute("UPDATE ocorrencias SET umidade_pct = 90 WHERE id = ?", (rec2["id"],))
+        conn.commit()
+    assert c.get(f"/security/verify/{rec2['id']}").json()["integro"] is False
+
 
 def test_markup_in_identifiers_is_rejected_with_400(client):
     c, _, _ = client
@@ -263,6 +273,7 @@ def test_places_show_latest_reading_and_guidance(client):
     assert escola["orientacao"]["titulo"] == "Ar ruim agora"
     assert escola["ultima_leitura"]["ia_risco"] == "critico"
     assert len(escola["historico"]) == 1
+    assert escola["ultima_leitura"]["tipo"] == "demo"
     assert c.post("/simulate", json={"cenario": "normal", "local_id": "nao-existe"}).status_code == 404
 
 

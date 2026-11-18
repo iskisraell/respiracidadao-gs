@@ -45,7 +45,8 @@ Abra http://localhost:5173. Para ver os três níveis sem sensor, use "Modo demo
 ## Quanto dá para confiar
 
 - A luz do sensor segue uma regra simples e acerta 84 de cada 100 horas.
-- A central acerta 87 de cada 100 com as quatro medidas do sensor. Nenhuma hora de ar bom virou ar ruim no teste, nem o contrário.
+- A central acerta 87 de cada 100 com as quatro medidas do sensor. Nas 1.389 horas de teste, nenhuma hora de ar bom virou ar ruim, nem o contrário.
+- O sensor ainda roda no simulador Wokwi. A placa física precisa ser montada e comparada com um medidor oficial antes de valer como medida.
 - A base é de uma cidade italiana. Em cada bairro novo o sensor precisa de algumas semanas ao lado de uma estação oficial para recalibrar.
 
 As decisões e o motivo de cada uma estão em [docs/PLANO-PRODUTO.md](docs/PLANO-PRODUTO.md). O material de entrega por disciplina está em [docs/ENTREGAS.md](docs/ENTREGAS.md).

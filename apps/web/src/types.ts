@@ -3,6 +3,7 @@ export type Level = "normal" | "atencao" | "critico";
 export interface Reading {
   id: number;
   dispositivo_id: string;
+  tipo: string;
   metrica: "gas_voc" | "gas_co";
   valor: number;
   gas_co: number | null;
