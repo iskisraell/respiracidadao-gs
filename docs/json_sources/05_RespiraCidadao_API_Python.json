@@ -1,0 +1,117 @@
+{
+  "title": "API REST EM PYTHON E PERSISTÊNCIA CSV",
+  "subtitle": [
+    "Serviço FastAPI Integrado ao ESP32 RespiraCidadão",
+    "GS 2026.2 - Computational Thinking with Python"
+  ],
+  "meta": [
+    {
+      "label": "Sala:",
+      "value": "1TIAPZ1"
+    },
+    {
+      "label": "Matéria:",
+      "value": "Computational Thinking with Python"
+    },
+    {
+      "label": "Grupo:",
+      "value": "Perceptron"
+    },
+    {
+      "label": "Integrantes:",
+      "value": "Giovanni Henrique Pereira Hessel (RM 570574)\nSuellen Pereira da Silva (RM 573862)\nIsrael Carneiro de Toledo (RM 573854)"
+    }
+  ],
+  "output_dir": "/home/agent/projects/respiracidadao-gs/docs/05-computational-thinking-with-python",
+  "filename": "05_RespiraCidadao_API_Python",
+  "sections": [
+    {
+      "title": "1. PAPEL DA API NA SOLUÇÃO CITIZENTECH",
+      "body": [
+        "A API REST em FastAPI recebe o JSON gerado pelo ESP32 (02 AICSS), valida campos obrigatórios e faixas numéricas com Pydantic, classifica o risco respiratório por função condicional, calcula indicadores agregados e persiste cada leitura em CSV (data/runtime/leituras.csv) e SQLite (ocorrencias.db)."
+      ]
+    },
+    {
+      "title": "2. ENDPOINTS, ESTRUTURA DE CÓDIGO E CONTRATO JSON",
+      "tables": [
+        {
+          "headers": [
+            "Rota",
+            "Método",
+            "Função Python / Lógica Aplicada"
+          ],
+          "rows": [
+            [
+              "/health",
+              "GET",
+              "Verifica saúde da API, modelos carregados e dicionário THRESHOLDS."
+            ],
+            [
+              "/ocorrencias",
+              "POST",
+              "Valida JSON (HTTP 400 se faltar campo), classifica e grava CSV + SQLite (HTTP 201)."
+            ],
+            [
+              "/ocorrencias",
+              "GET",
+              "Consulta leituras filtradas por nivel_risco ou dispositivo_id."
+            ],
+            [
+              "/indicadores",
+              "GET",
+              "Itera registros e calcula total, alertas, %, média, mínimo e máximo."
+            ],
+            [
+              "/simulate",
+              "POST",
+              "Dispara os 3 cenários (normal, atencao, critico) ponta a ponta."
+            ]
+          ],
+          "col_widths": [
+            36,
+            22,
+            122
+          ]
+        }
+      ]
+    },
+    {
+      "title": "3. OS 3 CENÁRIOS DE TESTE E LIMITAÇÕES",
+      "tables": [
+        {
+          "headers": [
+            "Cenário Testado",
+            "Entrada POST (fumaca_ppm)",
+            "Resposta HTTP e CSV"
+          ],
+          "rows": [
+            [
+              "1. Normal",
+              "valor=55.0 (esp32-01)",
+              "201 | nivel_risco=normal | alerta=false | gravado no CSV"
+            ],
+            [
+              "2. Atenção",
+              "valor=165.0 (drone)",
+              "201 | nivel_risco=atencao | alerta=true | gravado no CSV"
+            ],
+            [
+              "3. Crítico + Validação",
+              "valor=310.0 / payload incompleto",
+              "201 (critico) / 400 (campos ausentes descartados)"
+            ]
+          ],
+          "col_widths": [
+            42,
+            56,
+            82
+          ]
+        }
+      ],
+      "body": [
+        "Execução local: uvicorn app.main:app --app-dir apps/api --port 8000 e pytest -v apps/api/tests/test_api.py (11 testes aprovados).",
+        "Limitações: persistência CSV local não escala para milhares de escritas concorrentes sem migração para banco gerenciado (resolvida na camada 07 Cloud com RDS PostgreSQL). Relacionado ao ODS 3 e ODS 11."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,120 @@
+{
+  "title": "RESPIRACIDADÃO: SISTEMA IOT E SENSORES",
+  "subtitle": [
+    "Monitoramento Local de Fumaça e Microclima com ESP32",
+    "GS 2026.2 - AI Computer Systems & Sensors"
+  ],
+  "meta": [
+    {
+      "label": "Sala:",
+      "value": "1TIAPZ1"
+    },
+    {
+      "label": "Matéria:",
+      "value": "AI Computer Systems & Sensors"
+    },
+    {
+      "label": "Grupo:",
+      "value": "Perceptron"
+    },
+    {
+      "label": "Integrantes:",
+      "value": "Giovanni Henrique Pereira Hessel (RM 570574)\nSuellen Pereira da Silva (RM 573862)\nIsrael Carneiro de Toledo (RM 573854)"
+    }
+  ],
+  "output_dir": "/home/agent/projects/respiracidadao-gs/docs/02-ai-computer-systems-and-sensors",
+  "filename": "02_RespiraCidadao_AICSS_IoT",
+  "sections": [
+    {
+      "title": "1. PROBLEMA, PÚBLICO E RELEVÂNCIA (ODS 3 E 11)",
+      "body": [
+        "Comunidades periféricas e escolas ficam expostas a plumas de fumaça e gases tóxicos sem estações oficiais próximas. Um nó ESP32 de baixo custo fornece aviso visual e sonoro imediato no local e envia telemetria JSON estruturada para análise em nuvem."
+      ]
+    },
+    {
+      "title": "2. HARDWARE, SENSORES E CONTRATO JSON",
+      "tables": [
+        {
+          "headers": [
+            "Componente",
+            "Pino",
+            "Justificativa Técnica"
+          ],
+          "rows": [
+            [
+              "Sensor MQ-2 (ADC Wokwi)",
+              "GPIO 34",
+              "Detecta fumaça e gases combustíveis de 0 a 400 ppm."
+            ],
+            [
+              "Sensor DHT22",
+              "GPIO 15",
+              "Mede temperatura (°C) e umidade relativa (%) que modulam dispersão."
+            ],
+            [
+              "LEDs Verde/Amarelo/Vermelho",
+              "GPIO 26/27/14",
+              "Sinalização visual imediata para normal, atenção e crítico."
+            ],
+            [
+              "Buzzer Piezoelétrico",
+              "GPIO 12",
+              "Alerta sonoro de acessibilidade (180 ms atenção, 1800 Hz crítico)."
+            ]
+          ],
+          "col_widths": [
+            55,
+            30,
+            95
+          ]
+        }
+      ],
+      "body": [
+        "Contrato JSON enviado via HTTP POST para /ocorrencias (alinhado com 05 Python e 07 Cloud): {dispositivo_id, tipo, latitude, longitude, metrica, valor, temperatura_c, umidade_pct, relato}."
+      ]
+    },
+    {
+      "title": "3. EVIDÊNCIA DOS 3 COMPORTAMENTOS E LIMITAÇÕES",
+      "tables": [
+        {
+          "headers": [
+            "Cenário",
+            "Entrada (fumaca_ppm)",
+            "Atuador Local",
+            "Resposta API & CSV"
+          ],
+          "rows": [
+            [
+              "1. Normal",
+              "68,4 ppm | 23,5°C | 58%",
+              "LED Verde | Buzzer mudo",
+              "HTTP 201 | nivel_risco=normal | gravado CSV"
+            ],
+            [
+              "2. Atenção",
+              "168,0 ppm | 31,2°C | 34%",
+              "LED Amarelo | Pulso 180ms",
+              "HTTP 201 | nivel_risco=atencao | gravado CSV"
+            ],
+            [
+              "3. Crítico",
+              "312,5 ppm | 36,8°C | 21%",
+              "LED Vermelho | Sirene 1800Hz",
+              "HTTP 201 | nivel_risco=critico | alerta=True"
+            ]
+          ],
+          "col_widths": [
+            28,
+            48,
+            52,
+            52
+          ]
+        }
+      ],
+      "body": [
+        "Implementado vs Simulado: firmware C++/Arduino, circuito Wokwi (diagram.json + libraries.txt), receptor CSV (receiver_csv.py) e script de teste (run_3_cenarios.py) foram implementados; a leitura química foi simulada via potenciômetro ADC no Wokwi.",
+        "Limitações: o sensor MQ-2 real requer pré-aquecimento de 24h e calibração Rs/R0 em campo, além de depender de Wi-Fi para o envio remoto."
+      ]
+    }
+  ]
+}

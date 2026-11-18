@@ -1,4 +1,4 @@
-# RespiraCidadão — Módulo IoT (`02 - AI Computer Systems & Sensors`)
+# RespiraCidadão: Módulo IoT (`02 - AI Computer Systems & Sensors`)
 
 ## Fluxo Funcional
 
@@ -24,7 +24,7 @@ Fumaça / Temperatura / Umidade ─► ESP32 (MQ-2 ADC + DHT22) ─► LEDs + Bu
 
 ## O que foi Implementado vs. Simulado
 
-- **Implementado:** firmware `sketch.ino` em C++/Arduino, circuito Wokwi `diagram.json`, regras determinísticas de limiar (`< 120` Normal, `120–249.9` Atenção, `>= 250` Crítico), envio JSON via `HTTPClient`, recepção em Python (`apps/api` e `receiver_csv.py`) com gravação em CSV.
+- **Implementado:** firmware `sketch.ino` em C++/Arduino, circuito Wokwi `diagram.json`, regras determinísticas de limiar (`< 120` Normal, `120 a 249.9` Atenção, `>= 250` Crítico), envio JSON via `HTTPClient`, recepção em Python (`apps/api` e `receiver_csv.py`) com gravação em CSV.
 - **Simulado:** variação química de fumaça via potenciômetro no Wokwi e envio automatizado dos 3 cenários via `run_3_cenarios.py`.
 - **Limitações:** sensor MQ-2 exige calibração física por curva de resistência (`Rs/R0`) em hardware real e depende de conectividade Wi-Fi local; sem conectividade, apenas o alerta sonoro/visual local permanece ativo.
 

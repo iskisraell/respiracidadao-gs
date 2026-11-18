@@ -1,0 +1,237 @@
+{
+  "title": "CONSULTORIA DE CIBERSEGURANÇA E LGPD",
+  "subtitle": [
+    "Avaliação de Riscos e Controles Funcionais do Protótipo RespiraCidadão",
+    "GS 2026.2 - Cognitive Cybersecurity"
+  ],
+  "meta": [
+    {
+      "label": "Sala:",
+      "value": "1TIAPZ1"
+    },
+    {
+      "label": "Matéria:",
+      "value": "Cognitive Cybersecurity"
+    },
+    {
+      "label": "Grupo:",
+      "value": "Perceptron"
+    },
+    {
+      "label": "Integrantes:",
+      "value": "Giovanni Henrique Pereira Hessel (RM 570574)\nSuellen Pereira da Silva (RM 573862)\nIsrael Carneiro de Toledo (RM 573854)"
+    }
+  ],
+  "output_dir": "/home/agent/projects/respiracidadao-gs/docs/03-cognitive-cybersecurity",
+  "filename": "03_RespiraCidadao_Cybersecurity",
+  "sections": [
+    {
+      "title": "1. SOLUÇÃO CITIZENTECH E ARQUITETURA SIMPLIFICADA",
+      "body": [
+        "Público-alvo único: crianças, idosos e escolas públicas vulneráveis a fumaça e poluentes. Problema principal: exposição respiratória sem alerta precoce.",
+        "Arquitetura de dados: Usuário/ESP32 -> Aplicação React + API FastAPI -> Banco SQLite/RDS PostgreSQL e CSV -> Modelo de IA (Random Forest, PyTorch MLP e Hugging Face)."
+      ]
+    },
+    {
+      "title": "2. SUPERFÍCIE DE ATAQUE EM 5 CAMADAS",
+      "tables": [
+        {
+          "headers": [
+            "Camada",
+            "Ameaças Identificadas",
+            "Impacto Direto"
+          ],
+          "rows": [
+            [
+              "Usuários",
+              "Uso indevido de endpoints administrativos e phishing",
+              "Limpeza ou falsificação de alertas comunitários"
+            ],
+            [
+              "Aplicação",
+              "Stored XSS no campo relato e CSV Formula Injection",
+              "Execução de script no painel ou planilhas abertas"
+            ],
+            [
+              "API",
+              "Flood de requisições (DoS) e spoofing de X-Forwarded-For",
+              "Indisponibilidade do servidor de telemetria"
+            ],
+            [
+              "Banco de Dados",
+              "SQL Injection e adulteração silenciosa de leituras",
+              "Perda de confiabilidade das métricas de risco"
+            ],
+            [
+              "Modelo de IA",
+              "Envenenamento de entrada com valores fora de faixa",
+              "Falsos negativos críticos em alertas de saúde"
+            ]
+          ],
+          "col_widths": [
+            35,
+            78,
+            67
+          ]
+        }
+      ]
+    },
+    {
+      "title": "3. MATRIZ DE RISCOS E CONTROLES DE SEGURANÇA",
+      "tables": [
+        {
+          "headers": [
+            "Risco",
+            "Prob. / Imp.",
+            "Controles Propostos e Aplicados"
+          ],
+          "rows": [
+            [
+              "R1. Flood HTTP na ingestão IoT",
+              "Alta / Alto",
+              "Rate Limiting Sliding Window (HTTP 429) e proxy confiável opt-in"
+            ],
+            [
+              "R2. Acesso admin não autorizado",
+              "Média / Crítico",
+              "Header X-API-Key via HMAC (RESPIRA_API_KEY sem default hardcoded)"
+            ],
+            [
+              "R3. XSS e CSV Injection em relatos",
+              "Alta / Médio",
+              "Sanitização HTML, controle de caracteres e prefixo seguro em CSV"
+            ],
+            [
+              "R4. Adulteração de registro histórico",
+              "Baixa / Alto",
+              "Hash SHA-256 canônico verificado via GET /security/verify/{id}"
+            ],
+            [
+              "R5. Manipulação de entradas da IA",
+              "Média / Alto",
+              "Validação estrita Pydantic (PredictIn) + fallback determinístico local"
+            ],
+            [
+              "R6. Phishing / Engenharia Social",
+              "Alta / Alto",
+              "Canais oficiais assinados, MFA para gestores e treinamento"
+            ]
+          ],
+          "col_widths": [
+            52,
+            28,
+            100
+          ]
+        }
+      ]
+    },
+    {
+      "title": "4. CONTROLES DE SEGURANÇA POR CATEGORIA E JUSTIFICATIVA",
+      "body": [
+        "Justificativa técnica: priorizamos controles de baixo custo, testáveis em código e proporcionais ao risco de uma telemetria ambiental sem dados cadastrais. Itens marcados como Proposto dependem da conta de nuvem do grupo e entram na evolução futura."
+      ],
+      "tables": [
+        {
+          "headers": [
+            "Categoria",
+            "Controle",
+            "Status"
+          ],
+          "rows": [
+            [
+              "Autenticação",
+              "X-API-Key com hmac.compare_digest nas rotas administrativas; MFA e política de senhas fortes para gestores de Defesa Civil e UBS",
+              "Chave implementada; MFA proposto"
+            ],
+            [
+              "Firewall / WAF",
+              "Rate Limiting por janela deslizante e CORS restrito na API; AWS WAF na Function URL e Security Group do RDS aberto só para a Lambda (porta 5432)",
+              "Rate limit implementado; WAF e Security Group propostos"
+            ],
+            [
+              "Backup e recuperação",
+              "Snapshots automáticos do RDS PostgreSQL, cópia periódica do CSV/SQLite com hash SHA-256 e plano de restauração testado",
+              "Proposto"
+            ],
+            [
+              "Criptografia",
+              "TLS em trânsito (Function URL HTTPS), criptografia em repouso do RDS com KMS e hash SHA-256 para integridade",
+              "SHA-256 implementado; TLS e KMS propostos para produção"
+            ],
+            [
+              "Monitoramento",
+              "Trilha security_audit.jsonl na API, CloudWatch Logs com WARNING para payload inválido ou crítico e alarmes por taxa de HTTP 429/400",
+              "Logs implementados; alarmes propostos"
+            ]
+          ],
+          "col_widths": [
+            34,
+            100,
+            46
+          ]
+        }
+      ]
+    },
+    {
+      "title": "5. DEMONSTRAÇÃO OBRIGATÓRIA DE PROTEÇÕES FUNCIONANDO",
+      "bullets": [
+        {
+          "text": "Rate Limiting (HTTP 429): SlidingWindowRateLimiter bloqueou excedentes em teste automatizado (10x HTTP 201 seguidas de 2x HTTP 429) e registrou evento rate_limit_blocked.",
+          "level": 0
+        },
+        {
+          "text": "Autenticação X-API-Key (HTTP 401/503): DELETE /ocorrencias bloqueia requisições sem chave válida com comparação em tempo constante (hmac.compare_digest).",
+          "level": 0
+        },
+        {
+          "text": "Sanitização XSS e CSV: payloads com <script> são escapados antes da gravação e auditados em security_audit.jsonl.",
+          "level": 0
+        },
+        {
+          "text": "Integridade SHA-256: GET /security/verify/{id} recalcula o hash canônico e detecta qualquer edição direta no arquivo SQLite.",
+          "level": 0
+        },
+        {
+          "text": "Evidência automatizada: 11/11 testes em apps/api/tests/test_api.py validados com sucesso.",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "title": "6. CONFORMIDADE LGPD E ENGENHARIA SOCIAL",
+      "tables": [
+        {
+          "headers": [
+            "Pergunta LGPD",
+            "Resposta Objetiva no RespiraCidadão"
+          ],
+          "rows": [
+            [
+              "Quais dados pessoais são tratados?",
+              "Nenhum dado cadastral (sem nome, CPF ou e-mail). Apenas ID técnico da estação, coordenadas públicas aproximadas e relato opcional."
+            ],
+            [
+              "Quais dados sensíveis podem existir?",
+              "O campo relato pode conter menção espontânea de sintoma respiratório (dado de saúde se associado a pessoa física)."
+            ],
+            [
+              "Quais proteções são aplicadas?",
+              "Minimização na coleta, sanitização, acesso restrito por API Key, TLS em trânsito na nuvem e integridade SHA-256."
+            ],
+            [
+              "Como o usuário é informado?",
+              "Aviso explícito na interface orientando o cidadão a descrever o ambiente sem incluir nomes ou dados pessoais."
+            ]
+          ],
+          "col_widths": [
+            62,
+            118
+          ]
+        }
+      ],
+      "body": [
+        "Cenário de Engenharia Social: atacante envia mensagem falsa no WhatsApp fingindo ser da Defesa Civil pedindo que diretores escolares instalem um aplicativo APK ou informem a chave de API do painel. Contramedidas: publicação exclusiva em domínio institucional HTTPS, treinamento da equipe escolar e autenticação multifator para contas administrativas."
+      ]
+    }
+  ]
+}

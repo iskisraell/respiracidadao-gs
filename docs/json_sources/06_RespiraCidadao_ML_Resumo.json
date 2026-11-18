@@ -1,0 +1,118 @@
+{
+  "title": "MACHINE LEARNING & MODELLING",
+  "subtitle": [
+    "Relatório Técnico de Classificação de Risco Respiratório",
+    "GS 2026.2 - Machine Learning and Modelling"
+  ],
+  "meta": [
+    {
+      "label": "Sala:",
+      "value": "1TIAPZ1"
+    },
+    {
+      "label": "Matéria:",
+      "value": "Machine Learning & Modelling"
+    },
+    {
+      "label": "Grupo:",
+      "value": "Perceptron"
+    },
+    {
+      "label": "Integrantes:",
+      "value": "Giovanni Henrique Pereira Hessel (RM 570574)\nSuellen Pereira da Silva (RM 573862)\nIsrael Carneiro de Toledo (RM 573854)"
+    }
+  ],
+  "output_dir": "/home/agent/projects/respiracidadao-gs/docs/06-machine-learning-and-modelling",
+  "filename": "06_RespiraCidadao_ML_Resumo",
+  "sections": [
+    {
+      "title": "1. BASE REAL, ALVO E PREVENÇÃO DE DATA LEAKAGE",
+      "body": [
+        "Utilizamos a base real UCI Air Quality (6941 observações completas). O alvo multiclasse (normal, atencao, critico) deriva de CO(GT), variável removida das 11 entradas para eliminar vazamento.",
+        "Split estratificado 80/20 e StandardScaler encapsulado em Pipeline garantem que estatísticas de teste nunca influenciem o treino."
+      ],
+      "images": [
+        {
+          "path": "/home/agent/projects/respiracidadao-gs/packages/ml-modelling/charts/01_eda_classes_box.png",
+          "caption": "Figura 1: Proporção das classes (36,5%, 39,2% e 24,4%) e comportamento de C6H6(GT).",
+          "width": 150
+        }
+      ]
+    },
+    {
+      "title": "2. COMPARAÇÃO DE MODELOS, TUNING E FEATURE IMPORTANCE",
+      "tables": [
+        {
+          "headers": [
+            "Modelo",
+            "Train Acc",
+            "Test Acc",
+            "Test F1-Macro",
+            "Gap"
+          ],
+          "rows": [
+            [
+              "RandomForest (default)",
+              "100.00%",
+              "89.34%",
+              "89.54%",
+              "10.66%"
+            ],
+            [
+              "GradientBoosting",
+              "92.16%",
+              "89.06%",
+              "89.28%",
+              "3.11%"
+            ],
+            [
+              "KNN (k=9)",
+              "90.63%",
+              "88.77%",
+              "88.97%",
+              "1.87%"
+            ],
+            [
+              "LogisticRegression (Baseline)",
+              "87.72%",
+              "88.55%",
+              "88.71%",
+              "-0.84%"
+            ],
+            [
+              "DecisionTree (depth=10)",
+              "92.15%",
+              "86.47%",
+              "86.76%",
+              "5.68%"
+            ],
+            [
+              "RandomForest (Tuned CV=5)",
+              "98.67%",
+              "89.06%",
+              "89.22%",
+              "9.61%"
+            ]
+          ],
+          "col_widths": [
+            68,
+            28,
+            28,
+            30,
+            26
+          ]
+        }
+      ],
+      "images": [
+        {
+          "path": "/home/agent/projects/respiracidadao-gs/packages/ml-modelling/charts/02_confusao_feature_importance.png",
+          "caption": "Figura 2: Matriz de Confusão do Random Forest Otimizado e Importância das Variáveis.",
+          "width": 150
+        }
+      ],
+      "body": [
+        "O RandomForestClassifier otimizado com RandomizedSearchCV (CV=5, F1-Macro=0.8921) atingiu 89.06% de acurácia em teste, com apenas 1 confusão direta entre Normal e Crítico em 1389 amostras de teste."
+      ]
+    }
+  ]
+}

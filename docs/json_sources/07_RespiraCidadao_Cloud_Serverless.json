@@ -1,0 +1,103 @@
+{
+  "title": "PLATAFORMAS COGNITIVAS & CLOUD SERVERLESS",
+  "subtitle": [
+    "Ingestão Serverless AWS Lambda, CloudWatch, Hugging Face e RDS PostgreSQL",
+    "GS 2026.2 - Cloud Computing"
+  ],
+  "meta": [
+    {
+      "label": "Sala:",
+      "value": "1TIAPZ1"
+    },
+    {
+      "label": "Matéria:",
+      "value": "Plataformas, Serviços Cognitivos & Cloud Computing"
+    },
+    {
+      "label": "Grupo:",
+      "value": "Perceptron"
+    },
+    {
+      "label": "Integrantes:",
+      "value": "Giovanni Henrique Pereira Hessel (RM 570574)\nSuellen Pereira da Silva (RM 573862)\nIsrael Carneiro de Toledo (RM 573854)"
+    }
+  ],
+  "output_dir": "/home/agent/projects/respiracidadao-gs/docs/07-plataformas-servicos-cognitivos-cloud",
+  "filename": "07_RespiraCidadao_Cloud_Serverless",
+  "sections": [
+    {
+      "title": "1. CENÁRIO, LIMIARES E ARQUITETURA SERVERLESS",
+      "body": [
+        "A camada serverless recebe ocorrências de campo (ESP32, drone ou app), grava telemetria e alertas no CloudWatch Logs, interpreta o relato cidadão via Hugging Face Router (cardiffnlp/twitter-xlm-roberta-base-sentiment) e persiste tudo no Amazon RDS PostgreSQL.",
+        "Requisito crítico AWS: a função Lambda permanece fora da VPC para acessar o endpoint externo da Hugging Face sem custo de NAT Gateway."
+      ],
+      "tables": [
+        {
+          "headers": [
+            "Rota Lambda Function URL",
+            "Comportamento Implementado"
+          ],
+          "rows": [
+            [
+              "GET /health",
+              "Retorna status da função, modelo HF configurado e flag ia_ativa."
+            ],
+            [
+              "POST /ocorrencias",
+              "Valida obrigatoriedade/tipo (400 + WARNING se inválido), classifica, consulta IA e grava no RDS (201)."
+            ],
+            [
+              "GET /ocorrencias",
+              "Lista últimas ocorrências persistidas ordenadas da mais recente à mais antiga."
+            ]
+          ],
+          "col_widths": [
+            54,
+            126
+          ]
+        }
+      ]
+    },
+    {
+      "title": "2. RESILIÊNCIA DE IA, TESTE LOCAL E EVIDÊNCIAS AWS",
+      "body": [
+        "A chamada à IA usa apenas urllib para https://router.huggingface.co/hf-inference/models/{modelo} com token em HF_TOKEN. Se houver timeout, ausência de token ou HTTP inesperado, a função registra WARNING e conclui a gravação no banco usando a regra local determinística.",
+        "Validação local automatizada: packages/cloud-serverless/teste_local.py executou 8/8 cenários com sucesso, além do simulador simulador_dispositivo.py em fluxo progressivo de queimada."
+      ]
+    },
+    {
+      "title": "3. IMPLEMENTADO LOCALMENTE VS PENDENTE NA CONTA AWS",
+      "tables": [
+        {
+          "headers": [
+            "Item exigido",
+            "Situação",
+            "Como concluir"
+          ],
+          "rows": [
+            [
+              "Código da Lambda, SQL, simulador e README",
+              "Implementado e validado localmente",
+              "Entregues no pacote 07"
+            ],
+            [
+              "Function URL e endpoint do RDS (sem senha)",
+              "Pendente: exige o deploy na conta AWS do grupo",
+              "Passo a passo no README do pacote"
+            ],
+            [
+              "4 prints (variáveis, simulador, CloudWatch, SELECT no RDS)",
+              "Pendente: gerados após o deploy",
+              "Capturar durante o vídeo de até 5 min"
+            ]
+          ],
+          "col_widths": [
+            64,
+            64,
+            52
+          ]
+        }
+      ]
+    }
+  ]
+}

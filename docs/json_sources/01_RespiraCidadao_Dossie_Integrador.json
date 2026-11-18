@@ -1,0 +1,161 @@
+{
+  "title": "RESPIRACIDADÃO: DOSSIÊ INTEGRADOR",
+  "subtitle": [
+    "Plataforma CitizenTech de Monitoramento Respiratório e Queimadas",
+    "Global Solution 2026.2"
+  ],
+  "subtitle_note": "Documento integrador de arquitetura, evidências e gestão",
+  "meta": [
+    {
+      "label": "Sala:",
+      "value": "1TIAPZ1"
+    },
+    {
+      "label": "Matéria:",
+      "value": "AI Challenges"
+    },
+    {
+      "label": "Grupo:",
+      "value": "Perceptron"
+    },
+    {
+      "label": "Integrantes:",
+      "value": "Giovanni Henrique Pereira Hessel (RM 570574)\nSuellen Pereira da Silva (RM 573862)\nIsrael Carneiro de Toledo (RM 573854)"
+    }
+  ],
+  "output_dir": "/home/agent/projects/respiracidadao-gs/docs/01-ai-challenges",
+  "filename": "01_RespiraCidadao_Dossie_Integrador",
+  "sections": [
+    {
+      "title": "1. PROBLEMA, PÚBLICO E PROPOSTA DE SOLUÇÃO",
+      "body": [
+        "Episódios de fumaça de queimadas e picos de monóxido de carbono (CO), benzeno e NO2 elevam internações respiratórias antes que boletins públicos emitam alertas.",
+        "O RespiraCidadão atende crianças em escolas públicas, idosos e pacientes com asma ou DPOC em periferias urbanas, operando com hardware acessível, interface de alto contraste e alerta sonoro local."
+      ],
+      "bullets": [
+        {
+          "text": "ODS 3 (Saúde e Bem-Estar): alerta precoce contra crises respiratórias agudas.",
+          "level": 0
+        },
+        {
+          "text": "ODS 10 (Redução das Desigualdades): cobertura comunitária de baixo custo em áreas sem estações oficiais.",
+          "level": 0
+        },
+        {
+          "text": "ODS 11 (Cidades Sustentáveis): dados abertos e rastreáveis para defesa civil e escolas.",
+          "level": 0
+        },
+        {
+          "text": "Referência à Live de Lançamento da GS: conectamos dados ambientais reais, inclusão e IA responsável aplicada a cidades resilientes.",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "title": "2. ARQUITETURA INTEGRADA E CONEXÃO ENTRE DISCIPLINAS",
+      "body": [
+        "Cada disciplina forma uma camada operacional única da solução, sem entregas isoladas."
+      ],
+      "images": [
+        {
+          "path": "/home/agent/projects/respiracidadao-gs/docs/assets/arquitetura_uml_respiracidadao.png",
+          "caption": "Figura 1: Arquitetura integrada e fluxo de dados do RespiraCidadão."
+        }
+      ],
+      "tables": [
+        {
+          "headers": [
+            "Disciplina",
+            "Papel no Fluxo Integrado",
+            "Evidência Principal"
+          ],
+          "rows": [
+            [
+              "02 AICSS",
+              "Nó ESP32 com MQ-2 + DHT22, LEDs, buzzer e JSON HTTP",
+              "sketch.ino + diagram.json + 3 cenários"
+            ],
+            [
+              "05 Python API",
+              "FastAPI valida JSON, classifica limiares e grava CSV/SQLite",
+              "POST/GET /ocorrencias + 11 testes pytest"
+            ],
+            [
+              "07 Cloud",
+              "Lambda + Function URL (fora VPC), CloudWatch, HF Router e RDS",
+              "lambda_function.py + tabela_ocorrencias.sql"
+            ],
+            [
+              "03 Cybersecurity",
+              "Rate Limit 429, sanitização XSS/CSV, X-API-Key e SHA-256",
+              "security.py + trilha JSONL + LGPD"
+            ],
+            [
+              "09 Estatística",
+              "Base real UCI (N=6.941), testes Z, regressões linear e logística",
+              "R2=90,25% múltipla; Acc=94,30% logística"
+            ],
+            [
+              "06 ML Modelling",
+              "Pipeline sem leakage comparando 5 modelos + RandomizedSearchCV",
+              "Random Forest Tuned 89,06% (F1 89,22%)"
+            ],
+            [
+              "08 Redes Neurais",
+              "PyTorch MLP regularizada com BatchNorm, Dropout e EarlyStop",
+              "Teste 89,64% com gap de overfit de 0,07%"
+            ],
+            [
+              "Frontend React",
+              "Painel unificado com tokens FIAP integrado ao /predict e IoT",
+              "App React + TS conectado à API local"
+            ]
+          ],
+          "col_widths": [
+            38,
+            84,
+            58
+          ]
+        }
+      ]
+    },
+    {
+      "title": "3. IMPLEMENTADO VS EVOLUÇÃO FUTURA E GESTÃO",
+      "tables": [
+        {
+          "headers": [
+            "Escopo",
+            "Implementado nesta GS",
+            "Evolução Futura"
+          ],
+          "rows": [
+            [
+              "Hardware IoT",
+              "Simulação Wokwi (MQ-2 ADC + DHT22 + 3 LEDs + buzzer) e envio HTTP",
+              "Placa física ESP32 com energia solar e LoRaWAN"
+            ],
+            [
+              "Nuvem e IA",
+              "API FastAPI + Lambda/RDS SQL + HF Router com fallback local + RF + MLP",
+              "Treino contínuo com dados CETESB/INPE e push WhatsApp"
+            ],
+            [
+              "Segurança",
+              "Rate limit, sanitização XSS/CSV, X-API-Key, SHA-256 e auditoria",
+              "MFA federado para gestores de Defesa Civil e UBS"
+            ]
+          ],
+          "col_widths": [
+            32,
+            76,
+            72
+          ]
+        }
+      ],
+      "body": [
+        "Gestão das entregas: dividimos o projeto em trilha IoT/Cloud/Segurança, trilha Estatística/ML/DL sobre a mesma base UCI e integração final no painel React e repositório único no GitHub.",
+        "Acessibilidade, LGPD e sustentabilidade: alerta sonoro em hardware para baixa visão, coleta sem CPF ou dados pessoais identificáveis, e execução de modelos compactos com baixo custo computacional."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,143 @@
+{
+  "title": "REDES NEURAIS ARTIFICIAIS & DEEP LEARNING",
+  "subtitle": [
+    "Classificador Neural AirQualityMLP em PyTorch para Risco Respiratório",
+    "GS 2026.2 - Redes Neurais & Deep Learning"
+  ],
+  "meta": [
+    {
+      "label": "Sala:",
+      "value": "1TIAPZ1"
+    },
+    {
+      "label": "Matéria:",
+      "value": "Redes Neurais Artificiais, Deep Learning e Algoritmos Genéticos"
+    },
+    {
+      "label": "Grupo:",
+      "value": "Perceptron"
+    },
+    {
+      "label": "Integrantes:",
+      "value": "Giovanni Henrique Pereira Hessel (RM 570574)\nSuellen Pereira da Silva (RM 573862)\nIsrael Carneiro de Toledo (RM 573854)"
+    }
+  ],
+  "output_dir": "/home/agent/projects/respiracidadao-gs/docs/08-redes-neurais-deep-learning-ag",
+  "filename": "08_RespiraCidadao_Redes_Neurais",
+  "sections": [
+    {
+      "title": "1. ETAPAS 1 A 4: PROBLEMA, BASE REAL, SPLIT E ARQUITETURA MLP",
+      "bullets": [
+        {
+          "text": "Etapa 1 (Problema): prever o risco respiratório (normal, atencao, critico) a partir de 11 variáveis contínuas de sensores para antecipar alertas em escolas e UBS.",
+          "level": 0
+        },
+        {
+          "text": "Etapa 2 (Dataset): UCI Air Quality real com 6.941 leituras limpas, sem dados sintéticos.",
+          "level": 0
+        },
+        {
+          "text": "Etapa 3 (Preparação): split estratificado 70% treino (4.858), 15% validação (1.041) e 15% teste (1.042), com StandardScaler ajustado apenas no treino.",
+          "level": 0
+        },
+        {
+          "text": "Etapa 4 (Justificativa MLP): dados tabulares pontuais com lacunas temporais tornam MLP mais rápida e adequada do que CNN (grade 2D) ou RNN (sequência contínua).",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "title": "2. ETAPAS 5 A 7: TREINAMENTO, REGULARIZAÇÃO E AVALIAÇÃO",
+      "tables": [
+        {
+          "headers": [
+            "Experimento",
+            "Épocas",
+            "Train Acc",
+            "Test Acc",
+            "F1-Macro",
+            "Gap Overfit"
+          ],
+          "rows": [
+            [
+              "Baseline MLP (128-64, sem Dropout/ES, lr=3e-3)",
+              "60",
+              "93.56%",
+              "88.96%",
+              "89.29%",
+              "4.60%"
+            ],
+            [
+              "Regularized MLP (64-32, BatchNorm+Dropout 0.25+ES, lr=1e-3)",
+              "60",
+              "89.71%",
+              "89.64%",
+              "89.85%",
+              "0.07%"
+            ]
+          ],
+          "col_widths": [
+            68,
+            18,
+            23,
+            23,
+            24,
+            24
+          ]
+        }
+      ],
+      "images": [
+        {
+          "path": "/home/agent/projects/respiracidadao-gs/packages/neural-networks/charts/01_curvas_treinamento.png",
+          "caption": "Figura 1: Evolução de Loss e Acurácia (Baseline MLP vs Regularized MLP).",
+          "width": 150
+        },
+        {
+          "path": "/home/agent/projects/respiracidadao-gs/packages/neural-networks/charts/02_matriz_confusao_nn.png",
+          "caption": "Figura 2: Matriz de Confusão do modelo PyTorch no conjunto de teste.",
+          "width": 150
+        }
+      ],
+      "body": [
+        "A introdução de BatchNorm1d, Dropout (0,25) e weight decay (1e-4) derrubou o overfitting de 4,60% para apenas 0,07%, elevando a acurácia em teste para 89,64% (F1-Macro 89,85%) com zero erros graves entre Normal e Crítico. O Early Stopping (paciência de 8 épocas) restaura o melhor estado de validação, mas não chegou a interromper o treino dentro das 60 épocas."
+      ]
+    },
+    {
+      "title": "3. ETAPA 8: DEMONSTRAÇÃO NÃO VISTA, LIMITAÇÕES E LGPD",
+      "tables": [
+        {
+          "headers": [
+            "Cenário Não Visto",
+            "Classe Predita",
+            "Probabilidades (Normal / Atenção / Crítico)"
+          ],
+          "rows": [
+            [
+              "Manhã limpa (Normal)",
+              "NORMAL",
+              "99.1% / 0.9% / 0.0%"
+            ],
+            [
+              "Tráfego intenso (Atenção)",
+              "ATENCAO",
+              "2.0% / 96.8% / 1.2%"
+            ],
+            [
+              "Fumaça crítica de queimada (Crítico)",
+              "CRITICO",
+              "0.0% / 0.9% / 99.1%"
+            ]
+          ],
+          "col_widths": [
+            56,
+            36,
+            88
+          ]
+        }
+      ],
+      "body": [
+        "Integração ao produto: os pesos air_quality_mlp.pt rodam em tempo real no endpoint POST /predict e no painel React. Limitações: sensibilidade a deriva química exige recalibração periódica com dados locais brasileiros. Segurança e LGPD: apenas telemetria ambiental anônima entra na rede neural."
+      ]
+    }
+  ]
+}

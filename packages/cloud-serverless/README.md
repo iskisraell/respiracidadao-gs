@@ -1,4 +1,4 @@
-# RespiraCidadão — Camada Serverless (`07 - Cloud Computing`)
+# RespiraCidadão: Camada Serverless (`07 - Cloud Computing`)
 
 ## Cenário CitizenTech e Cidadão Beneficiado
 
@@ -8,9 +8,9 @@ O RespiraCidadão coleta telemetria de fumaça (`fumaca_ppm`), monóxido de carb
 
 | Métrica | Normal | Atenção | Crítico (Alerta) |
 |---|---|---|---|
-| `fumaca_ppm` | `< 120` | `120 – 249.9` | `>= 250` |
-| `co_mg_m3` | `< 4.0` | `4.0 – 8.9` | `>= 9.0` |
-| `no2_ug_m3` | `< 100` | `100 – 199.9` | `>= 200` |
+| `fumaca_ppm` | `< 120` | `120 a 249.9` | `>= 250` |
+| `co_mg_m3` | `< 4.0` | `4.0 a 8.9` | `>= 9.0` |
+| `no2_ug_m3` | `< 100` | `100 a 199.9` | `>= 200` |
 
 ## Arquitetura AWS (Sem VPC na Lambda)
 

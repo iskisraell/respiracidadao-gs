@@ -1,0 +1,208 @@
+{
+  "title": "RELATÓRIO ESTATÍSTICO DE QUALIDADE DO AR",
+  "subtitle": [
+    "Consultoria Analítica RespiraCidadão sobre Base Real UCI Air Quality",
+    "GS 2026.2 - Statistical Computing with R & Python"
+  ],
+  "meta": [
+    {
+      "label": "Sala:",
+      "value": "1TIAPZ1"
+    },
+    {
+      "label": "Matéria:",
+      "value": "Statistical Computing with R & Python"
+    },
+    {
+      "label": "Grupo:",
+      "value": "Perceptron"
+    },
+    {
+      "label": "Integrantes:",
+      "value": "Giovanni Henrique Pereira Hessel (RM 570574)\nSuellen Pereira da Silva (RM 573862)\nIsrael Carneiro de Toledo (RM 573854)"
+    }
+  ],
+  "output_dir": "/home/agent/projects/respiracidadao-gs/docs/09-statistical-computing-r-python",
+  "filename": "09_RespiraCidadao_Relatorio_Estatistico",
+  "sections": [
+    {
+      "title": "1. BASE REAL E CONTEXTO CITIZENTECH",
+      "body": [
+        "Base selecionada: UCI Air Quality (Vito et al., 2008), com 9357 registros horários originais e 6941 observações válidas após remoção das falhas de sensor (-200).",
+        "Justificativa da base: dados horários reais de sensores de gás em área urbana, com CO, benzeno e NO2 medidos por analisadores de referência, o que permite avaliar sensores de baixo custo para o problema de alerta respiratório (ODS 3 e 11).",
+        "Distribuição de risco por CO(GT): 2531 Normal (<1,5 mg/m³), 2718 Atenção (1,5 a 3,0 mg/m³) e 1692 Crítico (>=3,0 mg/m³)."
+      ]
+    },
+    {
+      "title": "2. DISTRIBUIÇÃO NORMAL E TESTES DE HIPÓTESE (ITENS 02 E 03)",
+      "tables": [
+        {
+          "headers": [
+            "Item",
+            "Métrica / Hipótese",
+            "Resultado Numérico",
+            "Classificação / Decisão"
+          ],
+          "rows": [
+            [
+              "02a",
+              "P(X < média) para CO(GT)",
+              "50.00% (média=2.1825)",
+              "Evento equiprovável (50/50 sob simetria normal)"
+            ],
+            [
+              "02b",
+              "P(X > mediana) para CO(GT)",
+              "57.77% (mediana=1.9)",
+              "Evento provável / frequente"
+            ],
+            [
+              "03a",
+              "H1: mu_amostral < mu_pop (n=20, alpha=6%)",
+              "x_bar=2.31 | Z=0.3958 (crit -1.5548) | p=0.6539",
+              "Não rejeitar H0"
+            ],
+            [
+              "03b",
+              "H1: mu_amostral > mu_pop (n=25, alpha=9%)",
+              "x_bar=1.86 | Z=-1.1189 (crit 1.3408) | p=0.8684",
+              "Não rejeitar H0"
+            ]
+          ],
+          "col_widths": [
+            15,
+            58,
+            62,
+            45
+          ]
+        }
+      ],
+      "images": [
+        {
+          "path": "/home/agent/projects/respiracidadao-gs/packages/stats-r-python/charts/02_distribuicao_normal_co.png",
+          "caption": "Figura 1: Distribuição empírica vs curva Normal teórica de CO(GT).",
+          "width": 140
+        }
+      ]
+    },
+    {
+      "title": "3. ANÁLISE BIVARIADA E REGRESSÃO LINEAR SIMPLES (ITEM 04)",
+      "body": [
+        "Entre PT08.S1(CO) e CO(GT), a covariância é 276.4609 e a correlação de Pearson é r = 0.877 (forte correlação positiva, p < 0,0001).",
+        "Equação: CO(GT) = -4.2888 + 0.00578 * PT08.S1(CO). Adequação: R² = 76.92% e Teste F = 23119.89 (p < 0,0001). Previsão para sensor PT08.S1(CO) = 1350: 3.512 mg/m³ (nível crítico)."
+      ],
+      "images": [
+        {
+          "path": "/home/agent/projects/respiracidadao-gs/packages/stats-r-python/charts/04_dispersao_regressao_simples.png",
+          "caption": "Figura 2: Dispersão, reta ajustada e ponto previsto.",
+          "width": 140
+        },
+        {
+          "path": "/home/agent/projects/respiracidadao-gs/packages/stats-r-python/charts/04_correlacao_bivariada.png",
+          "caption": "Figura 3: Correlação linear bivariada por decis.",
+          "width": 140
+        }
+      ]
+    },
+    {
+      "title": "4. ANÁLISE MULTIVARIADA E REGRESSÃO MÚLTIPLA (ITEM 05)",
+      "body": [
+        "Explicando CO(GT) por PT08.S1(CO), C6H6(GT), NO2(GT) e Temperatura (T), o modelo alcança R² = 90.25% (R² ajustado = 90.24%) e Teste F = 16050.73 (p < 0,0001).",
+        "Equação ajustada: CO(GT) = -0.5483 + 0.00105*PT08.S1(CO) + 0.1452*C6H6(GT) + 0.00295*NO2(GT) + (-0.01752)*T.",
+        "Interpretação das correlações: C6H6(GT) (r=0.93), PT08.S1(CO) (r=0.877) e NO2(GT) (r=0.6738) acompanham CO(GT), enquanto a temperatura é praticamente independente (r=0.0183). A correlação de 0.8774 entre PT08.S1(CO) e C6H6(GT) indica colinearidade moderada entre sensores.",
+        "Previsões multivariadas: cenário Atenção Urbana = 2.2241 mg/m³; cenário Crítico Queimada = 4.4793 mg/m³."
+      ],
+      "tables": [
+        {
+          "headers": [
+            "Covariância",
+            "CO(GT)",
+            "PT08.S1(CO)",
+            "C6H6(GT)",
+            "NO2(GT)",
+            "T"
+          ],
+          "rows": [
+            [
+              "CO(GT)",
+              "2.0769",
+              "276.4609",
+              "10.0056",
+              "46.1034",
+              "0.2337"
+            ],
+            [
+              "PT08.S1(CO)",
+              "276.4609",
+              "47844.4550",
+              "1432.7531",
+              "6524.1247",
+              "54.7065"
+            ],
+            [
+              "C6H6(GT)",
+              "10.0056",
+              "1432.7531",
+              "55.7296",
+              "213.7957",
+              "12.4797"
+            ],
+            [
+              "NO2(GT)",
+              "46.1034",
+              "6524.1247",
+              "213.7957",
+              "2253.8772",
+              "-89.9976"
+            ],
+            [
+              "T",
+              "0.2337",
+              "54.7065",
+              "12.4797",
+              "-89.9976",
+              "78.2324"
+            ]
+          ],
+          "col_widths": [
+            32,
+            28,
+            32,
+            30,
+            30,
+            28
+          ]
+        }
+      ],
+      "images": [
+        {
+          "path": "/home/agent/projects/respiracidadao-gs/packages/stats-r-python/charts/05_dispersao_multivariada.png",
+          "caption": "Figura 4: Dispersão multivariada das variáveis explicativas vs CO(GT).",
+          "width": 140
+        },
+        {
+          "path": "/home/agent/projects/respiracidadao-gs/packages/stats-r-python/charts/05_matriz_correlacao.png",
+          "caption": "Figura 5: Matriz de Correlação Linear de Pearson.",
+          "width": 140
+        }
+      ]
+    },
+    {
+      "title": "5. REGRESSÃO LOGÍSTICA BINÁRIA E RECOMENDAÇÕES (ITENS 06 E 07)",
+      "body": [
+        "Para classificar o evento crítico (CO >= 3,0 mg/m³), a regressão logística binária atingiu 94.30% de acurácia em teste (Precisão=89.32%, Recall=87.00%, F1=88.14%).",
+        "Equação logit: logit(P) = -13.6002 + (0.00328)*PT08.S1(CO) + (0.66764)*C6H6(GT) + (0.01391)*NO2(GT) + (-0.13029)*T.",
+        "Matriz de confusão (teste, 1736 casos): 1269 verdadeiros negativos, 368 verdadeiros positivos, 44 falsos alertas e 55 alertas críticos não detectados. A acurácia alta com recall de 87.00% mostra que o modelo captura a maior parte dos eventos críticos, mas ainda perde alguns, o que exige limiar conservador em produção.",
+        "Classificação de cenários com 4 variáveis: Atenção Urbana obteve P(Crítico)=1,85% (classe 0) e Crítico Queimada obteve P(Crítico)=99,61% (classe 1).",
+        "Conclusão executiva para tomada de decisão: combinar sensores óxido-metálicos de baixo custo (PT08.S1) com benzeno/NO2 eleva o poder explicativo de 76,92% para 90,25%, viabilizando alertas municipais confiáveis a baixo custo."
+      ],
+      "images": [
+        {
+          "path": "/home/agent/projects/respiracidadao-gs/packages/stats-r-python/charts/06_matriz_confusao_logistica.png",
+          "caption": "Figura 6: Matriz de Confusão da Regressão Logística Binária.",
+          "width": 140
+        }
+      ]
+    }
+  ]
+}
