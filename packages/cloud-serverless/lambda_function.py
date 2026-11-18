@@ -175,10 +175,11 @@ def _numero(valor, nome, obrigatorio=False):
 def _data_medicao(texto):
     """Mesma regra da API local: ISO 8601, no maximo 5 minutos no futuro; devolve (data, erro)."""
     agora = datetime.now(timezone.utc)
+    texto = str(texto).strip() if texto is not None else ""
     if not texto:
         return agora, None
     try:
-        data = datetime.fromisoformat(str(texto).replace("Z", "+00:00"))
+        data = datetime.fromisoformat(texto.replace("Z", "+00:00"))
     except ValueError:
         return None, "medido_em deve estar no formato ISO 8601"
     data = (data if data.tzinfo else data.replace(tzinfo=timezone.utc)).astimezone(timezone.utc)
@@ -240,12 +241,12 @@ def rota_ingestao(evento):
     relato_bruto = payload.get("relato")
     if relato_bruto is not None and len(str(relato_bruto)) > LIMITE_RELATO:
         erros.append(f"relato passa de {LIMITE_RELATO} caracteres")
+    medido_em, erro_data = _data_medicao(payload.get("medido_em"))
+    if erro_data:
+        erros.append(erro_data)
     if erros:
         logger.warning("LEITURA DESCARTADA - campos invalidos: %s", erros)
         return resposta(400, {"erro": "campos invalidos", "detalhes": erros})
-    medido_em, erro_data = _data_medicao(payload.get("medido_em"))
-    if erro_data:
-        return resposta(400, {"erro": "campos invalidos", "detalhes": [erro_data]})
 
     relato = payload.get("relato")
     relato = _limpar_texto(relato) if relato is not None else None

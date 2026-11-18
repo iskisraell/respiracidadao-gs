@@ -108,7 +108,7 @@
       ],
       "body": [
         "A rede A (128 e 64 neurônios, taxa de aprendizado 0,003, sem regularização, 150 épocas) teve a menor perda de validação na época 41 (0,289); depois disso a perda de validação subiu até 0,327 enquanto a de treino seguia caindo. Ela chegou a 90,9% no treino e 85,7% no teste: 5,2 pontos de diferença, sinal de que decorava. A rede B (64 e 32 neurônios, taxa 0,001) tem quatro freios. BatchNorm reajusta a escala dos números entre camadas para o treino não oscilar. Dropout de 0,25 desliga um quarto dos neurônios ao acaso em cada passo, para nenhum deles virar muleta. Weight decay pune pesos grandes. A parada antecipada encerra o treino quando a validação passa 15 épocas sem melhorar. Parou na época 34, voltou ao melhor estado (época 19) e ficou com 86,1% no teste e 1,1 ponto de diferença.",
-        "Nas 1042 horas de teste, nenhuma hora de ar bom virou ruim e nenhuma ruim virou bom. A regra simples do sensor acerta 82% nessas horas; a rede B acerta 3,6 pontos a mais (86,1% contra 82,4%). No documento do modelo da central a mesma regra aparece com 84%: lá o teste tem 1.389 horas (20% da base) e aqui 1.042 (15%), então são horas diferentes."
+        "Nas 1.042 horas de teste, nenhuma hora de ar bom virou ruim e nenhuma ruim virou bom. A regra simples do sensor acerta 82% nessas horas; a rede B acerta 3,6 pontos a mais (86,1% contra 82,4%). No documento do modelo da central a mesma regra aparece com 84%: lá o teste tem 1.389 horas (20% da base) e aqui 1.042 (15%), então são horas diferentes."
       ]
     },
     {
