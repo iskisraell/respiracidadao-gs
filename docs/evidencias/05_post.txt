@@ -22,10 +22,10 @@ $ curl -X POST localhost:8000/ocorrencias -H "Content-Type: application/json" -d
   "hash_integridade": "1b547adc8f491e16f7032a3e5bfd72645ab7cff015459f83c58a4f9e04c3f7a5"
 }
 
-$ curl -X POST localhost:8000/ocorrencias -d '{"dispositivo_id":"esp32-x","metrica":"gas_voc"}'
-{"erro": "Campos obrigatórios ausentes ou inválidos.", "detalhes": [{"campo": "body.valor", "mensagem": "Field required"}]}
+$ curl -X POST localhost:8000/ocorrencias -H "Content-Type: application/json" -d '{"dispositivo_id":"esp32-x","metrica":"gas_voc"}'
+{"erro":"Campos obrigatórios ausentes ou inválidos.","detalhes":[{"campo":"body.valor","mensagem":"Field required"}]}
 HTTP 400
 
-$ curl -X POST localhost:8000/ocorrencias -d '{"dispositivo_id":"esp32-x","valor":900,"medido_em":"2099-01-01T00:00:00Z"}'
-{"erro": "Campos obrigatórios ausentes ou inválidos.", "detalhes": [{"campo": "body.medido_em", "mensagem": "Value error, medido_em está no futuro"}]}
+$ curl -X POST localhost:8000/ocorrencias -H "Content-Type: application/json" -d '{"dispositivo_id":"esp32-x","valor":900,"medido_em":"2099-01-01T00:00:00Z"}'
+{"erro":"Campos obrigatórios ausentes ou inválidos.","detalhes":[{"campo":"body.medido_em","mensagem":"Value error, medido_em está no futuro"}]}
 HTTP 400

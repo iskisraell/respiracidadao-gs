@@ -28,10 +28,10 @@
     {
       "title": "1. CENÁRIO E LIMIARES",
       "body": [
-        "Uma prefeitura não quer manter um servidor ligado em cada bairro. A central na nuvem só existe quando chega leitura: o sensor manda o JSON para uma URL, uma função Lambda valida, classifica, pede à IA de texto uma leitura do relato (quando houver) e grava no PostgreSQL. Tudo que dá errado vira aviso no CloudWatch.",
-        "Para o cidadão, isso significa que a família consulta o mesmo nível que a escola vê, sem a prefeitura pagar servidor parado de madrugada. ODS 3 (aviso antes da crise respiratória), ODS 10 (sensor barato onde não há estação oficial) e ODS 11 (dado aberto por bairro).",
+        "Uma prefeitura não quer manter um servidor ligado em cada bairro. A função Lambda só roda quando chega uma leitura pela URL pública. Ela valida o JSON, classifica o nível pelos limiares, manda o relato (quando houver) para a IA de texto da Hugging Face e grava tudo no PostgreSQL. Tudo que dá errado vira aviso no CloudWatch.",
+        "Para o bairro, família e escola consultam o mesmo dado. Para a prefeitura, não há máquina ligada de madrugada sem leitura chegando. ODS 3 (aviso antes da crise respiratória), ODS 10 (sensor barato onde não há estação oficial) e ODS 11 (dado aberto por bairro).",
         "Limiares: gas_voc atenção 830 e crítico 1140; gas_co atenção 1010 e crítico 1280. Tipos aceitos: esp32 e app.",
-        "A função roda fora da rede privada da AWS (VPC). Dentro dela, para chegar à Hugging Face, precisaríamos de um NAT Gateway, um tradutor de rede que cobra por hora mesmo parado. O banco aceita conexão de fora, mas só com senha e SSL obrigatório. Serve para demonstração; em produção o banco vai para rede privada."
+        "A função roda fora da rede privada da AWS (VPC). Dentro dela, para chegar à Hugging Face, precisaríamos de um NAT Gateway, um tradutor de rede que cobra por hora mesmo parado. Como a função fica fora da VPC, o banco precisa aceitar conexão externa na porta 5432 (regra 0.0.0.0/0 no grupo de segurança), sempre com usuário, senha e SSL obrigatório. Isso vale só para a demonstração: depois da apresentação o banco é apagado ou vai para uma sub-rede privada. Toda consulta usa parâmetros (%s), nunca texto colado, contra injeção de SQL."
       ],
       "tables": [
         {
@@ -50,7 +50,7 @@
             ],
             [
               "GET /ocorrencias",
-              "Últimas leituras gravadas, da mais nova para a mais antiga"
+              "As 20 leituras mais recentes. Filtro por sensor e por nível ficou só na API local da 05"
             ]
           ],
           "col_widths": [
@@ -71,7 +71,7 @@
       "title": "3. TESTADO SEM AWS",
       "bullets": [
         {
-          "text": "teste_local.py: 8 de 8 verificações passam: saúde da função, leitura bom e ruim gravadas, listagem, e recusa com 400 para JSON quebrado, valor não numérico, tipo de aparelho inválido e campo faltando, sem gravar nada.",
+          "text": "teste_local.py: 8 de 8 verificações passam: saúde da função, leitura bom e ruim gravadas, listagem, recusa com 400 para JSON quebrado, valor não numérico, tipo de aparelho inválido, campo faltando e relato acima de 500 caracteres, sem gravar nada, e a IA de texto fora do ar sem derrubar a gravação.",
           "level": 0
         },
         {
@@ -81,6 +81,13 @@
         {
           "text": "simulador_dispositivo.py --cenario queimada --lugar escola manda leituras que sobem até o vermelho, igual ao que a função vai receber.",
           "level": 0
+        }
+      ],
+      "images": [
+        {
+          "path": "/home/agent/projects/respiracidadao-gs/docs/evidencias/07_teste_local.png",
+          "caption": "Figura 1: teste_local.py chamando o handler da Lambda sem AWS. Cada linha LEITURA DESCARTADA é um WARNING que vai para o CloudWatch.",
+          "width": 160
         }
       ]
     },

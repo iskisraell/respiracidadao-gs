@@ -29,7 +29,7 @@
       "title": "1. A SOLUÇÃO EM UMA PÁGINA",
       "body": [
         "O RespiraCidadão avisa escolas, UBS e famílias quando o ar perto delas piora. Público: crianças, idosos e pessoas com asma na periferia. Problema: exposição à fumaça sem aviso a tempo.",
-        "Caminho dos dados: sensor ESP32 ou pessoa no app, central (API FastAPI), banco (SQLite e CSV no local, PostgreSQL na nuvem) e modelos de IA que conferem cada leitura. Um alarme falso faz a escola cancelar aula à toa. Um alarme perdido deixa criança respirando fumaça. A segurança aqui serve para que nenhum dos dois aconteça por ação de alguém mal-intencionado."
+        "Caminho dos dados: sensor ESP32 ou pessoa no app, central (API FastAPI), banco (SQLite e CSV no local, PostgreSQL na nuvem) e modelos de IA que conferem cada leitura. Um alarme falso faz a escola cancelar aula à toa. Um alarme perdido deixa criança respirando fumaça. As proteções impedem que alguém dispare alertas falsos em massa, apague leituras ou altere o histórico no banco."
       ]
     },
     {
@@ -99,7 +99,7 @@
             [
               "R3. Script ou fórmula em relato",
               "Alta / Médio",
-              "Tags e sinais < > removidos antes de gravar; células de CSV que começam com = + - @ ganham prefixo"
+              "Marcações HTML como <script> são removidas antes de gravar; textos que começam com = + - ou @ ganham um apóstrofo no CSV para não virarem fórmula no Excel"
             ],
             [
               "R4. Histórico adulterado",
@@ -128,7 +128,7 @@
     {
       "title": "4. CONTROLES POR CATEGORIA",
       "body": [
-        "Priorizamos o que dá para provar em código e custa pouco. O que depende da conta de nuvem está marcado como proposto."
+        "Priorizamos o que dá para provar em código e custa pouco. O dado do produto é público e o morador não faz login, então não faz sentido proteger leitura com senha. O que precisa de proteção é escrita e apagamento: limite de envios contra enxurrada, chave só para administrar e selo HMAC para provar que o histórico não mudou. O que depende da conta de nuvem está marcado como proposto."
       ],
       "tables": [
         {
@@ -145,7 +145,7 @@
             ],
             [
               "Firewall / WAF",
-              "Limite por endereço e só o site do app pode chamar a central (CORS); filtro de ataques web (AWS WAF) na URL da função e banco aceitando só a porta 5432",
+              "Limite de envios por IP na central; filtro de ataques web (AWS WAF) na URL pública; banco aceitando só a porta 5432. CORS só impede que outro site, aberto no navegador da vítima, chame a central; quem usa curl ignora CORS, por isso ele não conta como barreira",
               "Limite feito; WAF proposto"
             ],
             [
@@ -162,6 +162,11 @@
               "Monitoramento",
               "Registro de eventos de segurança (security_audit.jsonl), lido só com chave, e avisos no CloudWatch para leitura descartada",
               "Feito; alarmes propostos"
+            ],
+            [
+              "Integridade do modelo",
+              "Os pesos da rede carregam com weights_only=True. Próximo passo: conferir o hash dos arquivos .joblib e .pt ao subir, contra troca do modelo em disco",
+              "Parcial"
             ]
           ],
           "col_widths": [
@@ -175,7 +180,7 @@
     {
       "title": "5. PROTEÇÕES FUNCIONANDO",
       "body": [
-        "Cada proteção abaixo tem um teste automático em apps/api/tests/test_api.py. Os 20 testes passam. Também rodamos cada ataque à mão contra a central ligada e guardamos a saída do terminal."
+        "Cada proteção abaixo tem um teste automático em apps/api/tests/test_api.py. Os 21 testes passam. Também rodamos cada ataque à mão contra a central ligada e guardamos a saída do terminal."
       ],
       "bullets": [
         {
@@ -215,7 +220,7 @@
         },
         {
           "path": "/home/agent/projects/respiracidadao-gs/docs/evidencias/03_pytest.png",
-          "caption": "Figura 3: Os 20 testes automáticos passando.",
+          "caption": "Figura 3: Os 21 testes automáticos passando.",
           "width": 160
         }
       ]
@@ -231,7 +236,7 @@
           "rows": [
             [
               "Que dados pessoais tratamos?",
-              "Nenhum cadastro. Leitura de sensor tem ID do aparelho e coordenada pública do prédio. Relato tem só texto e lugar. O endereço IP de quem envia fica só no registro de segurança, para aplicar o limite e investigar ataque."
+              "O endereço IP é dado pessoal (LGPD, art. 5º, I). Ele fica só no registro de segurança, para aplicar o limite e investigar ataque, com base no legítimo interesse de prevenir abuso (art. 7º, IX). Fora isso, não há cadastro: leitura de sensor tem ID do aparelho e coordenada pública do prédio, e relato tem só texto e lugar."
             ],
             [
               "Quem vê o registro de segurança?",

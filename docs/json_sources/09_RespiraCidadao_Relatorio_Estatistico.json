@@ -78,8 +78,9 @@
         }
       ],
       "body": [
-        "A média (2,18) fica acima da mediana (1,9): a cauda direita é longa, com poucas horas de monóxido muito alto. Por isso P(X > mediana) sob a Normal dá 57,8%, e não 50%. O produto existe para pegar essas horas raras da cauda.",
-        "Nos dois testes as amostras sorteadas não mostram diferença da média da base. É o esperado para amostras aleatórias da mesma população, e confirma que amostras pequenas não servem para tirar conclusão sobre um bairro."
+        "A média (2,18) fica acima da mediana (1,9): a cauda direita é longa. Por isso P(X > mediana) sob a Normal dá 57,8%, e não 50%. As horas de ar ruim (3,0 mg/m³ ou mais) são 1.692 de 6.941, quase 1 em cada 4, e é essa parcela que o alerta precisa pegar.",
+        "Nos testes Z usamos a média e o desvio da base inteira como população: média 2,1825 mg/m³ e sigma 1,4411 mg/m³. Z = (média da amostra - 2,1825) / (1,4411 / raiz de n).",
+        "Nos dois testes não rejeitamos H0: as amostras sorteadas (n = 20 e n = 25) não diferem da média da base. É o resultado esperado para amostras tiradas da mesma população."
       ],
       "images": [
         {
@@ -95,7 +96,7 @@
         "a) A dispersão entre o sensor de monóxido PT08.S1(CO) e o CO(GT) da estação forma uma nuvem estreita que sobe para a direita. Quando o sensor sobe, o monóxido real sobe junto.",
         "b) Covariância 276,46 e correlação de Pearson r = 0,877, com p < 0,0001. Relação positiva e forte.",
         "c) O gráfico por decis mostra a média de CO(GT) subindo de forma quase reta a cada faixa do sensor.",
-        "d) Equação: CO(GT) = -4,2888 + 0,00578 * PT08,S1(CO).",
+        "d) Equação: CO(GT) = -4,2888 + 0,00578 * PT08.S1(CO).",
         "e) R² = 76,92% e teste F = 23119,89 (p < 0,0001). Só o sensor de monóxido já explica três quartos da variação do monóxido real.",
         "f) Previsão: com o sensor em 1350, o CO previsto é 3,512 mg/m³, nível ruim."
       ],
@@ -118,8 +119,8 @@
         "Usamos as quatro medidas que nosso ESP32 tem: os dois sensores de gás PT08.S1(CO) e PT08.S2(NMHC), temperatura (T) e umidade (RH).",
         "a) e b) Os dois sensores de gás andam com o CO(GT) (r = 0,877 e 0,914) e entre si (r = 0,886), então carregam informação parecida. Temperatura e umidade quase não se relacionam com o CO sozinhas (r = 0,018 e 0,065), mas se relacionam entre si (r = -0,564) e corrigem a leitura dos sensores de gás, que mudam com o clima.",
         "c) No gráfico de correlação (Figura 5), os três medidores de monóxido e gases formam o bloco de valores mais altos, porque sobem juntos: 0,877, 0,914 e 0,886. A única relação negativa forte é temperatura com umidade (-0,564): tarde quente costuma ser tarde seca.",
-        "d) Equação: CO(GT) = -2,6608 + (0,00130)*PT08,S1(CO) + (0,00426)*PT08,S2(NMHC) + (-0,03046)*T + (-0,00314)*RH.",
-        "e) R² = 88,07% (ajustado 88,06%) e teste F = 12797,13 (p < 0,0001). As quatro medidas juntas explicam 88% da variação, contra 77% de um sensor só.",
+        "d) Equação: CO(GT) = -2,6608 + (0,00130)*PT08.S1(CO) + (0,00426)*PT08.S2(NMHC) + (-0,03046)*T + (-0,00314)*RH.",
+        "e) R² = 88,07% (ajustado 88,06%) e teste F = 12797,13 (p < 0,0001). As quatro medidas juntas explicam 88% da variação, contra 77% de um sensor só. Temperatura e umidade entram com sinal negativo, embora sozinhas tenham correlação positiva com o CO: na equação elas corrigem a deriva dos sensores de gás com o clima. Como os dois sensores de gás têm r = 0,886 entre si, cada coeficiente sozinho não deve ser lido como efeito isolado; a previsão do conjunto é o que vale.",
         "f) Previsões: Ar carregado (Praça da Sé) = 2,105 mg/m³ (carregado); Ar ruim (Escola) = 3,537 mg/m³ (ruim)."
       ],
       "tables": [
@@ -200,7 +201,7 @@
     {
       "title": "5. AR RUIM OU NÃO: REGRESSÃO LOGÍSTICA (ITEM 06)",
       "body": [
-        "a) Evento: ar ruim (CO(GT) de 3,0 mg/m³ ou mais). Equação: logit(P) = -24,6774 + (0,00313)*PT08,S1(CO) + (0,02139)*PT08,S2(NMHC) + (-0,16795)*T + (-0,01122)*RH.",
+        "a) P é a probabilidade de ar ruim, CO(GT) de 3,0 mg/m³ ou mais. Equação: logit(P) = -24,6774 + (0,00313)*PT08.S1(CO) + (0,02139)*PT08.S2(NMHC) + (-0,16795)*T + (-0,01122)*RH. A probabilidade sai da sigmoide: P = 1 / (1 + e elevado a -logit). Treinamos com 75% das horas (5.205) e testamos nos 25% restantes (1.736).",
         "b) No teste, com 1736 horas: 1263 horas boas reconhecidas, 365 horas ruins reconhecidas, 50 alarmes falsos e 58 horas ruins perdidas. Acurácia 93,78%, precisão 87,95%, recall 86,29%. De cada 100 horas de ar ruim, o modelo pega 86 e deixa passar 14.",
         "c) Classificação: Ar carregado (Praça da Sé) deu P(ruim) = 0,89%, classe 0. Ar ruim (Escola) deu P(ruim) = 80,92%, classe 1."
       ],
@@ -216,7 +217,7 @@
       "title": "6. O QUE RECOMENDAMOS (ITEM 07)",
       "bullets": [
         {
-          "text": "Sim, o sensor barato serve. As quatro medidas explicam 88% do monóxido real e acertam 94% das horas na decisão ar ruim ou não.",
+          "text": "O sensor barato serve para avisar o bairro. As quatro medidas explicam 88% do monóxido real e acertam 94% das horas na decisão ar ruim ou não.",
           "level": 0
         },
         {
@@ -228,7 +229,7 @@
           "level": 0
         },
         {
-          "text": "Recalibre em cada bairro. A base é de outra cidade, e os testes de hipótese mostram que poucas horas de amostra não bastam para concluir nada sobre um lugar novo.",
+          "text": "Recalibre em cada bairro. A base é de outra cidade e outro clima, e os sensores de gás mudam com o clima. Algumas semanas ao lado de uma estação CETESB ajustam os coeficientes ao lugar novo.",
           "level": 0
         }
       ]

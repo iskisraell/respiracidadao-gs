@@ -1,9 +1,31 @@
-$ cut -d, -f2,6-10,15,16,21 data/runtime/leituras.csv   # medidas, nível, alerta, hora da medida
-dispositivo_id,metrica,valor,gas_co,temperatura_c,umidade_pct,nivel_risco,alerta,medido_em
-esp32-ubs-vila-maria,gas_voc,706.0,925.0,18.0,55.0,normal,False,2026-11-18T05:15:40.812040+00:00
-esp32-centro-01,gas_voc,980.0,1120.0,24.0,42.0,atencao,True,2026-11-18T05:15:40.933597+00:00
-esp32-escola-zona-norte,gas_voc,1280.0,1383.0,31.0,34.0,critico,True,2026-11-18T05:15:41.596810+00:00
-esp32-escola-zona-norte,gas_voc,1280.0,1383.0,31.0,34.0,critico,True,2026-11-18T05:15:17+00:00
+$ cut -d, -f2,7-10,15,16,20 data/runtime/leituras.csv   # sensor, medidas, nível, alerta, data/hora
+dispositivo_id,valor,gas_co,temperatura_c,umidade_pct,nivel_risco,alerta,criado_em
+esp32-ubs-vila-maria,706.0,925.0,18.0,55.0,normal,False,2026-11-18T05:15:40.812040+00:00
+esp32-centro-01,980.0,1120.0,24.0,42.0,atencao,True,2026-11-18T05:15:40.933597+00:00
+esp32-escola-zona-norte,1280.0,1383.0,31.0,34.0,critico,True,2026-11-18T05:15:41.596810+00:00
+esp32-escola-zona-norte,1280.0,1383.0,31.0,34.0,critico,True,2026-11-18T05:15:57.548849+00:00
+
+$ curl -s 'localhost:8000/ocorrencias?risco=critico'   # campos principais
+[
+  {
+    "id": 27,
+    "dispositivo_id": "esp32-escola-zona-norte",
+    "valor": 1280.0,
+    "gas_co": 1383.0,
+    "nivel_risco": "critico",
+    "medido_em": "2026-11-18T05:15:17+00:00",
+    "criado_em": "2026-11-18T05:15:57.548849+00:00"
+  },
+  {
+    "id": 26,
+    "dispositivo_id": "esp32-escola-zona-norte",
+    "valor": 1280.0,
+    "gas_co": 1383.0,
+    "nivel_risco": "critico",
+    "medido_em": "2026-11-18T05:15:41.596810+00:00",
+    "criado_em": "2026-11-18T05:15:41.596810+00:00"
+  }
+]
 
 $ curl -s localhost:8000/indicadores
 {

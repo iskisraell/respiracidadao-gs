@@ -1,10 +1,3 @@
-# Monitor serial do ESP32 (formato do sketch.ino, ar ruim)
-STATUS critico
-SENSORES gases=critico monoxido=critico umidade=normal temperatura=31.0C
-JSON {"dispositivo_id":"esp32-escola-zona-norte","tipo":"esp32","latitude":-23.4892,
-      "longitude":-46.6208,"metrica":"gas_voc","valor":1280.0,"gas_co":1383.0,
-      "temperatura_c":31.0,"umidade_pct":34.0}
-
 $ python receiver_csv.py
 Receptor do sensor ativo em http://127.0.0.1:8085 -> CSV: leituras_iot.csv
 [2026-11-18T04:54:50+00:00] esp32-ubs-vila-maria | gas_voc=706.0 | STATUS=normal

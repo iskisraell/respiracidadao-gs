@@ -39,7 +39,7 @@ Abra http://localhost:5173. Para ver os três níveis sem sensor, use "Modo demo
 
 ```bash
 .venv/bin/pip install pytest httpx
-.venv/bin/pytest apps/api/tests                       # 20 testes da central
+.venv/bin/pytest apps/api/tests                       # 21 testes da central
 .venv/bin/python packages/cloud-serverless/teste_local.py   # 8 verificações da função na nuvem
 ```
 

@@ -28,7 +28,7 @@
     {
       "title": "1. O QUE A CENTRAL FAZ",
       "body": [
-        "Problema: escolas e UBS da periferia não sabem quando o ar perto delas piora. Público: coordenação de escola e UBS e famílias com criança, idoso ou alguém com asma. O sensor na escola só sabe acender uma luz. Quem guarda o histórico, confere com o modelo e responde ao app é a central. Ela recebe o JSON do ESP32 (o mesmo contrato do sensor), recusa o que vier incompleto, classifica o nível por uma função condicional, grava em CSV (data/runtime/leituras.csv) e em SQLite, e calcula indicadores.",
+        "Problema: escolas e UBS da periferia não sabem quando o ar perto delas piora. Público: coordenação de escola e UBS e famílias com criança, idoso ou alguém com asma. O sensor na escola só sabe acender uma luz. Quem guarda o histórico, confere com o modelo e responde ao app é a central. Ela recebe o JSON do ESP32 e recusa leitura incompleta com erro 400. Uma função condicional decide o nível. A leitura vai com data e hora para o CSV (data/runtime/leituras.csv) e para o SQLite, e os indicadores são recalculados a cada consulta.",
         "As medidas: gas_voc é o sensor de fumaça e gases, e gas_co o de monóxido de carbono. Os dois devolvem um número bruto, sem unidade, que sobe quando o ar piora. Limiares em um dicionário: gas_voc atenção 830 e crítico 1140; gas_co atenção 1010 e crítico 1280. Os mesmos números do firmware e da função na nuvem.",
         "Contrato JSON que o sensor envia: {\"dispositivo_id\": \"esp32-escola-zona-norte\", \"tipo\": \"esp32\", \"latitude\": -23.49, \"longitude\": -46.62, \"metrica\": \"gas_voc\", \"valor\": 1280, \"gas_co\": 1383, \"temperatura_c\": 31, \"umidade_pct\": 34}."
       ],
@@ -53,7 +53,7 @@
             [
               "/ocorrencias",
               "POST",
-              "Valida com Pydantic (400 se faltar campo ou valor fora da faixa), classifica, grava CSV e SQLite, devolve 201"
+              "Confere tipo e faixa de cada campo (campo ausente ou valor absurdo volta 400), classifica, grava CSV e SQLite, devolve 201"
             ],
             [
               "/ocorrencias",
@@ -133,9 +133,9 @@
         }
       ],
       "body": [
-        "As saídas abaixo são da central rodando de verdade: os 3 cenários do sensor, um POST manual com resposta 201, um JSON incompleto recusado com 400, as linhas do CSV e os indicadores calculados.",
-        "Para rodar: uvicorn app.main:app --app-dir apps/api --port 8000. Os cenários do sensor rodam com python packages/iot-aicss/run_3_cenarios.py, e os 20 testes automáticos com pytest apps/api/tests.",
-        "Limitações: CSV é ótimo para abrir numa planilha e ruim para muitas escritas ao mesmo tempo. Para vários bairros, a central vai para a nuvem com PostgreSQL. A classificação por limiar não vê tendência; quem olha o histórico é o modelo da central.",
+        "As saídas abaixo são da central rodando de verdade: os 3 cenários do sensor, um POST manual com resposta 201, um JSON incompleto recusado com 400, as linhas do CSV, a consulta GET e os indicadores. A Figura 5 traz os trechos do código que fazem cada passo.",
+        "Para rodar: uvicorn app.main:app --app-dir apps/api --port 8000. Os cenários do sensor rodam com python packages/iot-aicss/run_3_cenarios.py, e os 21 testes automáticos com pytest apps/api/tests.",
+        "Limitações: sem os arquivos dos modelos, a central continua gravando com a regra de limiar e devolve ia_risco nulo. CSV é ótimo para abrir numa planilha e ruim para muitas escritas ao mesmo tempo. Para vários bairros, a central vai para a nuvem com PostgreSQL. A classificação por limiar não vê tendência; quem olha o histórico é o modelo da central.",
         "ODS 3 e ODS 11."
       ]
     },
@@ -154,7 +154,12 @@
         },
         {
           "path": "/home/agent/projects/respiracidadao-gs/docs/evidencias/05_csv_indicadores.png",
-          "caption": "Figura 4: Linhas gravadas no CSV e GET /indicadores.",
+          "caption": "Figura 4: Linhas do CSV com data e hora, GET /ocorrencias filtrando ar ruim e GET /indicadores.",
+          "width": 160
+        },
+        {
+          "path": "/home/agent/projects/respiracidadao-gs/docs/evidencias/05_codigo.png",
+          "caption": "Figura 5: O código por trás: limiares num dicionário, decisão com if, gravação no CSV e indicadores calculados com laço.",
           "width": 160
         }
       ]

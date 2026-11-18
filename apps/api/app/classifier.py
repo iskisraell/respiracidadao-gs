@@ -30,7 +30,7 @@ RISK_LABELS = ["normal", "atencao", "critico"]
 
 
 def classify_threshold(metrica: str, valor: float) -> Tuple[Literal["normal", "atencao", "critico"], bool]:
-    """Local deterministic risk classifier (always available, zero network dependency)."""
+    """Regra local: decide o nível pelos dois limiares, sem depender de rede."""
     low, high = THRESHOLDS[metrica]
     if valor >= high:
         return "critico", True

@@ -352,3 +352,16 @@ def test_medido_em_is_stored_and_checked(client):
     assert c.post("/ocorrencias", json={**base, "medido_em": "ontem"}).status_code in (400, 422)
     sem = c.post("/ocorrencias", json=base).json()
     assert sem["medido_em"] == sem["criado_em"]
+
+
+def test_seal_key_creation_is_race_safe(tmp_path, monkeypatch):
+    """Vários workers subindo juntos chegam todos à mesma chave."""
+    from concurrent.futures import ThreadPoolExecutor
+    import app.security as sec_mod
+
+    monkeypatch.delenv("RESPIRA_SEAL_KEY", raising=False)
+    monkeypatch.setenv("RESPIRA_SEAL_KEY_FILE", str(tmp_path / "seal.key"))
+    with ThreadPoolExecutor(8) as pool:
+        keys = set(pool.map(lambda _: sec_mod._load_seal_key(), range(16)))
+    assert len(keys) == 1 and len(next(iter(keys))) == 64
+    assert [p.name for p in tmp_path.iterdir()] == ["seal.key"]

@@ -19,29 +19,36 @@ RATE_LIMIT_MAX_REQUESTS = int(os.getenv("RATE_LIMIT_MAX_REQUESTS", "30"))
 RATE_LIMIT_WINDOW_SEC = int(os.getenv("RATE_LIMIT_WINDOW_SEC", "60"))
 # Only honour X-Forwarded-For when the API sits behind a trusted reverse proxy.
 # Otherwise any client could spoof the header and bypass the per-IP rate limiter.
-# Chave do selo de integridade. Com ela o selo é HMAC-SHA256: quem altera o banco sem a chave
-# não consegue refazer o selo. Sem ela, cai para SHA-256 puro (detecta alteração acidental).
+# Chave do selo de integridade. O selo é HMAC-SHA256: quem altera o banco sem a chave
+# não consegue refazer o selo. Sem chave a central não sobe (não existe selo "fraco").
 def _load_seal_key() -> bytes:
-    """RESPIRA_SEAL_KEY do ambiente; sem ela, gera uma chave local fora do banco (arquivo 0600, ignorado pelo git)."""
+    """RESPIRA_SEAL_KEY do ambiente; sem ela, usa ou cria uma chave local fora do banco (arquivo 0600, ignorado pelo git)."""
     env = os.getenv("RESPIRA_SEAL_KEY", "").strip()
     if env:
         return env.encode("utf-8")
     data_dir = Path(os.getenv("RESPIRA_DATA_DIR", Path(__file__).resolve().parents[3] / "data" / "runtime"))
     key_file = Path(os.getenv("RESPIRA_SEAL_KEY_FILE", data_dir / "seal.key"))
     try:
-        if key_file.exists():
-            key = key_file.read_text(encoding="utf-8").strip()
-            if not key:
-                raise RuntimeError(f"Arquivo de chave do selo vazio: {key_file}")
-            return key.encode("utf-8")
-        key_file.parent.mkdir(parents=True, exist_ok=True)
-        key = secrets.token_hex(32)
-        fd = os.open(str(key_file), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-        with os.fdopen(fd, "w", encoding="utf-8") as f:
-            f.write(key)
-        return key.encode("utf-8")
+        if not key_file.exists():
+            # Escreve num arquivo temporário e publica com link(): é atômico, então dois workers
+            # subindo juntos nunca leem um arquivo pela metade; quem perde a corrida lê o do vencedor.
+            key_file.parent.mkdir(parents=True, exist_ok=True)
+            tmp = key_file.with_name(f".{key_file.name}.{os.getpid()}.{secrets.token_hex(4)}")
+            fd = os.open(str(tmp), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                f.write(secrets.token_hex(32))
+            try:
+                os.link(tmp, key_file)
+            except FileExistsError:
+                pass
+            finally:
+                tmp.unlink(missing_ok=True)
+        key = key_file.read_text(encoding="utf-8").strip()
     except OSError as exc:
         raise RuntimeError(f"Sem chave do selo: defina RESPIRA_SEAL_KEY ou libere escrita em {key_file}") from exc
+    if not key:
+        raise RuntimeError(f"Arquivo de chave do selo vazio: {key_file}")
+    return key.encode("utf-8")
 
 
 SEAL_KEY = _load_seal_key()

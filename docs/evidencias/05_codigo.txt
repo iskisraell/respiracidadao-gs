@@ -1,0 +1,31 @@
+# apps/api/app/classifier.py, linha 18
+THRESHOLDS: Dict[str, Tuple[float, float]] = {
+    "gas_voc": (830.0, 1140.0),
+    "gas_co": (1010.0, 1280.0),
+}
+
+# apps/api/app/classifier.py, linha 32
+def classify_threshold(metrica: str, valor: float) -> Tuple[Literal["normal", "atencao", "critico"], bool]:
+    """Regra local: decide o nível pelos dois limiares, sem depender de rede."""
+    low, high = THRESHOLDS[metrica]
+    if valor >= high:
+        return "critico", True
+    if valor >= low:
+        return "atencao", True
+    return "normal", False
+
+# apps/api/app/storage.py, linha 161
+with self._csv_lock, self.csv_path.open("a", newline="", encoding="utf-8") as f:
+    writer = csv.DictWriter(f, fieldnames=CSV_HEADERS)
+    writer.writerow({k: _csv_safe(record.get(k, "")) if record.get(k) is not None else "" for k in CSV_HEADERS})
+
+# apps/api/app/storage.py, linha 226
+total, alertas, media, vmax, vmin = conn.execute(
+    "SELECT COUNT(*), COALESCE(SUM(alerta), 0), AVG(valor), MAX(valor), MIN(valor) FROM ocorrencias WHERE tipo != 'demo'"
+).fetchone()
+por_risco = {"normal": 0, "atencao": 0, "critico": 0}
+for risco, qtd in conn.execute("SELECT nivel_risco, COUNT(*) FROM ocorrencias WHERE tipo != 'demo' GROUP BY nivel_risco"):
+    por_risco[risco] = qtd
+
+# apps/api/app/storage.py, linha 253
+"pct_alertas": round((alertas / total) * 100.0, 2),

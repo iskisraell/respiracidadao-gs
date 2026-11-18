@@ -41,6 +41,29 @@ def terminal_png(txt: Path) -> Path:
     return out
 
 
+def _trecho(arquivo: str, inicio: str, linhas: int) -> list[str]:
+    """Copia linhas do código-fonte a partir da primeira que contém `inicio` (o print fica igual ao código)."""
+    src = (ROOT / arquivo).read_text(encoding="utf-8").split("\n")
+    i = next(n for n, l in enumerate(src) if inicio in l)
+    bloco = src[i:i + linhas]
+    recuo = min(len(l) - len(l.lstrip()) for l in bloco if l.strip())
+    return [f"# {arquivo}, linha {i + 1}"] + [l[recuo:] for l in bloco]
+
+
+def codigo_05() -> Path:
+    """Trechos reais da central: limiares, decisão condicional, gravação no CSV e cálculo dos indicadores."""
+    partes = [
+        _trecho("apps/api/app/classifier.py", "THRESHOLDS: Dict", 4),
+        _trecho("apps/api/app/classifier.py", "def classify_threshold", 8),
+        _trecho("apps/api/app/storage.py", "with self._csv_lock, self.csv_path.open(\"a\"", 3),
+        _trecho("apps/api/app/storage.py", "total, alertas, media, vmax, vmin = conn.execute(", 6),
+        _trecho("apps/api/app/storage.py", "\"pct_alertas\": round(", 1),
+    ]
+    txt = EVID / "05_codigo.txt"
+    txt.write_text("\n\n".join("\n".join(p) for p in partes) + "\n", encoding="utf-8")
+    return txt
+
+
 def sequence_diagram() -> Path:
     """UML de sequência: o caminho de uma leitura de ar ruim, do sensor ao app."""
     actors = ["Sensor ESP32", "Central (API)", "Modelo", "Banco + CSV", "App"]
@@ -88,6 +111,7 @@ def sequence_diagram() -> Path:
 
 
 if __name__ == "__main__":
+    codigo_05()
     for txt in sorted(EVID.glob("*.txt")):
         print("print:", terminal_png(txt).name)
     print("uml:", sequence_diagram().name)

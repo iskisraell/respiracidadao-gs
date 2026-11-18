@@ -19,4 +19,5 @@ test_demo_readings_never_hide_real_ones PASSED
 test_seal_is_keyed_even_without_env PASSED
 test_seal_refuses_to_run_without_key PASSED
 test_medido_em_is_stored_and_checked PASSED
-============================= 20 passed in 28.12s
+test_seal_key_creation_is_race_safe PASSED
+============================= 21 passed in 21.28s

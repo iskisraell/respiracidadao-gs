@@ -30,7 +30,7 @@
       "title": "1. O PROBLEMA E PARA QUEM",
       "body": [
         "Uma diretora abre o celular às 7h40 e lê: \"Ar ruim perto da escola agora. Mantenha as janelas fechadas e deixe a educação física para depois do almoço.\" O RespiraCidadão existe para essa frase chegar a tempo e ser verdadeira.",
-        "A Organização Mundial da Saúde estima cerca de 7 milhões de mortes por ano ligadas à poluição do ar. Fumaça de queimada e trânsito pesado pioram crises de asma e DPOC. Quem sente primeiro são crianças, idosos e pacientes de UBS na periferia, onde quase não há estação oficial de medição. O boletim público, quando sai, é da cidade inteira e chega horas depois.",
+        "A Organização Mundial da Saúde estima cerca de 7 milhões de mortes por ano ligadas à poluição do ar. Fumaça de queimada e trânsito pesado pioram crises de asma e de bronquite crônica (DPOC). Quem sente primeiro são crianças, idosos e pacientes de UBS na periferia, onde quase não há estação oficial de medição. O boletim público, quando sai, é da cidade inteira e chega horas depois.",
         "Nosso público são três pessoas: a coordenação de escola ou UBS, que decide se a atividade é ao ar livre; a família com criança, idoso ou alguém com asma, que quer saber se é hora de sair; e o vizinho que viu fumaça e quer avisar alguém."
       ],
       "bullets": [
@@ -55,7 +55,7 @@
     {
       "title": "2. COMO A INFORMAÇÃO CHEGA ATÉ A PESSOA",
       "body": [
-        "Um sensor na parede mede fumaça, monóxido, temperatura e umidade. Se o ar piora, a luz muda de cor e o alarme toca na hora, mesmo sem internet. A leitura vai para a central, que confere com um modelo treinado em 6.941 horas reais de medição e devolve o nível com uma porcentagem de confiança. O app mostra a cor, uma frase e o que fazer."
+        "Um sensor na parede mede fumaça, monóxido, temperatura e umidade. Se o ar piora, a luz muda de cor e o alarme toca na hora, mesmo sem internet. A leitura vai para a central, que confere com um modelo treinado a partir de uma base real de 6.941 horas de medição e devolve o nível com uma porcentagem de confiança. O app mostra a cor, uma frase e o que fazer."
       ],
       "images": [
         {
@@ -85,11 +85,11 @@
             [
               "Central (API)",
               "Recebe, valida, classifica, guarda em CSV e banco, responde ao app",
-              "05 Python: FastAPI, 20 testes automáticos"
+              "05 Python: FastAPI, 21 testes automáticos"
             ],
             [
               "Central na nuvem",
-              "A mesma central sem servidor ligado: função + banco gerenciado",
+              "A mesma central sem servidor ligado: função + banco gerenciado. Pronta para publicar, testada localmente; ainda não está no ar",
               "07 Cloud: Lambda, PostgreSQL, script de publicação"
             ],
             [
@@ -191,7 +191,7 @@
       "title": "5. ACESSIBILIDADE, SEGURANÇA, DADOS PESSOAIS E SUSTENTABILIDADE",
       "bullets": [
         {
-          "text": "Acessibilidade: cor sempre acompanhada de palavra (Bom, Carregado, Ruim), contraste alto, textos curtos e alarme sonoro no sensor para quem não está olhando a tela.",
+          "text": "Acessibilidade: cada alerta junta cor, palavra (Bom, Carregado ou Ruim) e, no sensor, um alarme de 1800 Hz para quem não está olhando a tela ou não distingue cores.",
           "level": 0
         },
         {

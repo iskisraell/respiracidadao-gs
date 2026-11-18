@@ -1,11 +1,11 @@
-$ for i in $(seq 1 32); do curl -s -o /dev/null -w "%{http_code} " -X POST localhost:8000/relatos ...; done
-# limite: 30 por minuto por endereço; os envios anteriores do mesmo minuto também contam
-201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 429 429 429 429 429 429 
+# central de teste numa base vazia (porta 8001), limite padrão: 30 envios por minuto por endereço
+$ for i in $(seq 1 32); do curl -s -o /dev/null -w "%{http_code} " -X POST localhost:8001/relatos -H "Content-Type: application/json" -d '{"local_id":"praca-da-se","texto":"Cheiro forte de fumaça"}'; done
+201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 429 429 
 
-$ curl -X DELETE localhost:8000/ocorrencias            # sem chave
+$ curl -X DELETE localhost:8001/ocorrencias            # sem chave
 {"detail":"Chave de API ausente ou inválida (X-API-Key)."}
 HTTP 401
 
-$ curl -X DELETE localhost:8000/ocorrencias -H "X-API-Key: errada"
+$ curl -X DELETE localhost:8001/ocorrencias -H "X-API-Key: errada"
 {"detail":"Chave de API ausente ou inválida (X-API-Key)."}
 HTTP 401

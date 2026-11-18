@@ -76,7 +76,7 @@
         }
       ],
       "body": [
-        "O firmware classifica cada sensor separado. Fumaça e gases: abaixo de 830 bom, de 830 a 1139 carregado, 1140 ou mais ruim. Monóxido: cortes em 1010 e 1280. Umidade abaixo de 30% conta como carregado, porque ar seco segura a fumaça perto do chão. A luz segue a medida de fumaça e gases, que sozinha acerta 84 de cada 100 horas na base real de 6.941 horas, e funciona sem rede. O monitor serial mostra o nível de cada sensor na linha SENSORES.",
+        "O firmware classifica cada sensor separado. Fumaça e gases: abaixo de 830 bom, de 830 a 1139 carregado, 1140 ou mais ruim. Monóxido: cortes em 1010 e 1280. Umidade abaixo de 30% aparece como carregado na linha SENSORES do monitor serial e segue no JSON para a central, mas não muda a luz. A luz e o buzzer seguem só a medida de fumaça e gases, e funcionam sem rede. Testada nas 1.389 horas separadas para teste da base real, essa regra simples acerta 84 de cada 100. Os índices 830 e 1140 estão na mesma escala dos sensores de óxido metálico da base UCI (de 380 a 2250), que os potenciômetros do Wokwi reproduzem.",
         "A cada 3 segundos o ESP32 monta um JSON e envia por HTTP POST para a central: {dispositivo_id, tipo, latitude, longitude, metrica: \"gas_voc\", valor, gas_co, temperatura_c, umidade_pct}. É o mesmo contrato da API em Python e da função na nuvem. O sensor não manda relato; relato é coisa de pessoa."
       ]
     },
@@ -145,12 +145,12 @@
     {
       "title": "5. O JSON CHEGANDO E VIRANDO CSV",
       "body": [
-        "Rodamos o mesmo firmware contra o receptor Python (receiver_csv.py). O print mostra a saída serial do sensor, o receptor confirmando cada leitura e as linhas gravadas no CSV."
+        "O Wokwi gratuito não alcança um servidor fora do navegador, então provamos o envio com o receptor Python (receiver_csv.py) recebendo o mesmo JSON dos três cenários. O print mostra o receptor confirmando cada leitura e as linhas gravadas no CSV. A saída serial do firmware está nas Figuras 1 a 3."
       ],
       "images": [
         {
           "path": "/home/agent/projects/respiracidadao-gs/docs/evidencias/02_json_csv.png",
-          "caption": "Figura 4: Saída serial, log do receptor e linhas do CSV.",
+          "caption": "Figura 4: Receptor confirmando as três leituras e as linhas gravadas no CSV.",
           "width": 165
         }
       ]

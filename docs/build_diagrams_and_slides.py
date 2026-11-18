@@ -177,7 +177,7 @@ def build_ml_slides():
     bullets(s, 0.7, 5.4, 11.9, 1.8, [
         f"Escolhemos a Random Forest ajustada: {acc:.1f}% no teste e só 1,5 ponto de diferença para o treino. A versão sem ajuste decorava o treino (100%).",
         "A regressão logística ficou 2 horas à frente em 1.389. É empate. Ficamos com a floresta porque o sensor de gás muda de leitura com calor e umidade, e ela aprende essas combinações sozinha.",
-        "Ajuste final: 250 árvores, profundidade 8, mínimo de 16 horas por folha. Padronização e modelo ficam num Pipeline, que só aprende com o treino.",
+        "Ajuste final: 250 árvores, profundidade 8, mínimo de 16 horas por folha e 10 para dividir um nó, todas as 4 medidas em cada divisão. Padronização e modelo ficam num Pipeline, que só aprende com o treino.",
     ], size=14)
 
     # 5. Matriz e importância
@@ -185,7 +185,7 @@ def build_ml_slides():
     s.shapes.add_picture(str(ROOT / "packages" / "ml-modelling" / "charts" / "02_confusao_feature_importance.png"), Inches(0.75), Inches(1.6), width=Inches(11.8))
 
     # 6. Por que só as 4 medidas
-    s = new_slide("Por que o modelo usa só o que o sensor mede", "Decisão de produto, não de laboratório")
+    s = new_slide("Por que o modelo usa só o que o sensor mede", "A escolha cabe no equipamento que o bairro pode ter")
     bullets(s, 0.7, 1.7, 11.9, 5.2, [
         f"Regra simples do sensor (sem internet): acerta {regra['accuracy']*100:.0f} de cada 100 horas.",
         f"Modelo com as 4 medidas do sensor: {campo['accuracy']*100:.0f} de cada 100.",
@@ -202,6 +202,14 @@ def build_ml_slides():
         "A central roda esse modelo a cada leitura e mostra no app: \"A central conferiu e concorda: Ruim, com 93% de confiança.\"",
         "Limite: os dados são de uma cidade italiana. Em cada bairro novo o sensor fica algumas semanas ao lado de uma estação oficial para recalibrar.",
     ], size=16)
+
+    # 8. Evoluções futuras
+    s = new_slide("O que vem depois", "Três passos para o modelo valer em São Paulo")
+    bullets(s, 0.7, 1.7, 11.9, 5.2, [
+        "Recalibrar com a CETESB: algumas semanas de sensor ao lado de uma estação oficial em cada bairro novo, e o modelo retreinado com esses dados.",
+        "Trocar o sensor de gás no prazo: sensores de óxido metálico envelhecem e a leitura deriva. O app avisa quando o sensor passa da validade.",
+        "Olhar a série no tempo: um modelo que lê as últimas horas para avisar antes de o ar ficar ruim, não só quando já ficou.",
+    ], size=17)
 
     out_pptx = DOCS_DIR / "06_RespiraCidadao_ML_Slides.pptx"
     prs.save(str(out_pptx))

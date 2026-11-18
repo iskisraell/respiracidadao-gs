@@ -17,7 +17,7 @@ Tudo no produto existe para essa frase ser verdadeira, rápida e confiável.
 ## O caminho da informação (sem jargão)
 
 1. Um sensor pequeno na parede da escola mede fumaça, monóxido, temperatura e umidade. Se o ar piora, a luz dele muda de cor na hora, mesmo sem internet.
-2. A leitura vai para a central. Lá, um modelo que aprendeu com 6.941 horas de medição real confere a leitura e diz o nível com uma porcentagem de certeza.
+2. A leitura vai para a central. Lá, um modelo que aprendeu com 6.941 horas de medição real confere a leitura e diz o nível com uma porcentagem de confiança.
 3. No app, a pessoa escolhe o lugar e vê a cor, uma frase simples e o que fazer agora.
 4. Vizinhos contam o que estão vendo ("cheiro de queimada na praça"). O relato aparece no lugar e a central percebe quando é urgente.
 5. O padrão do dia mostra quando o ar costuma estar pior. Na base real, o ar ruim aparece em 63% das horas das 19h e em 19% das horas entre 14h e 17h. Daí sai a dica de horário.
@@ -34,7 +34,7 @@ Tudo no produto existe para essa frase ser verdadeira, rápida e confiável.
 
 ### 1. Coerência de dados [feito]
 - [x] Modelos treinados com as 4 leituras que o sensor mede (antes usavam 11 variáveis de laboratório).
-- [x] API grava a leitura com a regra local e o veredito do modelo. 20 testes passando.
+- [x] API grava a leitura com a regra local e o veredito do modelo. 21 testes passando.
 - [x] Firmware e circuito do ESP32 no mesmo contrato.
 
 ### 2. API de produto [feito]
@@ -70,7 +70,7 @@ Tudo no produto existe para essa frase ser verdadeira, rápida e confiável.
 |---|---|
 | Modelo usa só o que o sensor mede | Um modelo melhor que depende de equipamento de laboratório não roda em nenhum bairro. Perdemos 1 ponto de acerto. |
 | A luz do sensor segue uma regra simples | Precisa funcionar sem internet. A regra acerta 84 de cada 100 horas. |
-| A central confere com o modelo | Ganha 3 pontos de acerto sobre a regra e dá uma porcentagem de certeza. |
+| A central confere com o modelo | Ganha 3 pontos de acerto sobre a regra e dá uma porcentagem de confiança. |
 | Dica de horário vem da base real | Entre 14h e 17h o ar ruim aparece em 19% das horas; às 8h, em 49%. |
 | Relatos ficam separados das leituras | Relato é opinião de pessoa; leitura é medida. O app mostra os dois lado a lado e não mistura. |
 | Leitura do sensor não leva relato | O firmware mandava um "relato" automático. Relato é de pessoa; o sensor manda só medida. |
