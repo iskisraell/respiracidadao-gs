@@ -1,0 +1,16 @@
+$ python packages/iot-aicss/run_3_cenarios.py
+
+Ar bom na UBS Vila Esperança
+  sensor  gases 706 | CO 925 | 18.0 °C | 55.0%
+  luz     verde, buzzer quieto
+  gravado nível normal | central: normal (100%)
+
+Ar carregado na Praça da Sé
+  sensor  gases 980 | CO 1120 | 24.0 °C | 42.0%
+  luz     amarela, bipe curto
+  gravado nível atencao | central: atencao (95%)
+
+Ar ruim na Escola Jardim Primavera
+  sensor  gases 1280 | CO 1383 | 31.0 °C | 34.0%
+  luz     vermelha, alarme contínuo
+  gravado nível critico | central: critico (93%)

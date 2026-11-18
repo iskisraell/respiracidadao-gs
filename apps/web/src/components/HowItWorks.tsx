@@ -50,7 +50,7 @@ export function HowItWorks() {
         )}
         <p>Quando erra, erra para o nível vizinho. Nas 1.389 horas de teste, a central nunca chamou de "bom" uma hora que era "ruim", nem o contrário.</p>
         <p className="muted">
-          Os níveis seguem o monóxido de carbono medido por um aparelho de referência: abaixo de 1,5 mg/m³ é bom, de 1,5 a 3 é atenção, acima de 3 é ruim.
+          Os níveis seguem o monóxido de carbono medido por um aparelho de referência: abaixo de 1,5 mg/m³ é bom, de 1,5 a 3 é carregado, acima de 3 é ruim.
         </p>
       </section>
 

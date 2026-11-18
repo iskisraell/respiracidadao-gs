@@ -29,7 +29,7 @@
       "title": "1. O PROBLEMA E POR QUE UM SENSOR NO LUGAR",
       "body": [
         "Escolas e UBS da periferia ficam longe das estações oficiais de qualidade do ar. Quando a fumaça chega, ninguém no prédio sabe até alguém começar a tossir. Um sensor pequeno na parede resolve a parte mais urgente: avisa quem está ali, na hora, com luz e som, e manda a leitura para a central do bairro.",
-        "ODS 3 (saúde e bem-estar) e ODS 11 (cidades sustentáveis)."
+        "A OMS estima cerca de 7 milhões de mortes por ano ligadas à poluição do ar, e crianças respiram mais ar por quilo de corpo que adultos. ODS 3 (saúde e bem-estar) e ODS 11 (cidades sustentáveis)."
       ]
     },
     {
@@ -76,7 +76,7 @@
         }
       ],
       "body": [
-        "A regra da luz usa só a medida de fumaça e gases: abaixo de 830 fica verde, de 830 a 1140 amarelo, acima de 1140 vermelho. Escolhemos esses cortes na base real de 6.941 horas. Sozinha, a regra acerta 84 de cada 100 horas, e funciona sem rede.",
+        "O firmware classifica cada sensor separado. Fumaça e gases: abaixo de 830 bom, de 830 a 1140 carregado, acima de 1140 ruim. Monóxido: cortes em 1010 e 1280. Umidade abaixo de 30% conta como carregado, porque ar seco segura a fumaça perto do chão. A luz segue a medida de fumaça e gases, que sozinha acerta 84 de cada 100 horas na base real de 6.941 horas, e funciona sem rede. O monitor serial mostra o nível de cada sensor na linha SENSORES.",
         "A cada 3 segundos o ESP32 monta um JSON e envia por HTTP POST para a central: {dispositivo_id, tipo, latitude, longitude, metrica: \"gas_voc\", valor, gas_co, temperatura_c, umidade_pct}. É o mesmo contrato da API em Python e da função na nuvem. O sensor não manda relato; relato é coisa de pessoa."
       ]
     },
@@ -143,7 +143,20 @@
       ]
     },
     {
-      "title": "5. O QUE É REAL E O QUE É SIMULADO",
+      "title": "5. O JSON CHEGANDO E VIRANDO CSV",
+      "body": [
+        "Rodamos o mesmo firmware contra o receptor Python (receiver_csv.py). O print mostra a saída serial do sensor, o receptor confirmando cada leitura e as linhas gravadas no CSV."
+      ],
+      "images": [
+        {
+          "path": "/home/agent/projects/respiracidadao-gs/docs/evidencias/02_json_csv.png",
+          "caption": "Figura 4: Saída serial, log do receptor e linhas do CSV.",
+          "width": 165
+        }
+      ]
+    },
+    {
+      "title": "6. O QUE É REAL E O QUE É SIMULADO",
       "bullets": [
         {
           "text": "Real: firmware em C++, circuito do Wokwi (diagram.json), receptor Python que grava CSV (receiver_csv.py) e o script que reproduz os 3 cenários (run_3_cenarios.py), testado contra a API e contra o receptor.",

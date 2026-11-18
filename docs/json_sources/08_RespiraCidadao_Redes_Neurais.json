@@ -107,8 +107,8 @@
         }
       ],
       "body": [
-        "A rede A, maior e sem freio, chegou a 90,9% no treino e 85,7% no teste: 5,2 pontos de diferença, sinal de que decorava. A rede B tem metade dos neurônios, BatchNorm, Dropout de 0,25, weight decay e parada antecipada com paciência de 15 épocas. Parou na época 34, voltou ao melhor estado (época 19) e ficou com 86,1% no teste e 1,1 ponto de diferença.",
-        "Nas 1042 horas de teste, nenhuma hora de ar bom virou ruim e nenhuma ruim virou bom. A regra simples do sensor acerta 82%; a rede ganha uns 4 pontos sobre ela."
+        "A rede A, maior e sem freio, chegou a 90,9% no treino e 85,7% no teste: 5,2 pontos de diferença, sinal de que decorava. A rede B tem metade dos neurônios e quatro freios. BatchNorm reajusta a escala dos números entre camadas para o treino não oscilar. Dropout de 0,25 desliga um quarto dos neurônios ao acaso em cada passo, para nenhum deles virar muleta. Weight decay pune pesos grandes. A parada antecipada encerra o treino quando a validação passa 15 épocas sem melhorar. Parou na época 34, voltou ao melhor estado (época 19) e ficou com 86,1% no teste e 1,1 ponto de diferença.",
+        "Nas 1042 horas de teste, nenhuma hora de ar bom virou ruim e nenhuma ruim virou bom. A regra simples do sensor acerta 82% nessas horas; a rede ganha uns 4 pontos sobre ela. No documento do modelo da central a mesma regra aparece com 84%: lá o teste tem 1.389 horas (20% da base) e aqui 1.042 (15%), então são horas diferentes."
       ]
     },
     {
@@ -146,7 +146,7 @@
       ],
       "body": [
         "No produto, os pesos (air_quality_mlp.pt) rodam na central a cada leitura, ao lado da Random Forest. Na tela Como funciona, o card \"Segunda opinião\" mostra o veredito da rede para a leitura que a pessoa montar.",
-        "Limites: base de outra cidade; precisa de recalibração em cada bairro. A rede acerta um pouco menos que a floresta, por isso é segunda opinião e não a voz principal.",
+        "Limites: base de outra cidade; precisa de recalibração em cada bairro. A rede acerta um pouco menos que a floresta, por isso é segunda opinião e não a voz principal. Próximo passo: uma rede recorrente (LSTM ou GRU) olhando janelas das últimas horas, para avisar que o ar vai piorar antes de piorar.",
         "Acessibilidade, segurança, LGPD e sustentabilidade: a rede só recebe 4 números ambientais, nunca dado de pessoa. Treina numa CPU comum e o arquivo de pesos tem 17 KB. O resultado chega ao usuário como cor e palavra, não como probabilidade crua."
       ]
     }

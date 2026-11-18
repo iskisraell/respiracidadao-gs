@@ -1,0 +1,26 @@
+$ curl -X POST localhost:8000/ocorrencias -H "Content-Type: application/json" -d @escola.json
+# escola.json
+{"dispositivo_id":"esp32-escola-zona-norte","tipo":"esp32","latitude":-23.4892,"longitude":-46.6208,"metrica":"gas_voc","valor":1280.0,"gas_co":1383.0,"temperatura_c":31.0,"umidade_pct":34.0}
+# resposta (201)
+{
+  "id": 14,
+  "dispositivo_id": "esp32-escola-zona-norte",
+  "tipo": "esp32",
+  "latitude": -23.4892,
+  "longitude": -46.6208,
+  "metrica": "gas_voc",
+  "valor": 1280.0,
+  "gas_co": 1383.0,
+  "temperatura_c": 31.0,
+  "umidade_pct": 34.0,
+  "nivel_risco": "critico",
+  "alerta": true,
+  "ia_risco": "critico",
+  "ia_risco_prob": 0.9317,
+  "criado_em": "2026-11-18T04:53:16.027472+00:00",
+  "hash_integridade": "d235cfffaeded1db7679d2a8fa5745d006645420e3499a11ceff66a93aaf9ea5"
+}
+
+$ curl -X POST localhost:8000/ocorrencias -d '{"dispositivo_id":"esp32-x","metrica":"gas_voc"}'
+{"erro":"Campos obrigatórios ausentes ou inválidos.","detalhes":[{"campo":"body.valor","mensagem":"Field required"}]}
+HTTP 400

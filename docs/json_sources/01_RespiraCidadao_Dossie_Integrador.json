@@ -30,7 +30,7 @@
       "title": "1. O PROBLEMA E PARA QUEM",
       "body": [
         "Uma diretora abre o celular às 7h40 e lê: \"Ar ruim perto da escola agora. Mantenha as janelas fechadas e deixe a educação física para depois do almoço.\" O RespiraCidadão existe para essa frase chegar a tempo e ser verdadeira.",
-        "Fumaça de queimada e trânsito pesado pioram crises de asma e DPOC. Quem sente primeiro são crianças, idosos e pacientes de UBS na periferia, onde quase não há estação oficial de medição. O boletim público, quando sai, é da cidade inteira e chega horas depois.",
+        "A Organização Mundial da Saúde estima cerca de 7 milhões de mortes por ano ligadas à poluição do ar. Fumaça de queimada e trânsito pesado pioram crises de asma e DPOC. Quem sente primeiro são crianças, idosos e pacientes de UBS na periferia, onde quase não há estação oficial de medição. O boletim público, quando sai, é da cidade inteira e chega horas depois.",
         "Nosso público são três pessoas: a coordenação de escola ou UBS, que decide se a atividade é ao ar livre; a família com criança, idoso ou alguém com asma, que quer saber se é hora de sair; e o vizinho que viu fumaça e quer avisar alguém."
       ],
       "bullets": [
@@ -47,7 +47,7 @@
           "level": 0
         },
         {
-          "text": "Do tema CitizenTech da live de lançamento, levamos a ideia de tecnologia que o cidadão comum entende e usa sem treinamento. Por isso o app fala de ar, lugar, horário e ação, nunca de modelo ou métrica.",
+          "text": "Do tema CitizenTech da live de lançamento, levamos a ideia de tecnologia que o cidadão comum entende e usa sem treinamento. Por isso o app fala de ar, lugar, horário e ação, e deixa modelo e métrica para a tela Como funciona.",
           "level": 0
         }
       ]
@@ -60,7 +60,12 @@
       "images": [
         {
           "path": "/home/agent/projects/respiracidadao-gs/docs/assets/arquitetura_uml_respiracidadao.png",
-          "caption": "Figura 1: Caminho de uma leitura, do sensor ao app.",
+          "caption": "Figura 1: Componentes do produto e por onde a leitura passa.",
+          "width": 165
+        },
+        {
+          "path": "/home/agent/projects/respiracidadao-gs/docs/assets/uml_sequencia_leitura.png",
+          "caption": "Figura 2: Diagrama de sequência UML de uma leitura de ar ruim. Foi com ele que fechamos o contrato JSON entre sensor, central e app antes de escrever código.",
           "width": 165
         }
       ],
@@ -124,17 +129,17 @@
       "images": [
         {
           "path": "/home/agent/projects/respiracidadao-gs/docs/assets/app_agora.png",
-          "caption": "Figura 2: Tela Agora com a escola em ar ruim e a central concordando com 93% de confiança.",
+          "caption": "Figura 3: Tela Agora com a escola em ar ruim e a central concordando com 93% de confiança.",
           "width": 160
         },
         {
           "path": "/home/agent/projects/respiracidadao-gs/docs/assets/app_horario_relatos.png",
-          "caption": "Figura 3: Melhor horário calculado da base real e relato de vizinho marcado como urgente.",
+          "caption": "Figura 4: Melhor horário calculado da base real e relato de vizinho marcado como urgente.",
           "width": 160
         },
         {
           "path": "/home/agent/projects/respiracidadao-gs/packages/iot-aicss/evidencias/wokwi_3_ar_ruim.png",
-          "caption": "Figura 4: O sensor no simulador Wokwi com o LED vermelho aceso.",
+          "caption": "Figura 5: O sensor no simulador Wokwi com o LED vermelho aceso.",
           "width": 160
         }
       ]
@@ -178,7 +183,8 @@
         }
       ],
       "body": [
-        "Gestão: dividimos o trabalho em três frentes que se encontram no mesmo contrato de dados. Uma cuidou do sensor e da nuvem, outra da estatística e dos modelos, e a terceira da central, do app e das proteções. Toda decisão ficou registrada num plano único no repositório, com o motivo ao lado."
+        "Gestão: dividimos o trabalho em três frentes que se encontram no mesmo contrato de dados. Uma cuidou do sensor e da nuvem, outra da estatística e dos modelos, e a terceira da central, do app e das proteções. Toda decisão ficou registrada num plano único no repositório, com o motivo ao lado.",
+        "Duas dificuldades mudaram o projeto. A primeira: o modelo com 11 medidas de laboratório acertava mais, mas nenhuma escola teria aquele equipamento. Cortamos para as 4 medidas que o ESP32 tem e aceitamos perder alguns pontos. A segunda: o Wokwi gratuito não alcança um servidor fora do navegador. Em vez de esconder isso, fizemos o sensor tratar a falta de rede como caso normal, com a luz local funcionando, e provamos o envio com um receptor em Python."
       ]
     },
     {

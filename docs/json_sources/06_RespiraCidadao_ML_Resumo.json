@@ -30,7 +30,7 @@
       "body": [
         "Base real UCI Air Quality: 9357 horas medidas numa cidade italiana, 6941 completas depois de tirar as falhas de sensor (-200).",
         "O alvo é o nível do ar pelo monóxido medido em laboratório: abaixo de 1,5 mg/m³ bom, até 3,0 carregado, acima ruim. As entradas são só as 4 medidas que nosso ESP32 tem: dois sensores de gás, temperatura e umidade. O valor de laboratório nunca entra como entrada, então não há vazamento.",
-        "Separamos 80% para treino e 20% para teste antes de qualquer ajuste, com proporção de classes igual nos dois. A padronização fica dentro do Pipeline e só aprende com o treino."
+        "Separamos 80% para treino e 20% para teste antes de qualquer ajuste, com proporção de classes igual nos dois. Usamos um Pipeline do scikit-learn, que junta a padronização e o modelo num bloco só. Assim a média e o desvio usados para padronizar saem só do treino, e o teste continua sendo dado que o modelo nunca viu."
       ],
       "images": [
         {
@@ -105,8 +105,8 @@
         }
       ],
       "body": [
-        "A Random Forest sem ajuste decorou o treino (100%) e caiu no teste. Com busca aleatória de hiperparâmetros e validação cruzada em 5 partes (F1 médio de 0,870), ela ficou com 87,1% no teste e só 1,5 ponto de diferença para o treino.",
-        "A regressão logística ficou 2 horas à frente em 1.389. Na prática é empate. Ficamos com a floresta porque ela não supõe fronteira reta entre os níveis e mostra quanto cada medida pesa."
+        "A Random Forest sem ajuste decorou o treino (100%) e caiu no teste. Com busca aleatória de hiperparâmetros e validação cruzada em 5 partes (F1 médio de 0,870), ela ficou com 87,1% no teste e só 1,5 ponto de diferença para o treino. Os valores escolhidos: 250 árvores, profundidade máxima 8, pelo menos 16 horas em cada folha e 10 para dividir um nó. Árvores mais rasas e folhas maiores impedem que ela decore casos isolados.",
+        "A regressão logística ficou 2 horas à frente em 1.389. Na prática é empate. Ficamos com a floresta porque o sensor de gás responde de forma não linear: a mesma fumaça dá leitura diferente com calor ou umidade alta. A floresta aprende essas combinações sem que a gente precise inventá-las, e mostra quanto cada medida pesa."
       ],
       "images": [
         {
@@ -165,7 +165,7 @@
           "headers": [
             "Leitura nunca vista",
             "Veredito",
-            "Certeza"
+            "Confiança"
           ],
           "rows": [
             [

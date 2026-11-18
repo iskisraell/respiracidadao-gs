@@ -35,15 +35,16 @@ Abra http://localhost:5173. Se a lista de lugares estiver vazia, clique em "Modo
 
 ## 01: vídeo integrador (até 7 min)
 
-1. **0:00 a 0:50, a cena.** Leia a frase da diretora às 7h40. Diga para quem é: coordenação de escola e UBS, famílias com criança, idoso ou alguém com asma, e o vizinho que viu fumaça. ODS 3, 10 e 11.
-2. **0:50 a 2:00, o caminho de uma leitura.** Mostre o diagrama `docs/assets/arquitetura_uml_respiracidadao.png` e conte em uma frase o papel de cada parte: sensor (02), central (05), nuvem (07), proteções (03), modelo (06), segunda opinião (08), estatística (09).
+1. **0:00 a 0:50, a cena.** Leia a frase da diretora às 7h40. Diga para quem é: coordenação de escola e UBS, famílias com criança, idoso ou alguém com asma, e o vizinho que viu fumaça. ODS 3, 10 e 11. Cite uma ideia concreta de um convidado da live de lançamento e o que ela mudou no produto. **Israel: preencha com o que vocês anotaram da live; o PDF só traz o tema CitizenTech, e o professor pede a ideia do convidado.**
+2. **0:50 a 2:00, o caminho de uma leitura.** Mostre o diagrama `docs/assets/arquitetura_uml_respiracidadao.png` e depois o de sequência `docs/assets/uml_sequencia_leitura.png` (foi com ele que vocês fecharam o JSON entre sensor, central e app) e conte em uma frase o papel de cada parte: sensor (02), central (05), nuvem (07), proteções (03), modelo (06), segunda opinião (08), estatística (09).
 3. **2:00 a 5:00, demonstração.**
    - Tela Agora: clique na Escola Jardim Primavera (vermelha). Leia "Ar ruim agora", o que fazer e a linha "A central conferiu e concorda: Ruim, com 93% de confiança".
    - Mostre o melhor horário (14h às 17h) e explique que vem de 6.941 horas reais.
    - Escreva um relato ("cheiro de queimada no portão") e mostre ele aparecer marcado como urgente.
    - Tela Como funciona: mexa nos controles de "Teste uma leitura" até virar vermelho e mostre a central e a segunda opinião concordando.
    - Mostre um print do Wokwi com o LED vermelho (`packages/iot-aicss/evidencias`).
-4. **5:00 a 6:30, o que é real e o que vem depois.** Real: sensor no simulador, central, modelos, app. Depois: placa física, publicação na nuvem, recalibração com estação CETESB, aviso no WhatsApp. Feche com acessibilidade (cor sempre com palavra, alarme sonoro), dados pessoais (relato sem nome) e a tela de RMs.
+4. **5:00 a 5:40, gestão.** Três frentes (sensor e nuvem; estatística e modelos; central, app e proteções) presas ao mesmo contrato JSON e a um plano único no repositório. Conte as duas dificuldades: trocar 11 medidas de laboratório pelas 4 do ESP32 e o Wokwi gratuito sem rede externa (viraram luz local + receptor Python).
+5. **5:40 a 6:40, o que é real e o que vem depois.** Real: sensor no simulador, central, modelos, app. Depois: placa física, publicação na nuvem, recalibração com estação CETESB, aviso no WhatsApp. Feche com acessibilidade (cor sempre com palavra, alarme sonoro), dados pessoais (relato sem nome) e a tela de RMs.
 
 ## Pitches curtos (até 5 min cada)
 

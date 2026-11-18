@@ -1,6 +1,6 @@
 import type { Level } from "./types";
 
-export const LEVEL_NAME: Record<Level, string> = { normal: "Bom", atencao: "Atenção", critico: "Ruim" };
+export const LEVEL_NAME: Record<Level, string> = { normal: "Bom", atencao: "Carregado", critico: "Ruim" };
 
 export function ago(iso: string, now = Date.now()): string {
   const min = Math.max(0, Math.round((now - new Date(iso).getTime()) / 60000));

@@ -29,7 +29,7 @@
       "title": "1. A PERGUNTA E A BASE (ITEM 01)",
       "body": [
         "Cliente: secretaria municipal que quer instalar sensores de baixo custo em escolas e UBS. Pergunta: as medidas de um sensor barato explicam o monóxido de carbono que uma estação oficial mediria? Se sim, dá para avisar escolas sem pagar por uma estação em cada bairro (ODS 3 e 11).",
-        "Base: UCI Air Quality (Vito et al., 2008), dados públicos do repositório da UC Irvine. São 9357 horas em que um sensor de baixo custo e um analisador de referência mediram o mesmo ar urbano. Tiramos as horas com falha (-200) e ficamos com 6941. Escolhemos essa base porque ela tem exatamente o par que nos interessa: sensor barato ao lado de medida oficial.",
+        "Base: UCI Air Quality (Vito et al., 2008), dados públicos do repositório da UC Irvine. São 9357 horas em que um sensor de baixo custo e um analisador de referência mediram o mesmo ar urbano. Tiramos as horas com falha (-200) e ficamos com 6941. Escolhemos essa base porque ela tem o par que nos interessa: sensor barato ao lado de medida oficial.",
         "Níveis pelo CO(GT): 2531 horas bom (abaixo de 1,5 mg/m³), 2718 carregado (1,5 a 3,0) e 1692 ruim (3,0 ou mais)."
       ]
     },
@@ -58,13 +58,13 @@
             ],
             [
               "03a",
-              "H1: média < média da base (n=20, alfa=6%)",
+              "H0: média = média da base. H1: média < média da base (n=20, alfa=6%)",
               "média da amostra 2,31; Z=0,3958; Z crítico -1,5548; p=0,6539",
               "Não rejeitar H0"
             ],
             [
               "03b",
-              "H1: média > média da base (n=25, alfa=9%)",
+              "H0: média = média da base. H1: média > média da base (n=25, alfa=9%)",
               "média da amostra 1,86; Z=-1,1189; Z crítico 1,3408; p=0,8684",
               "Não rejeitar H0"
             ]
@@ -78,7 +78,7 @@
         }
       ],
       "body": [
-        "A média (2,18) fica acima da mediana (1,9): a cauda direita é longa, com poucas horas de monóxido muito alto. Por isso P(X > mediana) sob a Normal dá 57,8%, e não 50%. Essas horas raras da cauda são justamente as que o produto precisa pegar.",
+        "A média (2,18) fica acima da mediana (1,9): a cauda direita é longa, com poucas horas de monóxido muito alto. Por isso P(X > mediana) sob a Normal dá 57,8%, e não 50%. O produto existe para pegar essas horas raras da cauda.",
         "Nos dois testes as amostras sorteadas não mostram diferença da média da base. É o esperado para amostras aleatórias da mesma população, e confirma que amostras pequenas não servem para tirar conclusão sobre um bairro."
       ],
       "images": [
@@ -117,6 +117,7 @@
       "body": [
         "Usamos as quatro medidas que nosso ESP32 tem: os dois sensores de gás PT08.S1(CO) e PT08.S2(NMHC), temperatura (T) e umidade (RH).",
         "a) e b) Os dois sensores de gás andam com o CO(GT) (r = 0,877 e 0,914) e entre si (r = 0,886), então carregam informação parecida. Temperatura e umidade quase não se relacionam com o CO sozinhas (r = 0,018 e 0,065), mas se relacionam entre si (r = -0,564) e corrigem a leitura dos sensores de gás, que mudam com o clima.",
+        "c) No gráfico de correlação (Figura 5), os três medidores de monóxido e gases formam o bloco de valores mais altos, porque sobem juntos: 0,877, 0,914 e 0,886. A única relação negativa forte é temperatura com umidade (-0,564): tarde quente costuma ser tarde seca.",
         "d) Equação: CO(GT) = -2,6608 + (0,00130)*PT08,S1(CO) + (0,00426)*PT08,S2(NMHC) + (-0,03046)*T + (-0,00314)*RH.",
         "e) R² = 88,07% (ajustado 88,06%) e teste F = 12797,13 (p < 0,0001). As quatro medidas juntas explicam 88% da variação, contra 77% de um sensor só.",
         "f) Previsões: Ar carregado (Praça da Sé) = 2,105 mg/m³ (carregado); Ar ruim (Escola) = 3,537 mg/m³ (ruim)."
@@ -200,7 +201,7 @@
       "title": "5. AR RUIM OU NÃO: REGRESSÃO LOGÍSTICA (ITEM 06)",
       "body": [
         "a) Evento: ar ruim (CO(GT) de 3,0 mg/m³ ou mais). Equação: logit(P) = -24,6774 + (0,00313)*PT08,S1(CO) + (0,02139)*PT08,S2(NMHC) + (-0,16795)*T + (-0,01122)*RH.",
-        "b) No teste, com 1736 horas: 1263 horas boas reconhecidas, 365 horas ruins reconhecidas, 50 alarmes falsos e 58 horas ruins perdidas. Acurácia 93,78%, precisão 87,95%, recall 86,29%. De cada 100 horas de ar ruim, o modelo pega 86. As 14 que escapam são o motivo de o sensor também ter a regra local de luz.",
+        "b) No teste, com 1736 horas: 1263 horas boas reconhecidas, 365 horas ruins reconhecidas, 50 alarmes falsos e 58 horas ruins perdidas. Acurácia 93,78%, precisão 87,95%, recall 86,29%. De cada 100 horas de ar ruim, o modelo pega 86 e deixa passar 14.",
         "c) Classificação: Ar carregado (Praça da Sé) deu P(ruim) = 0,89%, classe 0. Ar ruim (Escola) deu P(ruim) = 80,92%, classe 1."
       ],
       "images": [
@@ -223,7 +224,7 @@
           "level": 0
         },
         {
-          "text": "Mantenha a luz local no sensor. O modelo perde 14 de cada 100 horas ruins; a regra no aparelho cobre quando a rede cai ou o modelo erra.",
+          "text": "Mantenha a luz local no sensor. Ela continua avisando quem está no prédio quando a internet cai e a central não responde.",
           "level": 0
         },
         {

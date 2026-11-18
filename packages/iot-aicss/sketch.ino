@@ -25,9 +25,9 @@
 #define PIN_VERMELHO 14
 #define PIN_BUZZER   25
 
-// Limiares do indice de gases, tirados da base real (mesmos da API e da Lambda)
-const float LIMIAR_ATENCAO = 830.0;
-const float LIMIAR_CRITICO = 1140.0;
+// Limiares tirados da base real (mesmos da API e da Lambda)
+const float VOC_ATENCAO = 830.0, VOC_CRITICO = 1140.0;   // fumaca e gases
+const float CO_ATENCAO = 1010.0, CO_CRITICO = 1280.0;    // monoxido
 
 const char* WIFI_SSID = "Wokwi-GUEST";
 const char* WIFI_PASS = "";
@@ -44,10 +44,16 @@ float lerIndice(int pino, float minimo, float maximo) {
   return minimo + (analogRead(pino) / 4095.0) * (maximo - minimo);
 }
 
-String classificar(float gasVoc) {
-  if (gasVoc >= LIMIAR_CRITICO) return "critico";
-  if (gasVoc >= LIMIAR_ATENCAO) return "atencao";
+// Classifica uma medida pelos seus dois limiares
+String classificar(float valor, float atencao, float critico) {
+  if (valor >= critico) return "critico";
+  if (valor >= atencao) return "atencao";
   return "normal";
+}
+
+// Ar seco (abaixo de 30%) segura a fumaca perto do chao: so vira atencao, nunca critico
+String classificarUmidade(float umid) {
+  return umid < 30.0 ? "atencao" : "normal";
 }
 
 void alertar(const String& status) {
@@ -106,11 +112,17 @@ void loop() {
   if (isnan(temp)) temp = 25.0;
   if (isnan(umid)) umid = 50.0;
 
-  String status = classificar(gasVoc);
+  // A luz segue a medida de fumaca e gases (regra validada na base real: 84 de cada 100 horas).
+  // As outras medidas tem status proprio no monitor serial e seguem para a central.
+  String status = classificar(gasVoc, VOC_ATENCAO, VOC_CRITICO);
+  String statusCo = classificar(gasCo, CO_ATENCAO, CO_CRITICO);
+  String statusUmid = classificarUmidade(umid);
   alertar(status);
 
   String json = montarJson(gasVoc, gasCo, temp, umid);
   Serial.println("STATUS " + status);
+  Serial.println("SENSORES gases=" + status + " monoxido=" + statusCo + " umidade=" + statusUmid +
+                 " temperatura=" + String(temp, 1) + "C");
   Serial.println("JSON " + json);
   enviar(json);
 

@@ -89,6 +89,8 @@ def build_all():
     ml_charts = ROOT / "packages" / "ml-modelling" / "charts"
     nn_charts = ROOT / "packages" / "neural-networks" / "charts"
     wokwi = ROOT / "packages" / "iot-aicss" / "evidencias"
+    evid = DOCS_DIR / "evidencias"
+    uml_seq = str(assets / "uml_sequencia_leitura.png")
 
     regra, campo, lab = ML["comparacao_conjuntos"]
     nn_regra, nn_base, nn_reg = NN["comparacao_experimentos"]
@@ -108,14 +110,14 @@ def build_all():
                 "title": "1. O PROBLEMA E PARA QUEM",
                 "body": [
                     "Uma diretora abre o celular às 7h40 e lê: \"Ar ruim perto da escola agora. Mantenha as janelas fechadas e deixe a educação física para depois do almoço.\" O RespiraCidadão existe para essa frase chegar a tempo e ser verdadeira.",
-                    "Fumaça de queimada e trânsito pesado pioram crises de asma e DPOC. Quem sente primeiro são crianças, idosos e pacientes de UBS na periferia, onde quase não há estação oficial de medição. O boletim público, quando sai, é da cidade inteira e chega horas depois.",
+                    "A Organização Mundial da Saúde estima cerca de 7 milhões de mortes por ano ligadas à poluição do ar. Fumaça de queimada e trânsito pesado pioram crises de asma e DPOC. Quem sente primeiro são crianças, idosos e pacientes de UBS na periferia, onde quase não há estação oficial de medição. O boletim público, quando sai, é da cidade inteira e chega horas depois.",
                     "Nosso público são três pessoas: a coordenação de escola ou UBS, que decide se a atividade é ao ar livre; a família com criança, idoso ou alguém com asma, que quer saber se é hora de sair; e o vizinho que viu fumaça e quer avisar alguém.",
                 ],
                 "bullets": [
                     {"text": "ODS 3, saúde e bem-estar: aviso antes da crise respiratória.", "level": 0},
                     {"text": "ODS 10, redução das desigualdades: um sensor barato onde a estação oficial não chega.", "level": 0},
                     {"text": "ODS 11, cidades sustentáveis: dado aberto e conferível por bairro.", "level": 0},
-                    {"text": "Do tema CitizenTech da live de lançamento, levamos a ideia de tecnologia que o cidadão comum entende e usa sem treinamento. Por isso o app fala de ar, lugar, horário e ação, nunca de modelo ou métrica.", "level": 0},
+                    {"text": "Do tema CitizenTech da live de lançamento, levamos a ideia de tecnologia que o cidadão comum entende e usa sem treinamento. Por isso o app fala de ar, lugar, horário e ação, e deixa modelo e métrica para a tela Como funciona.", "level": 0},
                 ],
             },
             {
@@ -123,7 +125,10 @@ def build_all():
                 "body": [
                     "Um sensor na parede mede fumaça, monóxido, temperatura e umidade. Se o ar piora, a luz muda de cor e o alarme toca na hora, mesmo sem internet. A leitura vai para a central, que confere com um modelo treinado em 6.941 horas reais de medição e devolve o nível com uma porcentagem de confiança. O app mostra a cor, uma frase e o que fazer.",
                 ],
-                "images": [{"path": arch_png, "caption": "Figura 1: Caminho de uma leitura, do sensor ao app.", "width": 165}],
+                "images": [
+                    {"path": arch_png, "caption": "Figura 1: Componentes do produto e por onde a leitura passa.", "width": 165},
+                    {"path": uml_seq, "caption": "Figura 2: Diagrama de sequência UML de uma leitura de ar ruim. Foi com ele que fechamos o contrato JSON entre sensor, central e app antes de escrever código.", "width": 165},
+                ],
                 "tables": [
                     {
                         "headers": ["Parte do produto", "O que faz", "Disciplina e evidência"],
@@ -146,9 +151,9 @@ def build_all():
                     "O app tem duas telas. \"Agora\" mostra cada lugar com sua cor, o que fazer, o melhor horário para atividade ao ar livre e o que os vizinhos estão contando. \"Como funciona\" explica o caminho da informação, deixa testar uma leitura e diz o que ainda não resolvemos.",
                 ],
                 "images": [
-                    {"path": str(assets / "app_agora.png"), "caption": "Figura 2: Tela Agora com a escola em ar ruim e a central concordando com 93% de confiança.", "width": 160},
-                    {"path": str(assets / "app_horario_relatos.png"), "caption": "Figura 3: Melhor horário calculado da base real e relato de vizinho marcado como urgente.", "width": 160},
-                    {"path": str(wokwi / "wokwi_3_ar_ruim.png"), "caption": "Figura 4: O sensor no simulador Wokwi com o LED vermelho aceso.", "width": 160},
+                    {"path": str(assets / "app_agora.png"), "caption": "Figura 3: Tela Agora com a escola em ar ruim e a central concordando com 93% de confiança.", "width": 160},
+                    {"path": str(assets / "app_horario_relatos.png"), "caption": "Figura 4: Melhor horário calculado da base real e relato de vizinho marcado como urgente.", "width": 160},
+                    {"path": str(wokwi / "wokwi_3_ar_ruim.png"), "caption": "Figura 5: O sensor no simulador Wokwi com o LED vermelho aceso.", "width": 160},
                 ],
             },
             {
@@ -167,6 +172,7 @@ def build_all():
                 ],
                 "body": [
                     "Gestão: dividimos o trabalho em três frentes que se encontram no mesmo contrato de dados. Uma cuidou do sensor e da nuvem, outra da estatística e dos modelos, e a terceira da central, do app e das proteções. Toda decisão ficou registrada num plano único no repositório, com o motivo ao lado.",
+                    "Duas dificuldades mudaram o projeto. A primeira: o modelo com 11 medidas de laboratório acertava mais, mas nenhuma escola teria aquele equipamento. Cortamos para as 4 medidas que o ESP32 tem e aceitamos perder alguns pontos. A segunda: o Wokwi gratuito não alcança um servidor fora do navegador. Em vez de esconder isso, fizemos o sensor tratar a falta de rede como caso normal, com a luz local funcionando, e provamos o envio com um receptor em Python.",
                 ],
             },
             {
@@ -193,7 +199,7 @@ def build_all():
                 "title": "1. O PROBLEMA E POR QUE UM SENSOR NO LUGAR",
                 "body": [
                     "Escolas e UBS da periferia ficam longe das estações oficiais de qualidade do ar. Quando a fumaça chega, ninguém no prédio sabe até alguém começar a tossir. Um sensor pequeno na parede resolve a parte mais urgente: avisa quem está ali, na hora, com luz e som, e manda a leitura para a central do bairro.",
-                    "ODS 3 (saúde e bem-estar) e ODS 11 (cidades sustentáveis).",
+                    "A OMS estima cerca de 7 milhões de mortes por ano ligadas à poluição do ar, e crianças respiram mais ar por quilo de corpo que adultos. ODS 3 (saúde e bem-estar) e ODS 11 (cidades sustentáveis).",
                 ],
             },
             {
@@ -212,7 +218,7 @@ def build_all():
                     }
                 ],
                 "body": [
-                    "A regra da luz usa só a medida de fumaça e gases: abaixo de 830 fica verde, de 830 a 1140 amarelo, acima de 1140 vermelho. Escolhemos esses cortes na base real de 6.941 horas. Sozinha, a regra acerta 84 de cada 100 horas, e funciona sem rede.",
+                    "O firmware classifica cada sensor separado. Fumaça e gases: abaixo de 830 bom, de 830 a 1140 carregado, acima de 1140 ruim. Monóxido: cortes em 1010 e 1280. Umidade abaixo de 30% conta como carregado, porque ar seco segura a fumaça perto do chão. A luz segue a medida de fumaça e gases, que sozinha acerta 84 de cada 100 horas na base real de 6.941 horas, e funciona sem rede. O monitor serial mostra o nível de cada sensor na linha SENSORES.",
                     "A cada 3 segundos o ESP32 monta um JSON e envia por HTTP POST para a central: {dispositivo_id, tipo, latitude, longitude, metrica: \"gas_voc\", valor, gas_co, temperatura_c, umidade_pct}. É o mesmo contrato da API em Python e da função na nuvem. O sensor não manda relato; relato é coisa de pessoa.",
                 ],
             },
@@ -240,7 +246,14 @@ def build_all():
                 ],
             },
             {
-                "title": "5. O QUE É REAL E O QUE É SIMULADO",
+                "title": "5. O JSON CHEGANDO E VIRANDO CSV",
+                "body": [
+                    "Rodamos o mesmo firmware contra o receptor Python (receiver_csv.py). O print mostra a saída serial do sensor, o receptor confirmando cada leitura e as linhas gravadas no CSV.",
+                ],
+                "images": [{"path": str(evid / "02_json_csv.png"), "caption": "Figura 4: Saída serial, log do receptor e linhas do CSV.", "width": 165}],
+            },
+            {
+                "title": "6. O QUE É REAL E O QUE É SIMULADO",
                 "bullets": [
                     {"text": "Real: firmware em C++, circuito do Wokwi (diagram.json), receptor Python que grava CSV (receiver_csv.py) e o script que reproduz os 3 cenários (run_3_cenarios.py), testado contra a API e contra o receptor.", "level": 0},
                     {"text": "Simulado: os dois sensores de gás são potenciômetros. Um sensor de verdade precisa de aquecimento e calibração ao lado de uma estação oficial antes de valer o número.", "level": 0},
@@ -262,11 +275,11 @@ def build_all():
                 "title": "1. A SOLUÇÃO EM UMA PÁGINA",
                 "body": [
                     "O RespiraCidadão avisa escolas, UBS e famílias quando o ar perto delas piora. Público: crianças, idosos e pessoas com asma na periferia. Problema: exposição à fumaça sem aviso a tempo.",
-                    "Caminho dos dados: sensor ESP32 ou pessoa no app, central (API FastAPI), banco (SQLite e CSV no local, PostgreSQL na nuvem) e modelos de IA que conferem cada leitura. Um alarme falso faz a escola cancelar aula à toa; um alarme perdido deixa criança respirando fumaça. As duas falhas custam caro, e é isso que estamos protegendo.",
+                    "Caminho dos dados: sensor ESP32 ou pessoa no app, central (API FastAPI), banco (SQLite e CSV no local, PostgreSQL na nuvem) e modelos de IA que conferem cada leitura. Um alarme falso faz a escola cancelar aula à toa. Um alarme perdido deixa criança respirando fumaça. A segurança aqui serve para que nenhum dos dois aconteça por ação de alguém mal-intencionado.",
                 ],
             },
             {
-                "title": "2. SUPERFÍCIE DE ATAQUE EM 5 CAMADAS",
+                "title": "2. ONDE O PRODUTO PODE SER ATACADO (5 CAMADAS)",
                 "tables": [
                     {
                         "headers": ["Camada", "Ameaça", "O que acontece se der certo"],
@@ -288,10 +301,10 @@ def build_all():
                         "headers": ["Risco", "Prob. / Impacto", "Controle"],
                         "rows": [
                             ["R1. Enxurrada de envios", "Alta / Alto", "Limite de 30 envios por minuto por endereço, resposta 429"],
-                            ["R2. Apagar dados sem permissão", "Média / Crítico", "Chave X-API-Key comparada em tempo constante; sem chave configurada, a rota fica fechada"],
+                            ["R2. Apagar dados sem permissão", "Média / Crítico", "Chave X-API-Key, comparada de um jeito que não deixa adivinhar pelo tempo de resposta; sem chave configurada, a rota fica fechada"],
                             ["R3. Script ou fórmula em relato", "Alta / Médio", "Texto escapado antes de gravar; células de CSV que começam com = + - @ ganham prefixo"],
                             ["R4. Histórico adulterado", "Baixa / Alto", "Selo HMAC-SHA256 (chave RESPIRA_SEAL_KEY fora do banco) cobrindo todos os campos da leitura, conferido em GET /security/verify/{id}"],
-                            ["R5. Leitura absurda para enganar o modelo", "Média / Alto", "Faixas válidas por campo (Pydantic); fora da faixa vira 400 e não chega ao modelo"],
+                            ["R5. Leitura absurda para enganar o modelo", "Média / Alto", "Cada campo tem faixa válida (validada com Pydantic); fora da faixa vira 400 e não chega ao modelo"],
                             ["R6. Engenharia social", "Alta / Alto", "Canal oficial único, treino da equipe e MFA para quem administra"],
                         ],
                         "col_widths": [50, 28, 102],
@@ -308,10 +321,10 @@ def build_all():
                         "headers": ["Categoria", "Controle", "Situação"],
                         "rows": [
                             ["Autenticação", "Chave para rotas de administração; MFA para gestores de escola e UBS", "Chave feita; MFA proposto"],
-                            ["Firewall / WAF", "Limite por endereço e CORS restrito; AWS WAF na URL da função e banco aceitando só a porta 5432", "Limite feito; WAF proposto"],
+                            ["Firewall / WAF", "Limite por endereço e só o site do app pode chamar a central (CORS); filtro de ataques web (AWS WAF) na URL da função e banco aceitando só a porta 5432", "Limite feito; WAF proposto"],
                             ["Backup", "Snapshot diário do PostgreSQL e cópia do CSV com o selo de cada linha", "Proposto"],
                             ["Criptografia", "HTTPS na URL da função, SSL obrigatório na conexão com o banco, disco do banco cifrado", "SSL feito no código; resto na publicação"],
-                            ["Monitoramento", "Registro de eventos de segurança (security_audit.jsonl) e avisos no CloudWatch para leitura descartada", "Feito; alarmes propostos"],
+                            ["Monitoramento", "Registro de eventos de segurança (security_audit.jsonl), lido só com chave, e avisos no CloudWatch para leitura descartada", "Feito; alarmes propostos"],
                         ],
                         "col_widths": [30, 104, 46],
                     }
@@ -320,7 +333,7 @@ def build_all():
             {
                 "title": "5. PROTEÇÕES FUNCIONANDO",
                 "body": [
-                    "Cada proteção abaixo tem um teste automático em apps/api/tests/test_api.py. Os 16 testes passam.",
+                    "Cada proteção abaixo tem um teste automático em apps/api/tests/test_api.py. Os 16 testes passam. Também rodamos cada ataque à mão contra a central ligada e guardamos a saída do terminal.",
                 ],
                 "bullets": [
                     {"text": "Limite de envios: com limite de teste em 10, os envios 11 e 12 voltam 429 e o evento rate_limit_blocked vai para o registro.", "level": 0},
@@ -331,12 +344,21 @@ def build_all():
                 ],
             },
             {
-                "title": "6. LGPD E ENGENHARIA SOCIAL",
+                "title": "6. PROVAS NO TERMINAL",
+                "images": [
+                    {"path": str(evid / "03_limite_chave.png"), "caption": "Figura 1: Envios além do limite voltam 429. Apagar sem chave ou com chave errada volta 401.", "width": 160},
+                    {"path": str(evid / "03_selo.png"), "caption": "Figura 2: Selo íntegro, edição direta no banco, selo quebrado.", "width": 160},
+                    {"path": str(evid / "03_pytest.png"), "caption": "Figura 3: Os 16 testes automáticos passando.", "width": 160},
+                ],
+            },
+            {
+                "title": "7. LGPD E ENGENHARIA SOCIAL",
                 "tables": [
                     {
                         "headers": ["Pergunta", "Resposta"],
                         "rows": [
-                            ["Que dados pessoais tratamos?", "Nenhum cadastro. Leitura de sensor tem ID do aparelho e coordenada pública do prédio. Relato tem só texto e lugar."],
+                            ["Que dados pessoais tratamos?", "Nenhum cadastro. Leitura de sensor tem ID do aparelho e coordenada pública do prédio. Relato tem só texto e lugar. O endereço IP de quem envia fica só no registro de segurança, para aplicar o limite e investigar ataque."],
+                            ["Quem vê o registro de segurança?", "Só quem tem a chave de administração (GET /security/audit exige X-API-Key). Proposta para produção: apagar o registro depois de 30 dias."],
                             ["Pode haver dado sensível?", "Sim. Um relato como \"meu filho está com falta de ar\" fala de saúde. Por isso não pedimos nome nem localização da pessoa."],
                             ["Como protegemos?", "Coleta mínima, texto limpo, chave para apagar, SSL até o banco e selo de integridade."],
                             ["Como a pessoa sabe?", "O formulário diz \"Sem nome, sem localização sua. Só o texto.\" e a tela Como funciona explica o resto."],
@@ -362,9 +384,11 @@ def build_all():
             {
                 "title": "1. O QUE A CENTRAL FAZ",
                 "body": [
-                    "O sensor na escola só sabe acender uma luz. Quem guarda o histórico, confere com o modelo e responde ao app é a central. Ela recebe o JSON do ESP32 (o mesmo contrato do sensor), recusa o que vier incompleto, classifica o nível por uma função condicional, grava em CSV (data/runtime/leituras.csv) e em SQLite, e calcula indicadores.",
-                    "Limiares em um dicionário: gas_voc atenção 830 e crítico 1140; gas_co atenção 1010 e crítico 1280. Os mesmos números do firmware e da função na nuvem.",
+                    "Problema: escolas e UBS da periferia não sabem quando o ar perto delas piora. Público: coordenação de escola e UBS e famílias com criança, idoso ou alguém com asma. O sensor na escola só sabe acender uma luz. Quem guarda o histórico, confere com o modelo e responde ao app é a central. Ela recebe o JSON do ESP32 (o mesmo contrato do sensor), recusa o que vier incompleto, classifica o nível por uma função condicional, grava em CSV (data/runtime/leituras.csv) e em SQLite, e calcula indicadores.",
+                    "As medidas: gas_voc é o sensor de fumaça e gases, e gas_co o de monóxido de carbono. Os dois devolvem um número bruto, sem unidade, que sobe quando o ar piora. Limiares em um dicionário: gas_voc atenção 830 e crítico 1140; gas_co atenção 1010 e crítico 1280. Os mesmos números do firmware e da função na nuvem.",
+                    "Contrato JSON que o sensor envia: {\"dispositivo_id\": \"esp32-escola-zona-norte\", \"tipo\": \"esp32\", \"latitude\": -23.49, \"longitude\": -46.62, \"metrica\": \"gas_voc\", \"valor\": 1280, \"gas_co\": 1383, \"temperatura_c\": 31, \"umidade_pct\": 34}.",
                 ],
+                "images": [{"path": uml_seq, "caption": "Figura 1: Diagrama de sequência UML de uma leitura, do sensor ao app.", "width": 165}],
             },
             {
                 "title": "2. ROTAS",
@@ -399,9 +423,18 @@ def build_all():
                     }
                 ],
                 "body": [
+                    "As saídas abaixo são da central rodando de verdade: os 3 cenários do sensor, um POST manual com resposta 201, um JSON incompleto recusado com 400, as linhas do CSV e os indicadores calculados.",
                     "Para rodar: uvicorn app.main:app --app-dir apps/api --port 8000. Os cenários do sensor rodam com python packages/iot-aicss/run_3_cenarios.py, e os 16 testes automáticos com pytest apps/api/tests.",
                     "Limitações: CSV é ótimo para abrir numa planilha e ruim para muitas escritas ao mesmo tempo. Para vários bairros, a central vai para a nuvem com PostgreSQL. A classificação por limiar não vê tendência; quem olha o histórico é o modelo da central.",
                     "ODS 3 e ODS 11.",
+                ],
+            },
+            {
+                "title": "4. A CENTRAL RODANDO",
+                "images": [
+                    {"path": str(evid / "05_cenarios.png"), "caption": "Figura 2: Os 3 cenários enviados pelo script do sensor.", "width": 160},
+                    {"path": str(evid / "05_post.png"), "caption": "Figura 3: POST aceito com 201 e JSON sem valor recusado com 400.", "width": 160},
+                    {"path": str(evid / "05_csv_indicadores.png"), "caption": "Figura 4: Linhas gravadas no CSV e GET /indicadores.", "width": 160},
                 ],
             },
         ],
@@ -420,7 +453,7 @@ def build_all():
                 "body": [
                     f"Base real UCI Air Quality: {STATS['dataset']['registros_brutos']} horas medidas numa cidade italiana, {STATS['dataset']['registros_limpos']} completas depois de tirar as falhas de sensor (-200).",
                     "O alvo é o nível do ar pelo monóxido medido em laboratório: abaixo de 1,5 mg/m³ bom, até 3,0 carregado, acima ruim. As entradas são só as 4 medidas que nosso ESP32 tem: dois sensores de gás, temperatura e umidade. O valor de laboratório nunca entra como entrada, então não há vazamento.",
-                    "Separamos 80% para treino e 20% para teste antes de qualquer ajuste, com proporção de classes igual nos dois. A padronização fica dentro do Pipeline e só aprende com o treino.",
+                    "Separamos 80% para treino e 20% para teste antes de qualquer ajuste, com proporção de classes igual nos dois. Usamos um Pipeline do scikit-learn, que junta a padronização e o modelo num bloco só. Assim a média e o desvio usados para padronizar saem só do treino, e o teste continua sendo dado que o modelo nunca viu.",
                 ],
                 "images": [{"path": str(ml_charts / "01_eda_classes_box.png"), "caption": "Figura 1: Quantas horas em cada nível e como a medida de gases se separa entre eles."}],
             },
@@ -437,8 +470,8 @@ def build_all():
                     }
                 ],
                 "body": [
-                    f"A Random Forest sem ajuste decorou o treino (100%) e caiu no teste. Com busca aleatória de hiperparâmetros e validação cruzada em 5 partes (F1 médio de {num(ML['cv_f1_macro'], 3)}), ela ficou com {pct(ML['teste_accuracy'])} no teste e só 1,5 ponto de diferença para o treino.",
-                    "A regressão logística ficou 2 horas à frente em 1.389. Na prática é empate. Ficamos com a floresta porque ela não supõe fronteira reta entre os níveis e mostra quanto cada medida pesa.",
+                    f"A Random Forest sem ajuste decorou o treino (100%) e caiu no teste. Com busca aleatória de hiperparâmetros e validação cruzada em 5 partes (F1 médio de {num(ML['cv_f1_macro'], 3)}), ela ficou com {pct(ML['teste_accuracy'])} no teste e só 1,5 ponto de diferença para o treino. Os valores escolhidos: 250 árvores, profundidade máxima 8, pelo menos 16 horas em cada folha e 10 para dividir um nó. Árvores mais rasas e folhas maiores impedem que ela decore casos isolados.",
+                    "A regressão logística ficou 2 horas à frente em 1.389. Na prática é empate. Ficamos com a floresta porque o sensor de gás responde de forma não linear: a mesma fumaça dá leitura diferente com calor ou umidade alta. A floresta aprende essas combinações sem que a gente precise inventá-las, e mostra quanto cada medida pesa.",
                 ],
                 "images": [{"path": str(ml_charts / "02_confusao_feature_importance.png"), "caption": "Figura 2: Onde o modelo erra e quanto cada medida pesa."}],
             },
@@ -464,7 +497,7 @@ def build_all():
                 "title": "4. APLICAÇÃO NO PRODUTO E LIMITES",
                 "tables": [
                     {
-                        "headers": ["Leitura nunca vista", "Veredito", "Certeza"],
+                        "headers": ["Leitura nunca vista", "Veredito", "Confiança"],
                         "rows": [
                             [d["cenario"], NIVEL[d["classe_predita"]], pct(max(d["probabilidades"].values()), 0)]
                             for d in ML["demonstracao_nao_vista"]
@@ -492,8 +525,9 @@ def build_all():
                 "title": "1. CENÁRIO E LIMIARES",
                 "body": [
                     "Uma prefeitura não quer manter um servidor ligado em cada bairro. A central na nuvem só existe quando chega leitura: o sensor manda o JSON para uma URL, uma função Lambda valida, classifica, pede à IA de texto uma leitura do relato (quando houver) e grava no PostgreSQL. Tudo que dá errado vira aviso no CloudWatch.",
-                    "Limiares: gas_voc atenção 830 e crítico 1140; gas_co atenção 1010 e crítico 1280. Tipos aceitos: esp32 e app. ODS 3 e ODS 11.",
-                    "A função fica fora da VPC para alcançar a Hugging Face sem pagar NAT Gateway. O banco aceita conexão pública com senha e SSL obrigatório. Serve para demonstração; em produção o banco vai para rede privada.",
+                    "Para o cidadão, isso significa que a família consulta o mesmo nível que a escola vê, sem a prefeitura pagar servidor parado de madrugada. ODS 3 (aviso antes da crise respiratória), ODS 10 (sensor barato onde não há estação oficial) e ODS 11 (dado aberto por bairro).",
+                    "Limiares: gas_voc atenção 830 e crítico 1140; gas_co atenção 1010 e crítico 1280. Tipos aceitos: esp32 e app.",
+                    "A função roda fora da rede privada da AWS (VPC). Dentro dela, para chegar à Hugging Face, precisaríamos de um NAT Gateway, um tradutor de rede que cobra por hora mesmo parado. O banco aceita conexão de fora, mas só com senha e SSL obrigatório. Serve para demonstração; em produção o banco vai para rede privada.",
                 ],
                 "tables": [
                     {
@@ -511,6 +545,7 @@ def build_all():
                 "title": "2. IA DE TEXTO SEM DERRUBAR A GRAVAÇÃO",
                 "body": [
                     "A função chama https://router.huggingface.co/hf-inference/models/cardiffnlp/twitter-xlm-roberta-base-sentiment com o token em HF_TOKEN, usando só urllib. Sem token, com timeout ou resposta estranha, ela registra WARNING e grava a leitura do mesmo jeito. Uma queimada não pode esperar a IA de texto voltar.",
+                    "Por que Hugging Face e não o Amazon Comprehend: o token é gratuito, não exige permissão extra de IAM (o Learner Lab bloqueia várias) e o modelo entende português, inclusive gíria de relato como \"tá fedendo a queimado\".",
                 ],
             },
             {
@@ -585,8 +620,8 @@ def build_all():
                     {"path": str(nn_charts / "02_matriz_confusao_nn.png"), "caption": "Figura 2: Onde a rede regularizada erra no teste."},
                 ],
                 "body": [
-                    f"A rede A, maior e sem freio, chegou a {pct(nn_base['train_acc'])} no treino e {pct(nn_base['test_acc'])} no teste: {num(nn_base['gap'] * 100, 1)} pontos de diferença, sinal de que decorava. A rede B tem metade dos neurônios, BatchNorm, Dropout de 0,25, weight decay e parada antecipada com paciência de 15 épocas. Parou na época {NN['epocas_executadas']}, voltou ao melhor estado (época {NN['melhor_epoca']}) e ficou com {pct(nn_reg['test_acc'])} no teste e {num(nn_reg['gap'] * 100, 1)} ponto de diferença.",
-                    f"Nas {nn_teste} horas de teste, nenhuma hora de ar bom virou ruim e nenhuma ruim virou bom. A regra simples do sensor acerta {pct(nn_regra['test_acc'], 0)}; a rede ganha uns 4 pontos sobre ela.",
+                    f"A rede A, maior e sem freio, chegou a {pct(nn_base['train_acc'])} no treino e {pct(nn_base['test_acc'])} no teste: {num(nn_base['gap'] * 100, 1)} pontos de diferença, sinal de que decorava. A rede B tem metade dos neurônios e quatro freios. BatchNorm reajusta a escala dos números entre camadas para o treino não oscilar. Dropout de 0,25 desliga um quarto dos neurônios ao acaso em cada passo, para nenhum deles virar muleta. Weight decay pune pesos grandes. A parada antecipada encerra o treino quando a validação passa 15 épocas sem melhorar. Parou na época {NN['epocas_executadas']}, voltou ao melhor estado (época {NN['melhor_epoca']}) e ficou com {pct(nn_reg['test_acc'])} no teste e {num(nn_reg['gap'] * 100, 1)} ponto de diferença.",
+                    f"Nas {nn_teste} horas de teste, nenhuma hora de ar bom virou ruim e nenhuma ruim virou bom. A regra simples do sensor acerta {pct(nn_regra['test_acc'], 0)} nessas horas; a rede ganha uns 4 pontos sobre ela. No documento do modelo da central a mesma regra aparece com 84%: lá o teste tem 1.389 horas (20% da base) e aqui 1.042 (15%), então são horas diferentes.",
                 ],
             },
             {
@@ -607,7 +642,7 @@ def build_all():
                 ],
                 "body": [
                     "No produto, os pesos (air_quality_mlp.pt) rodam na central a cada leitura, ao lado da Random Forest. Na tela Como funciona, o card \"Segunda opinião\" mostra o veredito da rede para a leitura que a pessoa montar.",
-                    "Limites: base de outra cidade; precisa de recalibração em cada bairro. A rede acerta um pouco menos que a floresta, por isso é segunda opinião e não a voz principal.",
+                    "Limites: base de outra cidade; precisa de recalibração em cada bairro. A rede acerta um pouco menos que a floresta, por isso é segunda opinião e não a voz principal. Próximo passo: uma rede recorrente (LSTM ou GRU) olhando janelas das últimas horas, para avisar que o ar vai piorar antes de piorar.",
                     "Acessibilidade, segurança, LGPD e sustentabilidade: a rede só recebe 4 números ambientais, nunca dado de pessoa. Treina numa CPU comum e o arquivo de pesos tem 17 KB. O resultado chega ao usuário como cor e palavra, não como probabilidade crua.",
                 ],
             },
@@ -635,7 +670,7 @@ def build_all():
                 "title": "1. A PERGUNTA E A BASE (ITEM 01)",
                 "body": [
                     "Cliente: secretaria municipal que quer instalar sensores de baixo custo em escolas e UBS. Pergunta: as medidas de um sensor barato explicam o monóxido de carbono que uma estação oficial mediria? Se sim, dá para avisar escolas sem pagar por uma estação em cada bairro (ODS 3 e 11).",
-                    f"Base: {STATS['dataset']['nome']}, dados públicos do repositório da UC Irvine. São {STATS['dataset']['registros_brutos']} horas em que um sensor de baixo custo e um analisador de referência mediram o mesmo ar urbano. Tiramos as horas com falha (-200) e ficamos com {STATS['dataset']['registros_limpos']}. Escolhemos essa base porque ela tem exatamente o par que nos interessa: sensor barato ao lado de medida oficial.",
+                    f"Base: {STATS['dataset']['nome']}, dados públicos do repositório da UC Irvine. São {STATS['dataset']['registros_brutos']} horas em que um sensor de baixo custo e um analisador de referência mediram o mesmo ar urbano. Tiramos as horas com falha (-200) e ficamos com {STATS['dataset']['registros_limpos']}. Escolhemos essa base porque ela tem o par que nos interessa: sensor barato ao lado de medida oficial.",
                     f"Níveis pelo CO(GT): {STATS['dataset']['distribuicao_risco']['normal']} horas bom (abaixo de 1,5 mg/m³), {STATS['dataset']['distribuicao_risco']['atencao']} carregado (1,5 a 3,0) e {STATS['dataset']['distribuicao_risco']['critico']} ruim (3,0 ou mais).",
                 ],
             },
@@ -647,14 +682,14 @@ def build_all():
                         "rows": [
                             ["02a", "P(X < média) de CO(GT)", f"{pct(it2['p_menor_media'], 2)} (média {num(it2['media'], 4)} mg/m³)", it2["classificacao_a"]],
                             ["02b", "P(X > mediana) de CO(GT)", f"{pct(it2['p_maior_mediana'], 2)} (mediana {num(it2['mediana'], 1)} mg/m³)", it2["classificacao_b"]],
-                            ["03a", "H1: média < média da base (n=20, alfa=6%)", f"média da amostra {num(t3a['media_amostral'])}; Z={num(t3a['z_calculado'], 4)}; Z crítico {num(t3a['z_critico'], 4)}; p={num(t3a['p_valor'], 4)}", t3a["decisao"]],
-                            ["03b", "H1: média > média da base (n=25, alfa=9%)", f"média da amostra {num(t3b['media_amostral'])}; Z={num(t3b['z_calculado'], 4)}; Z crítico {num(t3b['z_critico'], 4)}; p={num(t3b['p_valor'], 4)}", t3b["decisao"]],
+                            ["03a", "H0: média = média da base. H1: média < média da base (n=20, alfa=6%)", f"média da amostra {num(t3a['media_amostral'])}; Z={num(t3a['z_calculado'], 4)}; Z crítico {num(t3a['z_critico'], 4)}; p={num(t3a['p_valor'], 4)}", t3a["decisao"]],
+                            ["03b", "H0: média = média da base. H1: média > média da base (n=25, alfa=9%)", f"média da amostra {num(t3b['media_amostral'])}; Z={num(t3b['z_calculado'], 4)}; Z crítico {num(t3b['z_critico'], 4)}; p={num(t3b['p_valor'], 4)}", t3b["decisao"]],
                         ],
                         "col_widths": [14, 52, 70, 44],
                     }
                 ],
                 "body": [
-                    "A média (2,18) fica acima da mediana (1,9): a cauda direita é longa, com poucas horas de monóxido muito alto. Por isso P(X > mediana) sob a Normal dá 57,8%, e não 50%. Essas horas raras da cauda são justamente as que o produto precisa pegar.",
+                    "A média (2,18) fica acima da mediana (1,9): a cauda direita é longa, com poucas horas de monóxido muito alto. Por isso P(X > mediana) sob a Normal dá 57,8%, e não 50%. O produto existe para pegar essas horas raras da cauda.",
                     "Nos dois testes as amostras sorteadas não mostram diferença da média da base. É o esperado para amostras aleatórias da mesma população, e confirma que amostras pequenas não servem para tirar conclusão sobre um bairro.",
                 ],
                 "images": [{"path": str(stats_charts / "02_distribuicao_normal_co.png"), "caption": "Figura 1: Distribuição de CO(GT) e a curva Normal com a mesma média e desvio."}],
@@ -679,6 +714,7 @@ def build_all():
                 "body": [
                     "Usamos as quatro medidas que nosso ESP32 tem: os dois sensores de gás PT08.S1(CO) e PT08.S2(NMHC), temperatura (T) e umidade (RH).",
                     f"a) e b) Os dois sensores de gás andam com o CO(GT) (r = {num(corr['CO(GT)']['PT08.S1(CO)'], 3)} e {num(corr['CO(GT)']['PT08.S2(NMHC)'], 3)}) e entre si (r = {num(corr['PT08.S1(CO)']['PT08.S2(NMHC)'], 3)}), então carregam informação parecida. Temperatura e umidade quase não se relacionam com o CO sozinhas (r = {num(corr['CO(GT)']['T'], 3)} e {num(corr['CO(GT)']['RH'], 3)}), mas se relacionam entre si (r = {num(corr['T']['RH'], 3)}) e corrigem a leitura dos sensores de gás, que mudam com o clima.",
+                    f"c) No gráfico de correlação (Figura 5), os três medidores de monóxido e gases formam o bloco de valores mais altos, porque sobem juntos: {num(corr['CO(GT)']['PT08.S1(CO)'], 3)}, {num(corr['CO(GT)']['PT08.S2(NMHC)'], 3)} e {num(corr['PT08.S1(CO)']['PT08.S2(NMHC)'], 3)}. A única relação negativa forte é temperatura com umidade ({num(corr['T']['RH'], 3)}): tarde quente costuma ser tarde seca.",
                     f"d) Equação: {it5['equacao'].replace('.', ',')}.",
                     f"e) R² = {pct(it5['r2'], 2)} (ajustado {pct(it5['r2_ajustado'], 2)}) e teste F = {num(it5['teste_f'], 2)} (p < 0,0001). As quatro medidas juntas explicam 88% da variação, contra 77% de um sensor só.",
                     f"f) Previsões: {it5['previsoes'][0]['cenario']} = {num(it5['previsoes'][0]['co_previsto'], 3)} mg/m³ (carregado); {it5['previsoes'][1]['cenario']} = {num(it5['previsoes'][1]['co_previsto'], 3)} mg/m³ (ruim).",
@@ -702,7 +738,7 @@ def build_all():
                 "title": "5. AR RUIM OU NÃO: REGRESSÃO LOGÍSTICA (ITEM 06)",
                 "body": [
                     f"a) Evento: ar ruim (CO(GT) de 3,0 mg/m³ ou mais). Equação: {it6['equacao_logit'].replace('.', ',')}.",
-                    f"b) No teste, com {sum(sum(l) for l in mc)} horas: {mc[0][0]} horas boas reconhecidas, {mc[1][1]} horas ruins reconhecidas, {mc[0][1]} alarmes falsos e {mc[1][0]} horas ruins perdidas. Acurácia {pct(it6['acuracia_teste'], 2)}, precisão {pct(it6['precision_critico'], 2)}, recall {pct(it6['recall_critico'], 2)}. De cada 100 horas de ar ruim, o modelo pega 86. As 14 que escapam são o motivo de o sensor também ter a regra local de luz.",
+                    f"b) No teste, com {sum(sum(l) for l in mc)} horas: {mc[0][0]} horas boas reconhecidas, {mc[1][1]} horas ruins reconhecidas, {mc[0][1]} alarmes falsos e {mc[1][0]} horas ruins perdidas. Acurácia {pct(it6['acuracia_teste'], 2)}, precisão {pct(it6['precision_critico'], 2)}, recall {pct(it6['recall_critico'], 2)}. De cada 100 horas de ar ruim, o modelo pega 86 e deixa passar 14.",
                     f"c) Classificação: {it6['classificacoes_exemplo'][0]['cenario']} deu P(ruim) = {pct(it6['classificacoes_exemplo'][0]['prob_critico'], 2)}, classe 0. {it6['classificacoes_exemplo'][1]['cenario']} deu P(ruim) = {pct(it6['classificacoes_exemplo'][1]['prob_critico'], 2)}, classe 1.",
                 ],
                 "images": [{"path": str(stats_charts / "06_matriz_confusao_logistica.png"), "caption": "Figura 6: Matriz de confusão da regressão logística."}],
@@ -712,7 +748,7 @@ def build_all():
                 "bullets": [
                     {"text": f"Sim, o sensor barato serve. As quatro medidas explicam {pct(it5['r2'], 0)} do monóxido real e acertam {pct(it6['acuracia_teste'], 0)} das horas na decisão ar ruim ou não.", "level": 0},
                     {"text": "Instale com as quatro medidas, não só com o sensor de gás. Temperatura e umidade sozinhas não dizem nada, mas somadas aos gases sobem o R² de 77% para 88%.", "level": 0},
-                    {"text": "Mantenha a luz local no sensor. O modelo perde 14 de cada 100 horas ruins; a regra no aparelho cobre quando a rede cai ou o modelo erra.", "level": 0},
+                    {"text": "Mantenha a luz local no sensor. Ela continua avisando quem está no prédio quando a internet cai e a central não responde.", "level": 0},
                     {"text": "Recalibre em cada bairro. A base é de outra cidade, e os testes de hipótese mostram que poucas horas de amostra não bastam para concluir nada sobre um lugar novo.", "level": 0},
                 ],
             },

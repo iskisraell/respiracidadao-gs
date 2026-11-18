@@ -29,7 +29,7 @@ export function BestTime({ pattern }: { pattern: HourPattern }) {
         ))}
       </div>
       <p className="legend">
-        <i className="sq critico" /> ar ruim <i className="sq atencao" /> atenção <i className="sq now" /> agora
+        <i className="sq critico" /> ar ruim <i className="sq atencao" /> ar carregado <i className="sq now" /> agora
       </p>
     </section>
   );

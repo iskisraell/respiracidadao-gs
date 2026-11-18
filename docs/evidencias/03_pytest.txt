@@ -1,0 +1,18 @@
+$ pytest apps/api/tests -v
+test_health PASSED
+test_validation_returns_400_on_missing_fields PASSED
+test_three_scenarios_and_csv_sqlite_persistence PASSED
+test_simulate_all_scenarios PASSED
+test_api_key_protection_and_rate_limiter PASSED
+test_integrity_detects_tampering PASSED
+test_markup_in_identifiers_is_rejected_with_400 PASSED
+test_spoofed_forwarded_header_does_not_bypass_rate_limit PASSED
+test_csv_formula_injection_and_missing_value PASSED
+test_indicators_cover_all_rows_not_only_last_1000 PASSED
+test_admin_route_fails_closed_without_configured_key PASSED
+test_full_reading_gets_model_verdict PASSED
+test_predict_returns_three_verdicts PASSED
+test_places_show_latest_reading_and_guidance PASSED
+test_relatos_are_sanitized_and_flag_urgency PASSED
+test_hourly_pattern_points_to_afternoon_window PASSED
+============================= 16 passed in 25.33s ==============================

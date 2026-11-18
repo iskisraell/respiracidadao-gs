@@ -29,11 +29,11 @@
       "title": "1. A SOLUÇÃO EM UMA PÁGINA",
       "body": [
         "O RespiraCidadão avisa escolas, UBS e famílias quando o ar perto delas piora. Público: crianças, idosos e pessoas com asma na periferia. Problema: exposição à fumaça sem aviso a tempo.",
-        "Caminho dos dados: sensor ESP32 ou pessoa no app, central (API FastAPI), banco (SQLite e CSV no local, PostgreSQL na nuvem) e modelos de IA que conferem cada leitura. Um alarme falso faz a escola cancelar aula à toa; um alarme perdido deixa criança respirando fumaça. As duas falhas custam caro, e é isso que estamos protegendo."
+        "Caminho dos dados: sensor ESP32 ou pessoa no app, central (API FastAPI), banco (SQLite e CSV no local, PostgreSQL na nuvem) e modelos de IA que conferem cada leitura. Um alarme falso faz a escola cancelar aula à toa. Um alarme perdido deixa criança respirando fumaça. A segurança aqui serve para que nenhum dos dois aconteça por ação de alguém mal-intencionado."
       ]
     },
     {
-      "title": "2. SUPERFÍCIE DE ATAQUE EM 5 CAMADAS",
+      "title": "2. ONDE O PRODUTO PODE SER ATACADO (5 CAMADAS)",
       "tables": [
         {
           "headers": [
@@ -94,7 +94,7 @@
             [
               "R2. Apagar dados sem permissão",
               "Média / Crítico",
-              "Chave X-API-Key comparada em tempo constante; sem chave configurada, a rota fica fechada"
+              "Chave X-API-Key, comparada de um jeito que não deixa adivinhar pelo tempo de resposta; sem chave configurada, a rota fica fechada"
             ],
             [
               "R3. Script ou fórmula em relato",
@@ -109,7 +109,7 @@
             [
               "R5. Leitura absurda para enganar o modelo",
               "Média / Alto",
-              "Faixas válidas por campo (Pydantic); fora da faixa vira 400 e não chega ao modelo"
+              "Cada campo tem faixa válida (validada com Pydantic); fora da faixa vira 400 e não chega ao modelo"
             ],
             [
               "R6. Engenharia social",
@@ -145,7 +145,7 @@
             ],
             [
               "Firewall / WAF",
-              "Limite por endereço e CORS restrito; AWS WAF na URL da função e banco aceitando só a porta 5432",
+              "Limite por endereço e só o site do app pode chamar a central (CORS); filtro de ataques web (AWS WAF) na URL da função e banco aceitando só a porta 5432",
               "Limite feito; WAF proposto"
             ],
             [
@@ -160,7 +160,7 @@
             ],
             [
               "Monitoramento",
-              "Registro de eventos de segurança (security_audit.jsonl) e avisos no CloudWatch para leitura descartada",
+              "Registro de eventos de segurança (security_audit.jsonl), lido só com chave, e avisos no CloudWatch para leitura descartada",
               "Feito; alarmes propostos"
             ]
           ],
@@ -175,7 +175,7 @@
     {
       "title": "5. PROTEÇÕES FUNCIONANDO",
       "body": [
-        "Cada proteção abaixo tem um teste automático em apps/api/tests/test_api.py. Os 16 testes passam."
+        "Cada proteção abaixo tem um teste automático em apps/api/tests/test_api.py. Os 16 testes passam. Também rodamos cada ataque à mão contra a central ligada e guardamos a saída do terminal."
       ],
       "bullets": [
         {
@@ -201,7 +201,27 @@
       ]
     },
     {
-      "title": "6. LGPD E ENGENHARIA SOCIAL",
+      "title": "6. PROVAS NO TERMINAL",
+      "images": [
+        {
+          "path": "/home/agent/projects/respiracidadao-gs/docs/evidencias/03_limite_chave.png",
+          "caption": "Figura 1: Envios além do limite voltam 429. Apagar sem chave ou com chave errada volta 401.",
+          "width": 160
+        },
+        {
+          "path": "/home/agent/projects/respiracidadao-gs/docs/evidencias/03_selo.png",
+          "caption": "Figura 2: Selo íntegro, edição direta no banco, selo quebrado.",
+          "width": 160
+        },
+        {
+          "path": "/home/agent/projects/respiracidadao-gs/docs/evidencias/03_pytest.png",
+          "caption": "Figura 3: Os 16 testes automáticos passando.",
+          "width": 160
+        }
+      ]
+    },
+    {
+      "title": "7. LGPD E ENGENHARIA SOCIAL",
       "tables": [
         {
           "headers": [
@@ -211,7 +231,11 @@
           "rows": [
             [
               "Que dados pessoais tratamos?",
-              "Nenhum cadastro. Leitura de sensor tem ID do aparelho e coordenada pública do prédio. Relato tem só texto e lugar."
+              "Nenhum cadastro. Leitura de sensor tem ID do aparelho e coordenada pública do prédio. Relato tem só texto e lugar. O endereço IP de quem envia fica só no registro de segurança, para aplicar o limite e investigar ataque."
+            ],
+            [
+              "Quem vê o registro de segurança?",
+              "Só quem tem a chave de administração (GET /security/audit exige X-API-Key). Proposta para produção: apagar o registro depois de 30 dias."
             ],
             [
               "Pode haver dado sensível?",

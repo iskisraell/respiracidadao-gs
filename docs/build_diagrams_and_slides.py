@@ -176,7 +176,8 @@ def build_ml_slides():
             f.size, f.color.rgb = Pt(12), rgb(INK)
     bullets(s, 0.7, 5.4, 11.9, 1.8, [
         f"Escolhemos a Random Forest ajustada: {acc:.1f}% no teste e só 1,5 ponto de diferença para o treino. A versão sem ajuste decorava o treino (100%).",
-        "A regressão logística ficou 2 horas à frente em 1.389. É empate. Ficamos com a floresta porque ela não supõe fronteira reta entre os níveis e mostra quanto cada medida pesa.",
+        "A regressão logística ficou 2 horas à frente em 1.389. É empate. Ficamos com a floresta porque o sensor de gás muda de leitura com calor e umidade, e ela aprende essas combinações sozinha.",
+        "Ajuste final: 250 árvores, profundidade 8, mínimo de 16 horas por folha. Padronização e modelo ficam num Pipeline, que só aprende com o treino.",
     ], size=14)
 
     # 5. Matriz e importância
@@ -197,8 +198,8 @@ def build_ml_slides():
     s = new_slide("No app, na prática", "Três leituras que o modelo nunca viu")
     bullets(s, 0.7, 1.7, 11.9, 5.4, [
         *[f"{d['cenario']}: {d['classe_predita'].replace('atencao', 'carregado').replace('critico', 'ruim').replace('normal', 'bom')}, "
-          f"{max(d['probabilidades'].values())*100:.0f}% de certeza." for d in demo],
-        "A central roda esse modelo a cada leitura e mostra no app: \"A central conferiu e concorda: Ruim, com 93% de certeza.\"",
+          f"{max(d['probabilidades'].values())*100:.0f}% de confiança." for d in demo],
+        "A central roda esse modelo a cada leitura e mostra no app: \"A central conferiu e concorda: Ruim, com 93% de confiança.\"",
         "Limite: os dados são de uma cidade italiana. Em cada bairro novo o sensor fica algumas semanas ao lado de uma estação oficial para recalibrar.",
     ], size=16)
 

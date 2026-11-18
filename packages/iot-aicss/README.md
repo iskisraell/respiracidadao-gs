@@ -35,7 +35,7 @@ Os limites vêm da base real e são os mesmos no firmware, no receptor, na API e
 2. Cole `sketch.ino` e `diagram.json`. Em Library Manager, adicione `DHT sensor library` e `Adafruit Unified Sensor` (lista em `libraries.txt`).
 3. Clique em play e gire o potenciômetro de gases. A luz muda e o Serial Monitor mostra o JSON.
 
-Os prints em `evidencias/` são dessa simulação, com os potenciômetros nas posições de cada nível:
+Os prints em `evidencias/` são dessa simulação. Os números abaixo são os que o potenciômetro marcou no print; os cenários de teste (`run_3_cenarios.py`) usam 706/925, 980/1120 e 1280/1383, a uma unidade de distância:
 
 | Nível | Gases | Monóxido | Print |
 |---|---|---|---|

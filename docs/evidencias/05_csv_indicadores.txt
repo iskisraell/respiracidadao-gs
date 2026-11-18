@@ -1,0 +1,26 @@
+$ cut -d, -f2,6-10,15,16 data/runtime/leituras.csv   # id, medidas, nível, alerta
+dispositivo_id,metrica,valor,gas_co,temperatura_c,umidade_pct,nivel_risco,alerta
+esp32-ubs-vila-maria,gas_voc,706.0,925.0,18.0,55.0,normal,False
+esp32-centro-01,gas_voc,980.0,1120.0,24.0,42.0,atencao,True
+esp32-escola-zona-norte,gas_voc,1280.0,1383.0,31.0,34.0,critico,True
+esp32-escola-zona-norte,gas_voc,1280.0,1383.0,31.0,34.0,critico,True
+
+$ curl -s localhost:8000/indicadores
+{
+    "total_leituras": 4,
+    "total_alertas": 3,
+    "pct_alertas": 75.0,
+    "media_valor": 1061.5,
+    "max_valor": 1280.0,
+    "min_valor": 706.0,
+    "por_risco": {
+        "normal": 1,
+        "atencao": 1,
+        "critico": 2
+    },
+    "por_dispositivo": {
+        "esp32-centro-01": 1,
+        "esp32-escola-zona-norte": 2,
+        "esp32-ubs-vila-maria": 1
+    }
+}

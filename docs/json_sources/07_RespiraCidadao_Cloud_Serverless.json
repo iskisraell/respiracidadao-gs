@@ -29,8 +29,9 @@
       "title": "1. CENÁRIO E LIMIARES",
       "body": [
         "Uma prefeitura não quer manter um servidor ligado em cada bairro. A central na nuvem só existe quando chega leitura: o sensor manda o JSON para uma URL, uma função Lambda valida, classifica, pede à IA de texto uma leitura do relato (quando houver) e grava no PostgreSQL. Tudo que dá errado vira aviso no CloudWatch.",
-        "Limiares: gas_voc atenção 830 e crítico 1140; gas_co atenção 1010 e crítico 1280. Tipos aceitos: esp32 e app. ODS 3 e ODS 11.",
-        "A função fica fora da VPC para alcançar a Hugging Face sem pagar NAT Gateway. O banco aceita conexão pública com senha e SSL obrigatório. Serve para demonstração; em produção o banco vai para rede privada."
+        "Para o cidadão, isso significa que a família consulta o mesmo nível que a escola vê, sem a prefeitura pagar servidor parado de madrugada. ODS 3 (aviso antes da crise respiratória), ODS 10 (sensor barato onde não há estação oficial) e ODS 11 (dado aberto por bairro).",
+        "Limiares: gas_voc atenção 830 e crítico 1140; gas_co atenção 1010 e crítico 1280. Tipos aceitos: esp32 e app.",
+        "A função roda fora da rede privada da AWS (VPC). Dentro dela, para chegar à Hugging Face, precisaríamos de um NAT Gateway, um tradutor de rede que cobra por hora mesmo parado. O banco aceita conexão de fora, mas só com senha e SSL obrigatório. Serve para demonstração; em produção o banco vai para rede privada."
       ],
       "tables": [
         {
@@ -62,7 +63,8 @@
     {
       "title": "2. IA DE TEXTO SEM DERRUBAR A GRAVAÇÃO",
       "body": [
-        "A função chama https://router.huggingface.co/hf-inference/models/cardiffnlp/twitter-xlm-roberta-base-sentiment com o token em HF_TOKEN, usando só urllib. Sem token, com timeout ou resposta estranha, ela registra WARNING e grava a leitura do mesmo jeito. Uma queimada não pode esperar a IA de texto voltar."
+        "A função chama https://router.huggingface.co/hf-inference/models/cardiffnlp/twitter-xlm-roberta-base-sentiment com o token em HF_TOKEN, usando só urllib. Sem token, com timeout ou resposta estranha, ela registra WARNING e grava a leitura do mesmo jeito. Uma queimada não pode esperar a IA de texto voltar.",
+        "Por que Hugging Face e não o Amazon Comprehend: o token é gratuito, não exige permissão extra de IAM (o Learner Lab bloqueia várias) e o modelo entende português, inclusive gíria de relato como \"tá fedendo a queimado\"."
       ]
     },
     {

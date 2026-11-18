@@ -269,7 +269,7 @@ def predict_risk(payload: PredictIn, request: Request):
         event="ai_prediction",
         severity="info",
         client_ip=client_ip,
-        detail=f"Inferência executada (ML={result.get('ml_disponivel')}, NN={result.get('nn_disponivel')}).",
+        detail=f"Inferência executada (ML={'ml' in result}, NN={'nn' in result}).",
         status_code=200,
     )
     return result
@@ -322,7 +322,7 @@ def get_stats_summary():
     }
 
 
-@app.get("/security/audit")
+@app.get("/security/audit", dependencies=[Depends(verify_api_key)])
 def get_security_audit(limit: int = Query(default=40, ge=1, le=100)):
     return {
         "rate_limit": {

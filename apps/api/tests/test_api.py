@@ -150,7 +150,8 @@ def test_api_key_protection_and_rate_limiter(client):
     assert statuses.count(201) == 10
     assert statuses.count(429) == 2
 
-    audit = c.get("/security/audit").json()
+    assert c.get("/security/audit").status_code == 401  # trilha tem IP: só com a chave
+    audit = c.get("/security/audit", headers={"X-API-Key": "test-only-key"}).json()
     assert any(ev["event"] == "rate_limit_blocked" for ev in audit["events"])
 
 

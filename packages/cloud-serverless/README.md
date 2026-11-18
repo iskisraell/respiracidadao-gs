@@ -8,6 +8,10 @@ sensor ESP32 --HTTPS--> Lambda (Function URL) --> PostgreSQL no RDS
                               '--> IA de texto (Hugging Face): lê o relato, se vier um
 ```
 
+## Para quem
+
+Uma prefeitura não quer pagar servidor ligado de madrugada em cada bairro. Com a central na nuvem, a família consulta o mesmo nível que a escola vê, e a conta só corre quando chega leitura. ODS 3 (aviso antes da crise respiratória), ODS 10 (sensor barato onde não há estação oficial) e ODS 11 (dado aberto por bairro).
+
 ## O que a função faz com cada leitura
 
 1. Confere o JSON. Campo faltando, número inválido ou tipo desconhecido vira resposta 400 e um aviso no log. Nunca 500.
@@ -54,9 +58,10 @@ Fora do Learner Lab, crie antes uma role com a política `AWSLambdaBasicExecutio
 
 ## Escolhas e limites
 
-- A função fica fora da VPC. Assim ela alcança a IA na internet sem NAT Gateway, que é pago. O preço é o banco aceitar conexão pública na porta 5432, protegido por senha e SSL. Serve para demonstração. Em produção, o banco ficaria numa sub-rede privada.
+- A função fica fora da rede privada da AWS (VPC). Lá dentro, para chegar à IA na internet, ela precisaria de um NAT Gateway, que cobra por hora mesmo parado. O preço é o banco aceitar conexão pública na porta 5432, protegido por senha e SSL. Serve para demonstração. Em produção, o banco ficaria numa sub-rede privada.
 - A conexão com o banco usa SSL, porque o RDS com PostgreSQL 15 ou mais novo recusa conexão sem ele.
 - O caminho do banco foi testado num PostgreSQL local: tabela criada, leituras gravadas e consultadas. O `deploy_aws.sh` não foi executado numa conta real, porque não temos credenciais aqui.
+- Usamos a Hugging Face e não o Amazon Comprehend porque o token é gratuito, não exige permissão extra de IAM (o Learner Lab bloqueia várias) e o modelo `cardiffnlp/twitter-xlm-roberta-base-sentiment` entende português informal.
 - A IA de relatos é opcional. Sem `HF_TOKEN`, a função grava tudo e deixa o sentimento vazio.
 
 ## Apagando tudo depois
