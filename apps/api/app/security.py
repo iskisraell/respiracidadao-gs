@@ -45,7 +45,9 @@ def compute_record_hash(payload: dict) -> str:
         "tipo": payload.get("tipo"),
         "metrica": payload.get("metrica"),
         "valor": round(float(payload.get("valor", 0.0)), 4),
+        "gas_co": payload.get("gas_co"),
         "nivel_risco": payload.get("nivel_risco"),
+        "ia_risco": payload.get("ia_risco"),
         "relato": payload.get("relato", ""),
         "criado_em": payload.get("criado_em"),
     }

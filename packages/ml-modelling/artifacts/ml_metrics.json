@@ -1,149 +1,175 @@
 {
   "dataset": "UCI Air Quality (N = 6.941)",
-  "algoritmo_vencedor": "RandomForestClassifier (Tuned)",
+  "features": [
+    "PT08.S1(CO)",
+    "PT08.S2(NMHC)",
+    "T",
+    "RH"
+  ],
+  "features_json": [
+    "gas_co",
+    "gas_voc",
+    "temperatura_c",
+    "umidade_pct"
+  ],
+  "algoritmo_vencedor": "RandomForestClassifier (tuned)",
   "melhores_hiperparametros": {
     "model__n_estimators": 250,
-    "model__min_samples_split": 2,
-    "model__min_samples_leaf": 2,
-    "model__max_features": "sqrt",
-    "model__max_depth": null
+    "model__min_samples_split": 10,
+    "model__min_samples_leaf": 16,
+    "model__max_features": null,
+    "model__max_depth": 8
   },
-  "cv_f1_macro": 0.8921,
-  "teste_accuracy": 0.8906,
-  "teste_f1_macro": 0.8922,
+  "cv_f1_macro": 0.8697,
+  "teste_accuracy": 0.8711,
+  "teste_f1_macro": 0.8742,
   "comparacao_modelos": [
     {
-      "modelo": "RandomForest (default)",
-      "train_acc": 1.0,
-      "test_acc": 0.8934,
-      "test_f1_macro": 0.8954,
-      "gap_overfit": 0.1066
+      "modelo": "LogisticRegression (baseline)",
+      "train_acc": 0.8653,
+      "test_acc": 0.8726,
+      "test_f1_macro": 0.8755,
+      "gap_overfit": -0.0073
     },
     {
       "modelo": "GradientBoosting",
-      "train_acc": 0.9216,
-      "test_acc": 0.8906,
-      "test_f1_macro": 0.8928,
-      "gap_overfit": 0.0311
+      "train_acc": 0.8937,
+      "test_acc": 0.8711,
+      "test_f1_macro": 0.8737,
+      "gap_overfit": 0.0226
     },
     {
-      "modelo": "KNN (k=9)",
-      "train_acc": 0.9063,
-      "test_acc": 0.8877,
-      "test_f1_macro": 0.8897,
-      "gap_overfit": 0.0187
+      "modelo": "RandomForest (default)",
+      "train_acc": 1.0,
+      "test_acc": 0.8697,
+      "test_f1_macro": 0.8731,
+      "gap_overfit": 0.1303
     },
     {
-      "modelo": "LogisticRegression (Baseline)",
-      "train_acc": 0.8772,
-      "test_acc": 0.8855,
-      "test_f1_macro": 0.8871,
-      "gap_overfit": -0.0084
+      "modelo": "KNN (k=15)",
+      "train_acc": 0.8777,
+      "test_acc": 0.869,
+      "test_f1_macro": 0.8724,
+      "gap_overfit": 0.0087
     },
     {
-      "modelo": "DecisionTree (depth=10)",
-      "train_acc": 0.9215,
-      "test_acc": 0.8647,
-      "test_f1_macro": 0.8676,
-      "gap_overfit": 0.0568
+      "modelo": "DecisionTree (depth=8)",
+      "train_acc": 0.8885,
+      "test_acc": 0.8611,
+      "test_f1_macro": 0.8634,
+      "gap_overfit": 0.0275
     },
     {
-      "modelo": "RandomForest (Tuned CV=5)",
-      "train_acc": 0.9867,
-      "test_acc": 0.8906,
-      "test_f1_macro": 0.8922,
-      "gap_overfit": 0.0961
+      "modelo": "RandomForest (tuned, CV=5)",
+      "train_acc": 0.8858,
+      "test_acc": 0.8711,
+      "test_f1_macro": 0.8742,
+      "gap_overfit": 0.0147
     }
   ],
+  "comparacao_conjuntos": [
+    {
+      "conjunto": "Regra do ESP32 (gas_voc 830/1140)",
+      "accuracy": 0.8395,
+      "f1_macro": 0.843
+    },
+    {
+      "conjunto": "Modelo de campo (4 sensores do ESP32)",
+      "accuracy": 0.8711,
+      "f1_macro": 0.8742
+    },
+    {
+      "conjunto": "Modelo de laboratório (11 variáveis UCI)",
+      "accuracy": 0.8826,
+      "f1_macro": 0.8851
+    }
+  ],
+  "split_temporal_f1": 0.8487,
+  "split_temporal_accuracy": 0.8452,
+  "regra_esp32": {
+    "metrica": "gas_voc",
+    "atencao": 830.0,
+    "critico": 1140.0
+  },
   "feature_importance": [
     {
       "feature": "PT08.S2(NMHC)",
-      "importance": 0.2632
-    },
-    {
-      "feature": "C6H6(GT)",
-      "importance": 0.1982
-    },
-    {
-      "feature": "PT08.S1(CO)",
-      "importance": 0.1045
-    },
-    {
-      "feature": "PT08.S5(O3)",
-      "importance": 0.1017
-    },
-    {
-      "feature": "NOx(GT)",
-      "importance": 0.0902
-    },
-    {
-      "feature": "NO2(GT)",
-      "importance": 0.0661
-    },
-    {
-      "feature": "PT08.S3(NOx)",
-      "importance": 0.061
-    },
-    {
-      "feature": "PT08.S4(NO2)",
-      "importance": 0.0334
+      "importance": 0.837
     },
     {
       "feature": "T",
-      "importance": 0.0321
+      "importance": 0.1002
     },
     {
-      "feature": "AH",
-      "importance": 0.026
+      "feature": "PT08.S1(CO)",
+      "importance": 0.044
     },
     {
       "feature": "RH",
-      "importance": 0.0236
+      "importance": 0.0187
     }
   ],
   "matriz_confusao": [
     [
-      457,
-      48,
-      1
+      443,
+      63,
+      0
     ],
     [
-      34,
-      478,
-      32
+      40,
+      469,
+      35
     ],
     [
       0,
-      37,
-      302
+      41,
+      298
     ]
   ],
   "demonstracao_nao_vista": [
     {
-      "cenario": "Manhã limpa (Normal)",
+      "cenario": "Manhã limpa perto da UBS",
+      "entrada": {
+        "gas_co": 925.0,
+        "gas_voc": 706.0,
+        "temperatura_c": 18.0,
+        "umidade_pct": 55.0
+      },
       "classe_predita": "normal",
       "probabilidades": {
-        "normal": 1.0,
-        "atencao": 0.0,
+        "normal": 0.9987,
+        "atencao": 0.0013,
         "critico": 0.0
       }
     },
     {
-      "cenario": "Tráfego intenso (Atenção)",
+      "cenario": "Trânsito pesado no fim da tarde",
+      "entrada": {
+        "gas_co": 1120.0,
+        "gas_voc": 980.0,
+        "temperatura_c": 24.0,
+        "umidade_pct": 42.0
+      },
       "classe_predita": "atencao",
       "probabilidades": {
-        "normal": 0.0113,
-        "atencao": 0.9847,
-        "critico": 0.004
+        "normal": 0.0401,
+        "atencao": 0.9515,
+        "critico": 0.0084
       }
     },
     {
-      "cenario": "Fumaça crítica de queimada (Crítico)",
+      "cenario": "Fumaça de queimada perto da escola",
+      "entrada": {
+        "gas_co": 1383.0,
+        "gas_voc": 1280.0,
+        "temperatura_c": 31.0,
+        "umidade_pct": 34.0
+      },
       "classe_predita": "critico",
       "probabilidades": {
         "normal": 0.0,
-        "atencao": 0.0,
-        "critico": 1.0
+        "atencao": 0.0683,
+        "critico": 0.9317
       }
     }
   ]

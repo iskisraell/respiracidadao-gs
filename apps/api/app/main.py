@@ -84,35 +84,24 @@ async def validation_error_handler(request: Request, exc: RequestValidationError
 
 
 def _ingest_occurrence(payload: OcorrenciaIn, client_ip: str, source_tag: str = "api") -> dict:
+    """Valida, classifica (regra local + Random Forest + sentimento do relato) e grava em SQLite e CSV."""
     clean_relato = sanitize_text(payload.relato)
     nivel_risco, alerta = classify_threshold(payload.metrica, payload.valor)
     ia_sentimento, ia_confianca, ia_fonte = analyze_report_sentiment(clean_relato)
 
-    logger.info(
-        "PAYLOAD RECEBIDO (%s): dispositivo=%s tipo=%s metrica=%s valor=%.2f temp=%s umid=%s",
-        source_tag,
-        payload.dispositivo_id,
-        payload.tipo,
-        payload.metrica,
-        payload.valor,
-        payload.temperatura_c,
-        payload.umidade_pct,
+    gas_voc = payload.valor if payload.metrica == "gas_voc" else None
+    gas_co = payload.gas_co if payload.gas_co is not None else (payload.valor if payload.metrica == "gas_co" else None)
+    ia_risco, ia_risco_prob = models.field_risk(
+        {"gas_co": gas_co, "gas_voc": gas_voc, "temperatura_c": payload.temperatura_c, "umidade_pct": payload.umidade_pct}
     )
+
     logger.info(
-        "CLASSIFICACAO: risco=%s alerta=%s ia_sentimento=%s confianca=%s fonte=%s",
-        nivel_risco,
-        alerta,
-        ia_sentimento,
-        ia_confianca,
-        ia_fonte,
+        "LEITURA %s: %s %s=%.1f gas_co=%s T=%s UR=%s -> regra=%s modelo=%s (%s)",
+        source_tag, payload.dispositivo_id, payload.metrica, payload.valor, gas_co,
+        payload.temperatura_c, payload.umidade_pct, nivel_risco, ia_risco, ia_risco_prob,
     )
     if nivel_risco == "critico":
-        logger.warning(
-            "ALERTA CRITICO CIDADAO: dispositivo=%s metrica=%s valor=%.2f",
-            payload.dispositivo_id,
-            payload.metrica,
-            payload.valor,
-        )
+        logger.warning("ALERTA CRITICO: %s %s=%.1f", payload.dispositivo_id, payload.metrica, payload.valor)
 
     record = store.insert(
         {
@@ -122,6 +111,7 @@ def _ingest_occurrence(payload: OcorrenciaIn, client_ip: str, source_tag: str = 
             "longitude": payload.longitude,
             "metrica": payload.metrica,
             "valor": float(payload.valor),
+            "gas_co": gas_co,
             "temperatura_c": payload.temperatura_c,
             "umidade_pct": payload.umidade_pct,
             "relato": clean_relato,
@@ -130,6 +120,8 @@ def _ingest_occurrence(payload: OcorrenciaIn, client_ip: str, source_tag: str = 
             "ia_fonte": ia_fonte,
             "nivel_risco": nivel_risco,
             "alerta": alerta,
+            "ia_risco": ia_risco,
+            "ia_risco_prob": ia_risco_prob,
         }
     )
 
@@ -138,15 +130,14 @@ def _ingest_occurrence(payload: OcorrenciaIn, client_ip: str, source_tag: str = 
             event="xss_sanitized",
             severity="warning",
             client_ip=client_ip,
-            detail=f"Caracteres potencialmente inseguros sanitizados no relato do registro #{record['id']}.",
+            detail=f"Relato do registro #{record['id']} tinha marcação HTML e foi sanitizado.",
             status_code=201,
         )
-
     auditor.record(
         event="occurrence_ingested",
         severity="warning" if nivel_risco == "critico" else "info",
         client_ip=client_ip,
-        detail=f"Ocorrência #{record['id']} ({payload.dispositivo_id}) classificada como {nivel_risco}.",
+        detail=f"Leitura #{record['id']} ({payload.dispositivo_id}): regra {nivel_risco}, modelo {ia_risco or 'sem dados'}.",
         status_code=201,
     )
     return record
@@ -225,39 +216,23 @@ def predict_risk(payload: PredictIn, request: Request):
 @app.post("/simulate")
 def simulate_scenarios(body: SimulateRequest, request: Request):
     client_ip = get_client_ip(request)
+    # Medianas de cada classe na base UCI: o que o ESP32 leria numa hora típica de cada nível.
+    base = {"tipo": body.tipo, "metrica": "gas_voc"}
     scenarios = {
         "normal": OcorrenciaIn(
-            dispositivo_id="esp32-respira-01",
-            tipo=body.tipo,
-            latitude=-23.5641,
-            longitude=-46.6524,
-            metrica="fumaca_ppm",
-            valor=68.4,
-            temperatura_c=23.5,
-            umidade_pct=58.0,
-            relato="Ar limpo na região da Avenida Paulista, visibilidade normal.",
+            **base, dispositivo_id="esp32-ubs-vila-maria", latitude=-23.5122, longitude=-46.5917,
+            valor=706.0, gas_co=925.0, temperatura_c=18.0, umidade_pct=55.0,
+            relato="Manhã limpa, sem cheiro de fumaça.",
         ),
         "atencao": OcorrenciaIn(
-            dispositivo_id="esp32-respira-02",
-            tipo=body.tipo,
-            latitude=-23.5505,
-            longitude=-46.6333,
-            metrica="fumaca_ppm",
-            valor=168.0,
-            temperatura_c=31.2,
-            umidade_pct=34.0,
-            relato="Cheiro forte de fumaça e neblina seca na área central.",
+            **base, dispositivo_id="esp32-centro-01", latitude=-23.5505, longitude=-46.6333,
+            valor=980.0, gas_co=1120.0, temperatura_c=24.0, umidade_pct=42.0,
+            relato="Trânsito parado na frente da escola, cheiro de escapamento.",
         ),
         "critico": OcorrenciaIn(
-            dispositivo_id="esp32-respira-03",
-            tipo=body.tipo,
-            latitude=-23.4892,
-            longitude=-46.6208,
-            metrica="fumaca_ppm",
-            valor=312.5,
-            temperatura_c=36.8,
-            umidade_pct=21.0,
-            relato="Fumaça intensa de queimada, crianças com tosse e falta de ar perto da escola.",
+            **base, dispositivo_id="esp32-escola-zona-norte", latitude=-23.4892, longitude=-46.6208,
+            valor=1280.0, gas_co=1383.0, temperatura_c=31.0, umidade_pct=34.0,
+            relato="Fumaça de queimada, crianças tossindo no pátio.",
         ),
     }
 

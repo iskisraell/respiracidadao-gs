@@ -34,7 +34,7 @@ def test_health(client):
     assert resp.status_code == 200
     body = resp.json()
     assert body["status"] == "ok"
-    assert "fumaca_ppm" in body["limiares"]
+    assert "gas_voc" in body["limiares"]
 
 
 def test_validation_returns_400_on_missing_fields(client):
@@ -50,8 +50,8 @@ def test_three_scenarios_and_csv_sqlite_persistence(client):
         {
             "dispositivo_id": "esp32-01",
             "tipo": "esp32",
-            "metrica": "fumaca_ppm",
-            "valor": 55.0,
+            "metrica": "gas_voc",
+            "valor": 700.0, "gas_co": 920.0,
             "temperatura_c": 22.0,
             "umidade_pct": 60.0,
             "relato": "Ar limpo na estação.",
@@ -59,8 +59,8 @@ def test_three_scenarios_and_csv_sqlite_persistence(client):
         {
             "dispositivo_id": "esp32-02",
             "tipo_dispositivo": "drone",
-            "metrica": "fumaca_ppm",
-            "valor": 165.0,
+            "metrica": "gas_voc",
+            "valor": 980.0, "gas_co": 1120.0,
             "temperatura_c": 30.0,
             "umidade_pct": 35.0,
             "relato": "Cheiro de fumaça e neblina.",
@@ -68,8 +68,8 @@ def test_three_scenarios_and_csv_sqlite_persistence(client):
         {
             "dispositivo_id": "esp32-03",
             "tipo": "esp32",
-            "metrica": "fumaca_ppm",
-            "valor": 310.0,
+            "metrica": "gas_voc",
+            "valor": 1300.0, "gas_co": 1390.0,
             "temperatura_c": 37.5,
             "umidade_pct": 19.0,
             "relato": "Fumaça densa de queimada, tosse na escola <script>alert(1)</script>",
@@ -106,7 +106,7 @@ def test_three_scenarios_and_csv_sqlite_persistence(client):
     ind = c.get("/indicadores").json()
     assert ind["total_leituras"] == 3
     assert ind["total_alertas"] == 2
-    assert ind["max_valor"] == 310.0
+    assert ind["max_valor"] == 1300.0
 
     # Integrity verification
     ver = c.get(f"/security/verify/{ids[0]}").json()
@@ -142,7 +142,7 @@ def test_api_key_protection_and_rate_limiter(client):
             "/ocorrencias",
             json={
                 "dispositivo_id": "esp32-burst",
-                "metrica": "fumaca_ppm",
+                "metrica": "gas_voc",
                 "valor": 40.0 + i,
             },
         )
@@ -160,7 +160,7 @@ def test_integrity_detects_tampering(client):
     c, _, runtime_dir = client
     rec = c.post(
         "/ocorrencias",
-        json={"dispositivo_id": "esp32-hash", "metrica": "fumaca_ppm", "valor": 300.0, "relato": "Fumaça forte"},
+        json={"dispositivo_id": "esp32-hash", "metrica": "gas_voc", "valor": 300.0, "relato": "Fumaça forte"},
     ).json()
     assert c.get(f"/security/verify/{rec['id']}").json()["integro"] is True
 
@@ -175,7 +175,7 @@ def test_integrity_detects_tampering(client):
 
 def test_markup_in_identifiers_is_rejected_with_400(client):
     c, _, _ = client
-    bad = {"dispositivo_id": "<img src=x onerror=alert(1)>", "metrica": "fumaca_ppm", "valor": 10}
+    bad = {"dispositivo_id": "<img src=x onerror=alert(1)>", "metrica": "gas_voc", "valor": 10}
     assert c.post("/ocorrencias", json=bad).status_code == 400
     bad = {"dispositivo_id": "esp32-ok", "metrica": "<script>", "valor": 10}
     assert c.post("/ocorrencias", json=bad).status_code == 400
@@ -188,7 +188,7 @@ def test_spoofed_forwarded_header_does_not_bypass_rate_limit(client):
     for i in range(12):
         r = c.post(
             "/ocorrencias",
-            json={"dispositivo_id": "esp32-spoof", "metrica": "fumaca_ppm", "valor": 20.0},
+            json={"dispositivo_id": "esp32-spoof", "metrica": "gas_voc", "valor": 20.0},
             headers={"X-Forwarded-For": f"10.0.0.{i}"},
         )
         codes.append(r.status_code)
@@ -199,7 +199,7 @@ def test_csv_formula_injection_and_missing_value(client):
     c, _, runtime_dir = client
     r = c.post(
         "/ocorrencias",
-        json={"dispositivo_id": "esp32-csv", "metrica": "fumaca_ppm", "valor": 5, "relato": "=HYPERLINK(\"http://x\")"},
+        json={"dispositivo_id": "esp32-csv", "metrica": "gas_voc", "valor": 5, "relato": "=HYPERLINK(\"http://x\")"},
     )
     assert r.status_code == 201
     with (runtime_dir / "leituras.csv").open(encoding="utf-8") as f:
@@ -216,7 +216,7 @@ def test_indicators_cover_all_rows_not_only_last_1000(client):
         main_mod.store.insert(
             {
                 "dispositivo_id": "esp32-bulk", "tipo": "esp32", "latitude": None, "longitude": None,
-                "metrica": "fumaca_ppm", "valor": 10.0, "temperatura_c": None, "umidade_pct": None,
+                "metrica": "gas_voc", "valor": 10.0, "temperatura_c": None, "umidade_pct": None,
                 "relato": "", "ia_sentimento": "sem_relato", "ia_confianca": None, "ia_fonte": "local-vazio",
                 "nivel_risco": "normal", "alerta": False,
             }
@@ -235,3 +235,19 @@ def test_admin_route_fails_closed_without_configured_key(tmp_path, monkeypatch):
     with TestClient(main_mod.app) as c:
         assert c.delete("/ocorrencias", headers={"X-API-Key": ""}).status_code == 503
         assert c.delete("/ocorrencias", headers={"X-API-Key": "perceptron-fiap-2026"}).status_code == 503
+
+
+def test_full_reading_gets_model_verdict(client):
+    c, _, _ = client
+    r = c.post("/ocorrencias", json={"dispositivo_id": "esp32-ia", "metrica": "gas_voc", "valor": 1280.0,
+                                     "gas_co": 1383.0, "temperatura_c": 31.0, "umidade_pct": 34.0}).json()
+    assert r["nivel_risco"] == "critico"
+    assert r["ia_risco"] == "critico" and r["ia_risco_prob"] > 0.5
+    partial = c.post("/ocorrencias", json={"dispositivo_id": "esp32-ia", "metrica": "gas_voc", "valor": 700.0}).json()
+    assert partial["ia_risco"] is None
+
+
+def test_predict_returns_three_verdicts(client):
+    c, _, _ = client
+    body = c.post("/predict", json={"gas_co": 925, "gas_voc": 706, "temperatura_c": 18, "umidade_pct": 55}).json()
+    assert body["ml"]["classe"] == body["nn"]["classe"] == body["regra_local"]["classe"] == "normal"

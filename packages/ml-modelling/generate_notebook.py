@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Gera o notebook Jupyter de 06 - Machine Learning & Modelling e salva em respira_ml_modelling.ipynb."""
+"""Gera o notebook de 06 - Machine Learning & Modelling (respira_ml_modelling.ipynb)."""
 
 from pathlib import Path
 import nbformat as nbf
@@ -18,25 +18,33 @@ def code(src: str):
 cells = [
     md(
         """
-# RespiraCidadão: Machine Learning & Modelling (`GS 2026.2`)
+# RespiraCidadão: Machine Learning & Modelling (GS 2026.2)
 
-**Sala:** `1TIAPZ1` | **Grupo:** `Perceptron`  
-**Integrantes:**
+Turma 1TIAPZ1, grupo Perceptron.
+
 - Giovanni Henrique Pereira Hessel (RM 570574)
 - Suellen Pereira da Silva (RM 573862)
 - Israel Carneiro de Toledo (RM 573854)
 
----
+## 1. Problema, público e dados
 
-## 1. Entendimento do Problema, Público e Dados
-- **Problema:** Episódios de poluição atmosférica e fumaça urbana elevam a concentração de monóxido de carbono (`CO`), benzeno (`C6H6`) e óxidos de nitrogênio (`NOx`/`NO2`), agravando crises respiratórias em escolas, UBS e residências vulneráveis.
-- **Público beneficiado:** Crianças, idosos e pacientes com asma/DPOC em áreas urbanas e periferias monitoradas pela rede CitizenTech RespiraCidadão.
-- **ODS relacionados:** ODS 3 (Saúde e Bem-Estar), ODS 10 (Redução das Desigualdades) e ODS 11 (Cidades e Comunidades Sustentáveis).
-- **Base de dados:** *UCI Air Quality Dataset* (Vito et al., 2008), base real com **9.357 registros horários** de sensores óxido-metálicos (`PT08.S1` a `PT08.S5`), analisadores de referência e microclima (`T`, `RH`, `AH`).
-- **Tarefa supervisionada:** Classificação multiclasse de risco respiratório baseada na concentração real de referência `CO(GT)` (excluída das variáveis de entrada para evitar *data leakage*):
-  - `0`: normal: `CO(GT) < 1.5 mg/m³`
-  - `1`: atencao: `1.5 <= CO(GT) < 3.0 mg/m³`
-  - `2`: critico: `CO(GT) >= 3.0 mg/m³`
+Fumaça de queimada e trânsito pesado sobem o monóxido de carbono (CO) perto de escolas e UBS. Quem sente primeiro são crianças, idosos e quem tem asma ou DPOC. Nosso nó comunitário (ESP32) mede dois sensores de gás de óxido metálico e temperatura/umidade. A pergunta deste notebook: com só essas 4 leituras, dá para prever o nível de risco do ar?
+
+- Base real: UCI Air Quality (De Vito et al., 2008), 9.357 registros horários de uma estação com sensores de óxido metálico (PT08.S1 a S5), analisadores de referência e microclima. Após a limpeza dos códigos -200 ficam 6.941 horas completas.
+- Alvo: nível de risco a partir do CO medido pelo analisador de referência, CO(GT). Ele só define o rótulo e nunca entra como entrada.
+  - normal: CO(GT) < 1,5 mg/m³
+  - atencao: 1,5 a 3,0 mg/m³
+  - critico: CO(GT) >= 3,0 mg/m³
+- Entradas: as 4 leituras que o ESP32 manda no JSON.
+
+| Coluna UCI | Campo no JSON do ESP32 | Sensor no nó |
+|---|---|---|
+| PT08.S1(CO) | gas_co | MOx de CO (tipo MQ-7) |
+| PT08.S2(NMHC) | gas_voc | MOx de hidrocarbonetos/fumaça (tipo MQ-135) |
+| T | temperatura_c | DHT22 |
+| RH | umidade_pct | DHT22 |
+
+ODS 3 (saúde), 10 (desigualdades) e 11 (cidades sustentáveis).
         """
     ),
     code(
@@ -53,28 +61,15 @@ import pandas as pd
 import seaborn as sns
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import (
-    accuracy_score,
-    classification_report,
-    confusion_matrix,
-    f1_score,
-)
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, f1_score
 from sklearn.model_selection import RandomizedSearchCV, StratifiedKFold, train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeClassifier
 
-plt.rcParams.update({
-    "figure.facecolor": "#0f0f12",
-    "axes.facecolor": "#1c1c21",
-    "axes.edgecolor": "#3a3a45",
-    "axes.labelcolor": "#e5e9f0",
-    "text.color": "#e5e9f0",
-    "xtick.color": "#acc1cc",
-    "ytick.color": "#acc1cc",
-    "grid.color": "#2a2a33",
-})
+plt.rcParams.update({"figure.facecolor": "white", "axes.grid": True, "grid.alpha": 0.3})
+RISK_COLORS = ["#2E9E5B", "#E0A100", "#ED145B"]
 
 ROOT = Path.cwd().resolve()
 if ROOT.name == "ml-modelling":
@@ -87,52 +82,45 @@ ARTIFACTS_DIR = OUT_DIR / "artifacts"
 CHARTS_DIR.mkdir(parents=True, exist_ok=True)
 ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
 
-FEATURES = [
-    "PT08.S1(CO)",
-    "C6H6(GT)",
-    "PT08.S2(NMHC)",
-    "NOx(GT)",
-    "PT08.S3(NOx)",
-    "NO2(GT)",
-    "PT08.S4(NO2)",
-    "PT08.S5(O3)",
-    "T",
-    "RH",
-    "AH",
+# Ordem igual ao JSON do ESP32: gas_co, gas_voc, temperatura_c, umidade_pct
+FEATURES = ["PT08.S1(CO)", "PT08.S2(NMHC)", "T", "RH"]
+LAB_FEATURES = [
+    "PT08.S1(CO)", "C6H6(GT)", "PT08.S2(NMHC)", "NOx(GT)", "PT08.S3(NOx)",
+    "NO2(GT)", "PT08.S4(NO2)", "PT08.S5(O3)", "T", "RH", "AH",
 ]
 CLASS_NAMES = ["normal", "atencao", "critico"]
+VOC_ATENCAO, VOC_CRITICO = 830.0, 1140.0  # regra offline do ESP32
 
 df = pd.read_csv(DATA_PATH)
-print(f"Dataset limpo carregado: {df.shape[0]} linhas x {df.shape[1]} colunas")
-df.head(5)
+df["datahora"] = pd.to_datetime(df["Date"] + " " + df["Time"], format="%d/%m/%Y %H.%M.%S")
+print(f"{df.shape[0]} horas, de {df['datahora'].min():%d/%m/%Y} a {df['datahora'].max():%d/%m/%Y}")
+df[FEATURES + ["CO(GT)", "nivel_risco"]].head()
         """
     ),
     md(
         """
-## 2. Análise Exploratória de Dados (EDA) e Qualidade
-Verificamos valores ausentes (já tratados na limpeza dos códigos `-200` e remoção de `NMHC(GT)` que possuía 90% de ausência no equipamento original), balanceamento das classes de risco e correlações entre sensores e poluentes.
+## 2. Análise exploratória
+
+Conferimos ausentes, o balanço das classes e se os sensores de campo separam as classes de risco. Se o sensor de fumaça (PT08.S2) não mudasse entre normal e crítico, nem valeria treinar.
         """
     ),
     code(
         """
-print("Valores ausentes por coluna:")
-print(df[FEATURES + ["CO(GT)", "nivel_risco"]].isna().sum())
-print("\\nDistribuição das classes de risco:")
-print(df["nivel_risco"].value_counts())
+print("Ausentes:", int(df[FEATURES + ["CO(GT)"]].isna().sum().sum()))
+print(df["nivel_risco"].value_counts(normalize=True).round(3))
+print(df[FEATURES].describe().T[["mean", "std", "min", "max"]].round(1))
 
-fig, axes = plt.subplots(1, 2, figsize=(12, 4.5))
+fig, axes = plt.subplots(1, 3, figsize=(15, 4.3))
 counts = df["nivel_risco"].value_counts().reindex(CLASS_NAMES)
-axes[0].bar(counts.index, counts.values, color=["#00C365", "#FFB700", "#ED145B"])
-axes[0].set_title("Distribuição das Classes de Risco (N = 6.941)", fontweight="bold")
-axes[0].set_ylabel("Registros horários")
-axes[0].grid(axis="y", alpha=0.35)
-
-sns.boxplot(data=df, x="nivel_risco", y="C6H6(GT)", order=CLASS_NAMES,
-            palette=["#00C365", "#FFB700", "#ED145B"], ax=axes[1])
-axes[1].set_title("Benzeno C6H6(GT) por Nível de Risco", fontweight="bold")
-axes[1].set_xlabel("Classe de risco")
-axes[1].set_ylabel("C6H6(GT) [ug/m³]")
-axes[1].grid(axis="y", alpha=0.35)
+axes[0].bar(counts.index, counts.values, color=RISK_COLORS)
+axes[0].set_title("Horas por classe de risco")
+axes[0].set_ylabel("horas")
+for ax, col, nome in [(axes[1], "PT08.S1(CO)", "gas_co"), (axes[2], "PT08.S2(NMHC)", "gas_voc")]:
+    sns.boxplot(data=df, x="nivel_risco", y=col, order=CLASS_NAMES, palette=RISK_COLORS, ax=ax)
+    ax.set_title(f"{nome} por classe")
+    ax.set_xlabel("")
+axes[2].axhline(VOC_ATENCAO, color="#E0A100", ls="--", lw=1)
+axes[2].axhline(VOC_CRITICO, color="#ED145B", ls="--", lw=1)
 fig.tight_layout()
 fig.savefig(CHARTS_DIR / "01_eda_classes_box.png", dpi=150)
 plt.show()
@@ -140,72 +128,60 @@ plt.show()
     ),
     md(
         """
-## 3. Pré-processamento sem Data Leakage
-- Separamos `X` (11 variáveis dos sensores e microclima) e `y` (`nivel_risco_id`: 0, 1, 2).
-- `CO(GT)` é usado apenas para definir o rótulo `y` e **não entra em `X`**, eliminando vazamento do alvo.
-- Divisão estratificada `80% treino / 20% teste` (`random_state=42`).
-- `StandardScaler` é aplicado **dentro de `Pipeline`** ajustado exclusivamente nos folds de treino.
+As medianas dos dois sensores sobem de normal para crítico, e o de hidrocarbonetos (gas_voc) separa melhor. As linhas tracejadas são os limiares que o ESP32 usa sozinho, sem rede: 830 para atenção e 1140 para crítico. Tiramos esses valores da própria base, buscando o par que maximiza o F1-macro.
+
+## 3. Pré-processamento sem vazamento
+
+- X recebe as 4 leituras de campo e y recebe nivel_risco_id (0, 1, 2).
+- Split estratificado 80/20 com random_state=42.
+- O StandardScaler fica dentro do Pipeline, então só aprende com os dados de treino de cada fold.
         """
     ),
     code(
         """
 X = df[FEATURES].to_numpy(dtype=np.float32)
 y = df["nivel_risco_id"].to_numpy(dtype=np.int64)
-
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.20, random_state=42, stratify=y
+idx_train, idx_test = train_test_split(
+    np.arange(len(df)), test_size=0.20, random_state=42, stratify=y
 )
+X_train, X_test, y_train, y_test = X[idx_train], X[idx_test], y[idx_train], y[idx_test]
 print(f"Treino: {X_train.shape} | Teste: {X_test.shape}")
         """
     ),
     md(
         """
-## 4. Comparação de Algoritmos (Baseline + Modelos Não Lineares)
-Comparamos 5 algoritmos da disciplina:
-1. **Regressão Logística (Baseline linear):** referência simples e interpretável.
-2. **KNN (`k=9`):** classificador por proximidade no espaço padronizado dos sensores.
-3. **Árvore de Decisão (`max_depth=10`):** captura regras não lineares com risco controlado de profundidade.
-4. **Random Forest:** ensemble bagging robusto a ruído de sensores.
-5. **Gradient Boosting:** ensemble sequencial de árvores para fronteiras finas entre `atencao` e `critico`.
+## 4. Comparação de algoritmos
+
+A regressão logística é o baseline. Contra ela colocamos KNN, árvore de decisão, Random Forest e Gradient Boosting. Medimos acurácia, F1-macro (as classes não são iguais em tamanho) e o gap entre treino e teste para enxergar overfitting.
         """
     ),
     code(
         """
+def pipe(model):
+    return Pipeline([("scaler", StandardScaler()), ("model", model)])
+
 candidates = {
-    "LogisticRegression (Baseline)": Pipeline([
-        ("scaler", StandardScaler()),
-        ("model", LogisticRegression(max_iter=1500, random_state=42)),
-    ]),
-    "KNN (k=9)": Pipeline([
-        ("scaler", StandardScaler()),
-        ("model", KNeighborsClassifier(n_neighbors=9)),
-    ]),
-    "DecisionTree (depth=10)": Pipeline([
-        ("scaler", StandardScaler()),
-        ("model", DecisionTreeClassifier(max_depth=10, min_samples_leaf=8, random_state=42)),
-    ]),
-    "RandomForest (default)": Pipeline([
-        ("scaler", StandardScaler()),
-        ("model", RandomForestClassifier(n_estimators=150, random_state=42, n_jobs=-1)),
-    ]),
-    "GradientBoosting": Pipeline([
-        ("scaler", StandardScaler()),
-        ("model", GradientBoostingClassifier(random_state=42)),
-    ]),
+    "LogisticRegression (baseline)": pipe(LogisticRegression(max_iter=2000, random_state=42)),
+    "KNN (k=15)": pipe(KNeighborsClassifier(n_neighbors=15)),
+    "DecisionTree (depth=8)": pipe(DecisionTreeClassifier(max_depth=8, min_samples_leaf=10, random_state=42)),
+    "RandomForest (default)": pipe(RandomForestClassifier(n_estimators=200, random_state=42, n_jobs=-1)),
+    "GradientBoosting": pipe(GradientBoostingClassifier(random_state=42)),
 }
 
-comparison = []
-for name, pipe in candidates.items():
-    pipe.fit(X_train, y_train)
-    tr_pred = pipe.predict(X_train)
-    te_pred = pipe.predict(X_test)
-    comparison.append({
+def score_row(name, model):
+    tr, te = model.predict(X_train), model.predict(X_test)
+    return {
         "modelo": name,
-        "train_acc": round(float(accuracy_score(y_train, tr_pred)), 4),
-        "test_acc": round(float(accuracy_score(y_test, te_pred)), 4),
-        "test_f1_macro": round(float(f1_score(y_test, te_pred, average="macro")), 4),
-        "gap_overfit": round(float(accuracy_score(y_train, tr_pred) - accuracy_score(y_test, te_pred)), 4),
-    })
+        "train_acc": round(float(accuracy_score(y_train, tr)), 4),
+        "test_acc": round(float(accuracy_score(y_test, te)), 4),
+        "test_f1_macro": round(float(f1_score(y_test, te, average="macro")), 4),
+        "gap_overfit": round(float(accuracy_score(y_train, tr) - accuracy_score(y_test, te)), 4),
+    }
+
+comparison = []
+for name, model in candidates.items():
+    model.fit(X_train, y_train)
+    comparison.append(score_row(name, model))
 
 comp_df = pd.DataFrame(comparison).sort_values("test_f1_macro", ascending=False)
 comp_df
@@ -213,175 +189,203 @@ comp_df
     ),
     md(
         """
-### Leitura da comparação
-- A **Regressão Logística (baseline linear)** já atinge `88,55%` de acurácia no teste e `F1-macro = 0,8871`. Os modelos não lineares ficam entre `86,47%` (Árvore) e `89,34%` (Random Forest): o ganho máximo sobre o baseline é de cerca de `0,8` ponto percentual.
-- Com `1.389` amostras de teste, o erro-padrão da acurácia é de aproximadamente `0,85 p.p.`; logo, **a diferença entre Random Forest, Gradient Boosting, KNN e Regressão Logística não é estatisticamente relevante**. O limite de desempenho parece vir dos dados (sensores de óxido metálico com deriva e ruído), não da escolha do algoritmo.
-        """
-    ),
-    md(
-        """
-## 5. Otimização de Hiperparâmetros (`RandomizedSearchCV` com CV=5)
-Aplicamos busca aleatória estratificada (5 folds) sobre o **Random Forest** para equilibrar poder preditivo e controle de overfitting (`max_depth`, `min_samples_leaf`, `max_features`, `n_estimators`).
+## 5. Tuning com RandomizedSearchCV (5 folds)
+
+O Random Forest padrão decora o treino (100% de acurácia), então ajustamos justamente os parâmetros que limitam a árvore: profundidade, folhas mínimas e número de variáveis por divisão. A busca usa StratifiedKFold com 5 folds e F1-macro como métrica, sem olhar o conjunto de teste. Limitar a profundidade também deixa o arquivo do modelo pequeno, o que importa para a API.
         """
     ),
     code(
         """
-rf_pipe = Pipeline([
-    ("scaler", StandardScaler()),
-    ("model", RandomForestClassifier(random_state=42, n_jobs=-1)),
-])
-
 param_dist = {
     "model__n_estimators": [150, 250, 350],
-    "model__max_depth": [10, 14, 18, None],
-    "model__min_samples_split": [2, 5, 10],
-    "model__min_samples_leaf": [1, 2, 4, 6],
-    "model__max_features": ["sqrt", "log2", 0.6],
+    "model__max_depth": [6, 8, 10, 12, 16],
+    "model__min_samples_leaf": [2, 4, 8, 16],
+    "model__min_samples_split": [2, 10, 20],
+    "model__max_features": ["sqrt", None],
 }
-
 cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 search = RandomizedSearchCV(
-    rf_pipe,
-    param_distributions=param_dist,
-    n_iter=16,
-    cv=cv,
-    scoring="f1_macro",
-    random_state=42,
-    n_jobs=-1,
+    pipe(RandomForestClassifier(random_state=42, n_jobs=-1)),
+    param_distributions=param_dist, n_iter=20, cv=cv,
+    scoring="f1_macro", random_state=42, n_jobs=-1,
 )
 search.fit(X_train, y_train)
-
 best_pipe = search.best_estimator_
-best_tr_pred = best_pipe.predict(X_train)
+tuned_row = score_row("RandomForest (tuned, CV=5)", best_pipe)
 best_te_pred = best_pipe.predict(X_test)
 
-tuned_row = {
-    "modelo": "RandomForest (Tuned CV=5)",
-    "train_acc": round(float(accuracy_score(y_train, best_tr_pred)), 4),
-    "test_acc": round(float(accuracy_score(y_test, best_te_pred)), 4),
-    "test_f1_macro": round(float(f1_score(y_test, best_te_pred, average="macro")), 4),
-    "gap_overfit": round(float(accuracy_score(y_train, best_tr_pred) - accuracy_score(y_test, best_te_pred)), 4),
-}
 print("Melhores hiperparâmetros:", search.best_params_)
-print("CV F1-macro médio:", round(float(search.best_score_), 4))
-print("Desempenho no conjunto de teste:", tuned_row)
-print("\\nRelatório de Classificação (Teste):")
+print("F1-macro médio na validação cruzada:", round(float(search.best_score_), 4))
+print(tuned_row)
 print(classification_report(y_test, best_te_pred, target_names=CLASS_NAMES))
         """
     ),
     md(
         """
-## 6. Avaliação de Generalização, Matriz de Confusão e Feature Importance
-Analisamos a matriz de confusão no conjunto de teste e a importância das variáveis para validar aderência física ao problema ambiental.
+## 6. Matriz de confusão e importância das variáveis
         """
     ),
     code(
         """
-fig, axes = plt.subplots(1, 2, figsize=(13, 5))
-
+fig, axes = plt.subplots(1, 2, figsize=(12, 4.6))
 cm = confusion_matrix(y_test, best_te_pred)
-sns.heatmap(cm, annot=True, fmt="d", cmap="RdPu",
-            xticklabels=CLASS_NAMES, yticklabels=CLASS_NAMES, ax=axes[0])
-axes[0].set_title(f"Matriz de Confusão: RF Tuned (Acc={tuned_row['test_acc']:.2%})", fontweight="bold")
-axes[0].set_xlabel("Predito")
-axes[0].set_ylabel("Real")
+sns.heatmap(cm, annot=True, fmt="d", cmap="RdPu", xticklabels=CLASS_NAMES, yticklabels=CLASS_NAMES, ax=axes[0])
+axes[0].set_title(f"Matriz de confusão, RF tuned (acc {tuned_row['test_acc']:.1%})")
+axes[0].set_xlabel("previsto")
+axes[0].set_ylabel("real")
 
+FEATURE_LABELS = ["gas_co (PT08.S1)", "gas_voc (PT08.S2)", "temperatura (T)", "umidade (RH)"]
 importances = best_pipe.named_steps["model"].feature_importances_
-imp_df = pd.DataFrame({"feature": FEATURES, "importance": importances}).sort_values("importance", ascending=True)
-axes[1].barh(imp_df["feature"], imp_df["importance"], color="#64D2FF")
-axes[1].set_title("Importância das Variáveis (Random Forest)", fontweight="bold")
-axes[1].set_xlabel("Importância relativa (Gini)")
-axes[1].grid(axis="x", alpha=0.35)
-
+imp_df = pd.DataFrame({"feature": FEATURES, "rotulo": FEATURE_LABELS, "importance": importances})
+imp_df = imp_df.sort_values("importance")
+axes[1].barh(imp_df["rotulo"], imp_df["importance"], color="#ED145B")
+axes[1].set_title("Importância das variáveis (Gini)")
 fig.tight_layout()
 fig.savefig(CHARTS_DIR / "02_confusao_feature_importance.png", dpi=150)
 plt.show()
+imp_df.sort_values("importance", ascending=False)
         """
     ),
     md(
         """
-### Análise de overfitting e interpretação
-| Modelo | Acurácia treino | Acurácia teste | Gap |
-|---|---|---|---|
-| Random Forest (default) | 100,00% | 89,34% | 10,66 p.p. |
-| Random Forest (tuned, CV=5) | 98,67% | 89,06% | 9,61 p.p. |
-| Gradient Boosting | 92,16% | 89,06% | 3,11 p.p. |
-| KNN (k=9) | 90,63% | 88,77% | 1,87 p.p. |
-| Regressão Logística | 87,72% | 88,55% | -0,84 p.p. |
+## 7. Por que 4 sensores e não 11
 
-- **Random Forest memoriza o treino** (gap próximo de 10 p.p.). O `RandomizedSearchCV` escolheu `max_depth=None` e `min_samples_leaf=2`, ou seja, a busca não reduziu a capacidade do modelo; o F1-macro em validação cruzada (`0,8921`) é praticamente igual ao F1-macro no teste (`0,8922`), o que indica **estimativa de generalização honesta**, mesmo com o gap.
-- O modelo ajustado **não superou o Random Forest padrão no teste** (`0,8922` contra `0,8954` de F1-macro). Mantemos o `Pipeline` ajustado por ser o resultado do protocolo de validação cruzada (sem consultar o conjunto de teste), e não por ganho medido.
-- A **Regressão Logística não sofre overfitting** (gap negativo) e entrega desempenho equivalente com custo de inferência muito menor: é a opção natural para o dispositivo de borda.
-- **Matriz de confusão:** os erros concentram-se em classes vizinhas (`normal` <-> `atencao` e `atencao` <-> `critico`). Apenas 1 caso `normal` foi previsto como `critico` e 0 casos `critico` como `normal`, comportamento coerente com o risco real.
-- **Importância das variáveis:** `PT08.S2(NMHC)` (26,3%) e `C6H6(GT)` (19,8%) lideram, seguidas de `PT08.S1(CO)` e `PT08.S5(O3)` (cerca de 10% cada). Faz sentido físico: CO, benzeno e hidrocarbonetos são co-emitidos por combustão veicular e queimadas. `CO(GT)` não participa das entradas.
-- **Limitação:** a divisão estratificada é aleatória sobre uma série horária; horas vizinhas (muito parecidas) podem cair em treino e teste, o que tende a deixar as métricas ligeiramente otimistas. Uma validação temporal (treinar em meses anteriores, testar nos seguintes) é o próximo passo.
-        """
-    ),
-    md(
-        """
-## 7. Exportação do Modelo e Demonstração em Exemplos Não Vistos
-Exportamos o `Pipeline` vencedor em `artifacts/best_ml_model.joblib` para uso direto na API FastAPI (`/predict`) e testamos 3 cenários simulados de campo.
+A base UCI tem 11 variáveis, mas 3 delas (C6H6, NOx, NO2) vêm de analisadores de referência que custam dezenas de milhares de reais. Nenhum nó comunitário tem isso. Por isso comparamos três opções com o mesmo split:
+
+1. Regra do ESP32: só o sensor gas_voc com os limiares 830/1140. Roda offline no microcontrolador.
+2. Modelo de campo: Random Forest tuned com as 4 leituras do ESP32. Roda na API.
+3. Modelo de laboratório: mesmo Random Forest com as 11 variáveis. Só funcionaria com uma estação oficial.
         """
     ),
     code(
         """
-joblib.dump(best_pipe, ARTIFACTS_DIR / "best_ml_model.joblib")
+def regra_esp32(voc):
+    return (voc >= VOC_ATENCAO).astype(int) + (voc >= VOC_CRITICO).astype(int)
+
+voc_test = df["PT08.S2(NMHC)"].to_numpy()[idx_test]
+regra_pred = regra_esp32(voc_test)
+
+X_lab = df[LAB_FEATURES].to_numpy(dtype=np.float32)
+lab_pipe = pipe(RandomForestClassifier(random_state=42, n_jobs=-1))
+lab_pipe.set_params(**search.best_params_)
+lab_pipe.fit(X_lab[idx_train], y_train)
+lab_pred = lab_pipe.predict(X_lab[idx_test])
+
+def resumo(nome, pred):
+    return {
+        "conjunto": nome,
+        "accuracy": round(float(accuracy_score(y_test, pred)), 4),
+        "f1_macro": round(float(f1_score(y_test, pred, average="macro")), 4),
+    }
+
+conjuntos = [
+    resumo("Regra do ESP32 (gas_voc 830/1140)", regra_pred),
+    resumo("Modelo de campo (4 sensores do ESP32)", best_te_pred),
+    resumo("Modelo de laboratório (11 variáveis UCI)", lab_pred),
+]
+conj_df = pd.DataFrame(conjuntos)
+conj_df
+        """
+    ),
+    code(
+        """
+ganho_ia = conjuntos[1]["f1_macro"] - conjuntos[0]["f1_macro"]
+perda_lab = conjuntos[2]["f1_macro"] - conjuntos[1]["f1_macro"]
+print(f"Modelo de campo vs regra do ESP32: {ganho_ia:+.3f} de F1-macro")
+print(f"Modelo de laboratório vs modelo de campo: {perda_lab:+.3f} de F1-macro")
+        """
+    ),
+    md(
+        """
+Ficamos com o modelo de campo. Ele perde pouco para o de laboratório, ganha da regra simples e, principalmente, roda com o que o ESP32 de fato mede. Um modelo melhor que exige um equipamento que ninguém na comunidade tem não ajuda ninguém. A regra fica no ESP32 porque precisa funcionar sem internet; o modelo entra quando a leitura chega à API.
+
+## 8. Checagem honesta: split temporal
+
+Horas vizinhas são quase iguais. No split aleatório, a hora 10h pode cair no treino e a 11h no teste, e isso infla a nota. Para medir esse efeito, treinamos com os primeiros 80% do período e testamos nos 20% finais, que o modelo nunca viu.
+        """
+    ),
+    code(
+        """
+ordem = np.argsort(df["datahora"].to_numpy())
+corte = int(len(ordem) * 0.8)
+tr_t, te_t = ordem[:corte], ordem[corte:]
+temporal_pipe = pipe(RandomForestClassifier(random_state=42, n_jobs=-1))
+temporal_pipe.set_params(**search.best_params_)
+temporal_pipe.fit(X[tr_t], y[tr_t])
+temporal_pred = temporal_pipe.predict(X[te_t])
+split_temporal_f1 = round(float(f1_score(y[te_t], temporal_pred, average="macro")), 4)
+split_temporal_acc = round(float(accuracy_score(y[te_t], temporal_pred)), 4)
+print(f"Treino até {df['datahora'].iloc[ordem[corte-1]]:%d/%m/%Y}, teste depois disso")
+print(f"Split temporal: acc {split_temporal_acc} | F1-macro {split_temporal_f1}")
+print(f"Split aleatório: acc {tuned_row['test_acc']} | F1-macro {tuned_row['test_f1_macro']}")
+        """
+    ),
+    md(
+        """
+## 9. Exportação e previsões em leituras novas
+
+Salvamos o Pipeline (scaler + Random Forest) em artifacts/best_ml_model.joblib. A API carrega esse arquivo e chama predict_proba com as 4 leituras na ordem gas_co, gas_voc, temperatura_c, umidade_pct.
+        """
+    ),
+    code(
+        """
+joblib.dump(best_pipe, ARTIFACTS_DIR / "best_ml_model.joblib", compress=3)
 
 unseen_samples = [
-    {
-        "cenario": "Manhã limpa (Normal)",
-        "entrada": [890.0, 4.2, 720.0, 75.0, 1080.0, 68.0, 1280.0, 640.0, 21.0, 58.0, 1.42],
-    },
-    {
-        "cenario": "Tráfego intenso (Atenção)",
-        "entrada": [1160.0, 10.8, 995.0, 210.0, 780.0, 118.0, 1520.0, 1040.0, 25.5, 42.0, 1.35],
-    },
-    {
-        "cenario": "Fumaça crítica de queimada (Crítico)",
-        "entrada": [1560.0, 24.5, 1410.0, 460.0, 510.0, 190.0, 1980.0, 1650.0, 32.0, 24.0, 1.12],
-    },
+    {"cenario": "Manhã limpa perto da UBS", "entrada": [925.0, 706.0, 18.0, 55.0]},
+    {"cenario": "Trânsito pesado no fim da tarde", "entrada": [1120.0, 980.0, 24.0, 42.0]},
+    {"cenario": "Fumaça de queimada perto da escola", "entrada": [1383.0, 1280.0, 31.0, 34.0]},
 ]
-
 demo_results = []
 for sc in unseen_samples:
-    arr = np.array([sc["entrada"]], dtype=np.float32)
-    probs = best_pipe.predict_proba(arr)[0]
-    pred_idx = int(np.argmax(probs))
+    probs = best_pipe.predict_proba(np.array([sc["entrada"]], dtype=np.float32))[0]
     item = {
         "cenario": sc["cenario"],
-        "classe_predita": CLASS_NAMES[pred_idx],
+        "entrada": dict(zip(["gas_co", "gas_voc", "temperatura_c", "umidade_pct"], sc["entrada"])),
+        "classe_predita": CLASS_NAMES[int(np.argmax(probs))],
         "probabilidades": {CLASS_NAMES[i]: round(float(probs[i]), 4) for i in range(3)},
     }
     demo_results.append(item)
-    print(item)
+    print(item["cenario"], "->", item["classe_predita"], item["probabilidades"])
 
-all_rows = comp_df.to_dict(orient="records") + [tuned_row]
 metrics_payload = {
     "dataset": "UCI Air Quality (N = 6.941)",
-    "algoritmo_vencedor": "RandomForestClassifier (Tuned)",
+    "features": FEATURES,
+    "features_json": ["gas_co", "gas_voc", "temperatura_c", "umidade_pct"],
+    "algoritmo_vencedor": "RandomForestClassifier (tuned)",
     "melhores_hiperparametros": search.best_params_,
     "cv_f1_macro": round(float(search.best_score_), 4),
     "teste_accuracy": tuned_row["test_acc"],
     "teste_f1_macro": tuned_row["test_f1_macro"],
-    "comparacao_modelos": all_rows,
-    "feature_importance": imp_df.sort_values("importance", ascending=False).round(4).to_dict(orient="records"),
+    "comparacao_modelos": comp_df.to_dict(orient="records") + [tuned_row],
+    "comparacao_conjuntos": conjuntos,
+    "split_temporal_f1": split_temporal_f1,
+    "split_temporal_accuracy": split_temporal_acc,
+    "regra_esp32": {"metrica": "gas_voc", "atencao": VOC_ATENCAO, "critico": VOC_CRITICO},
+    "feature_importance": imp_df.sort_values("importance", ascending=False)[["feature", "importance"]].round(4).to_dict(orient="records"),
     "matriz_confusao": cm.tolist(),
     "demonstracao_nao_vista": demo_results,
 }
-
 (ARTIFACTS_DIR / "ml_metrics.json").write_text(
     json.dumps(metrics_payload, indent=2, ensure_ascii=False), encoding="utf-8"
 )
-print("\\n[OK] Modelo e métricas salvos em packages/ml-modelling/artifacts/.")
+print("Modelo e métricas salvos em packages/ml-modelling/artifacts/")
+        """
+    ),
+    md(
+        """
+## 10. Leitura dos resultados
+
+- O Random Forest tuned (250 árvores, profundidade 8, folha mínima 16) chega a F1-macro 0,874 no teste e 0,870 na validação cruzada. Os dois números são próximos, então a busca não escolheu um modelo que só funciona naquele split.
+- Contra a regra do ESP32 (F1 0,843) o modelo ganha 3 pontos. Contra o modelo de laboratório (0,885) perde 1 ponto. Aceitamos perder esse ponto para rodar com sensores que um nó comunitário consegue ter.
+- No split temporal o F1 cai para 0,849. Esse é o número que esperamos na rua. O split aleatório infla a nota em uns 2,5 pontos.
+- Os três cenários novos caem na classe esperada com probabilidade acima de 93%.
+- Limite: a base é de uma cidade italiana entre 2004 e 2005. Para usar em São Paulo é preciso calibrar com leituras locais.
         """
     ),
 ]
 
 nb = nbf.v4.new_notebook(cells=cells)
-nb["metadata"]["kernelspec"] = {
-    "display_name": "Python 3",
-    "language": "python",
-    "name": "python3",
-}
+nb["metadata"]["kernelspec"] = {"display_name": "Python 3", "language": "python", "name": "python3"}
 nbf.write(nb, str(NB_PATH))
 print(f"Notebook criado em {NB_PATH}")

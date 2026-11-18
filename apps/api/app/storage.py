@@ -15,6 +15,7 @@ CSV_HEADERS = [
     "longitude",
     "metrica",
     "valor",
+    "gas_co",
     "temperatura_c",
     "umidade_pct",
     "relato",
@@ -23,6 +24,8 @@ CSV_HEADERS = [
     "ia_fonte",
     "nivel_risco",
     "alerta",
+    "ia_risco",
+    "ia_risco_prob",
     "hash_integridade",
     "criado_em",
 ]
@@ -67,6 +70,7 @@ class OccurrenceStore:
                     longitude REAL,
                     metrica TEXT NOT NULL,
                     valor REAL NOT NULL,
+                    gas_co REAL,
                     temperatura_c REAL,
                     umidade_pct REAL,
                     relato TEXT NOT NULL,
@@ -75,6 +79,8 @@ class OccurrenceStore:
                     ia_fonte TEXT NOT NULL,
                     nivel_risco TEXT NOT NULL,
                     alerta INTEGER NOT NULL,
+                    ia_risco TEXT,
+                    ia_risco_prob REAL,
                     hash_integridade TEXT NOT NULL,
                     criado_em TEXT NOT NULL
                 )
@@ -97,10 +103,10 @@ class OccurrenceStore:
             cur = conn.execute(
                 """
                 INSERT INTO ocorrencias (
-                    dispositivo_id, tipo, latitude, longitude, metrica, valor,
+                    dispositivo_id, tipo, latitude, longitude, metrica, valor, gas_co,
                     temperatura_c, umidade_pct, relato, ia_sentimento, ia_confianca,
-                    ia_fonte, nivel_risco, alerta, hash_integridade, criado_em
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ia_fonte, nivel_risco, alerta, ia_risco, ia_risco_prob, hash_integridade, criado_em
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     payload["dispositivo_id"],
@@ -109,6 +115,7 @@ class OccurrenceStore:
                     payload.get("longitude"),
                     payload["metrica"],
                     float(payload["valor"]),
+                    payload.get("gas_co"),
                     payload.get("temperatura_c"),
                     payload.get("umidade_pct"),
                     payload["relato"],
@@ -117,6 +124,8 @@ class OccurrenceStore:
                     payload["ia_fonte"],
                     payload["nivel_risco"],
                     1 if payload["alerta"] else 0,
+                    payload.get("ia_risco"),
+                    payload.get("ia_risco_prob"),
                     digest,
                     criado_em,
                 ),
