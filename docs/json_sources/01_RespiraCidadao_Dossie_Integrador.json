@@ -55,7 +55,7 @@
     {
       "title": "2. COMO A INFORMAÇÃO CHEGA ATÉ A PESSOA",
       "body": [
-        "Um sensor na parede mede fumaça, monóxido, temperatura e umidade. Se o ar piora, a luz muda de cor e o alarme toca na hora, mesmo sem internet. A leitura vai para a central, que confere com um modelo treinado em 6.941 horas reais de medição e devolve o nível com uma porcentagem de certeza. O app mostra a cor, uma frase e o que fazer."
+        "Um sensor na parede mede fumaça, monóxido, temperatura e umidade. Se o ar piora, a luz muda de cor e o alarme toca na hora, mesmo sem internet. A leitura vai para a central, que confere com um modelo treinado em 6.941 horas reais de medição e devolve o nível com uma porcentagem de confiança. O app mostra a cor, uma frase e o que fazer."
       ],
       "images": [
         {
@@ -124,7 +124,7 @@
       "images": [
         {
           "path": "/home/agent/projects/respiracidadao-gs/docs/assets/app_agora.png",
-          "caption": "Figura 2: Tela Agora com a escola em ar ruim e a central concordando com 93% de certeza.",
+          "caption": "Figura 2: Tela Agora com a escola em ar ruim e a central concordando com 93% de confiança.",
           "width": 160
         },
         {

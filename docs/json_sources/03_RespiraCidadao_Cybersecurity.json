@@ -104,7 +104,7 @@
             [
               "R4. Histórico adulterado",
               "Baixa / Alto",
-              "Selo SHA-256 em cada leitura, conferido em GET /security/verify/{id}"
+              "Selo HMAC-SHA256 (chave RESPIRA_SEAL_KEY fora do banco) cobrindo todos os campos da leitura, conferido em GET /security/verify/{id}"
             ],
             [
               "R5. Leitura absurda para enganar o modelo",
