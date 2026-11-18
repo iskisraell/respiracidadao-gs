@@ -1,9 +1,9 @@
 import hashlib
 import hmac
-import html
 import json
 import os
 import re
+import secrets
 import time
 from collections import defaultdict, deque
 from datetime import datetime, timezone
@@ -21,19 +21,44 @@ RATE_LIMIT_WINDOW_SEC = int(os.getenv("RATE_LIMIT_WINDOW_SEC", "60"))
 # Otherwise any client could spoof the header and bypass the per-IP rate limiter.
 # Chave do selo de integridade. Com ela o selo é HMAC-SHA256: quem altera o banco sem a chave
 # não consegue refazer o selo. Sem ela, cai para SHA-256 puro (detecta alteração acidental).
-SEAL_KEY = os.getenv("RESPIRA_SEAL_KEY", "").strip().encode("utf-8")
+def _load_seal_key() -> bytes:
+    """RESPIRA_SEAL_KEY do ambiente; sem ela, gera uma chave local fora do banco (arquivo 0600, ignorado pelo git)."""
+    env = os.getenv("RESPIRA_SEAL_KEY", "").strip()
+    if env:
+        return env.encode("utf-8")
+    data_dir = Path(os.getenv("RESPIRA_DATA_DIR", Path(__file__).resolve().parents[3] / "data" / "runtime"))
+    key_file = Path(os.getenv("RESPIRA_SEAL_KEY_FILE", data_dir / "seal.key"))
+    try:
+        if key_file.exists():
+            return key_file.read_text(encoding="utf-8").strip().encode("utf-8")
+        key_file.parent.mkdir(parents=True, exist_ok=True)
+        key = secrets.token_hex(32)
+        fd = os.open(str(key_file), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(key)
+        return key.encode("utf-8")
+    except OSError:
+        return b""
+
+
+SEAL_KEY = _load_seal_key()
 TRUST_PROXY = os.getenv("RESPIRA_TRUST_PROXY", "").strip().lower() in {"1", "true", "yes"}
 
 _CONTROL_CHARS = re.compile(r"[\x00-\x08\x0b-\x1f\x7f]")
 _MARKUP_CHARS = re.compile(r"[<>]")
+_TAGS = re.compile(r"<[^>]*>")
 
 
 def sanitize_text(value: Optional[str]) -> str:
-    """Escape HTML/script payloads and normalize whitespace to mitigate XSS/log injection."""
+    """Remove tags e sinais < >, caracteres de controle e espaços repetidos.
+
+    Não converte para entidades HTML: o app (React) já escapa o texto na tela, e entidades
+    apareceriam cruas para quem lê (d&#x27;água). Fórmulas de planilha são tratadas no CSV.
+    """
     if not value:
         return ""
-    stripped = " ".join(_CONTROL_CHARS.sub(" ", value).split())
-    return html.escape(stripped, quote=True)
+    no_tags = _MARKUP_CHARS.sub("", _TAGS.sub(" ", value))
+    return " ".join(_CONTROL_CHARS.sub(" ", no_tags).split())
 
 
 def contains_markup(value: Optional[str]) -> bool:
@@ -61,6 +86,10 @@ def compute_record_hash(payload: dict) -> str:
         "ia_risco": payload.get("ia_risco"),
         "ia_risco_prob": num("ia_risco_prob"),
         "relato": payload.get("relato", ""),
+        "alerta": bool(payload.get("alerta")),
+        "ia_sentimento": payload.get("ia_sentimento"),
+        "ia_confianca": num("ia_confianca"),
+        "ia_fonte": payload.get("ia_fonte"),
         "criado_em": payload.get("criado_em"),
     }
     encoded = json.dumps(canonical, sort_keys=True, ensure_ascii=False).encode("utf-8")

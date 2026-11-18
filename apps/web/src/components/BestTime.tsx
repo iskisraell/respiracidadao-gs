@@ -17,7 +17,7 @@ export function BestTime({ pattern }: { pattern: HourPattern }) {
         {inicio}h às {fim}h
       </p>
       <p className="muted">
-        Às {pior_hora}h, o ar ruim foi {vezes} vezes mais comum. Média de 6.941 horas medidas numa cidade italiana em 2004 e 2005; vale como ponto de partida até o sensor deste lugar juntar o próprio histórico.
+        No horário de aula (7h às 18h), o pior momento é às {pior_hora}h: o ar ruim foi {vezes} vezes mais comum que na melhor janela. Média de 6.941 horas medidas numa cidade italiana em 2004 e 2005; vale como ponto de partida até o sensor deste lugar juntar o próprio histórico.
       </p>
       <div className="hours" role="img" aria-label={`Ar ruim é mais comum às ${pior_hora}h e menos comum entre ${inicio}h e ${fim}h`}>
         {pattern.horas.map((h) => (

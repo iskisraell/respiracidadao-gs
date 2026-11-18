@@ -4,7 +4,7 @@ from pydantic import AliasChoices, BaseModel, Field, field_validator
 
 class OcorrenciaIn(BaseModel):
     dispositivo_id: str = Field(..., min_length=2, max_length=64, pattern=r"^[A-Za-z0-9_.:\-]+$", examples=["esp32-respira-01"])
-    tipo: Literal["esp32", "drone", "app"] = Field(
+    tipo: Literal["esp32", "app"] = Field(
         default="esp32",
         validation_alias=AliasChoices("tipo", "tipo_dispositivo"),
     )
@@ -63,7 +63,7 @@ class PredictIn(BaseModel):
 
 class SimulateRequest(BaseModel):
     cenario: Literal["todos", "normal", "atencao", "critico"] = "todos"
-    tipo: Literal["esp32", "drone", "app"] = "esp32"
+    tipo: Literal["esp32", "app"] = "esp32"
     local_id: Optional[str] = Field(default=None, max_length=64)
 
 

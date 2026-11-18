@@ -65,6 +65,7 @@ p { margin: 0; }
 .dot.normal { background: var(--normal); }
 .dot.atencao { background: var(--atencao); }
 .dot.critico { background: var(--critico); }
+.level-pill { display: inline-flex; align-items: center; gap: 6px; font-size: 0.82rem; font-weight: 600; color: var(--ink-2); white-space: nowrap; }
 
 .status { border-radius: 22px; padding: 28px; background: var(--surface); box-shadow: var(--shadow); border-top: 8px solid var(--line); display: flex; flex-direction: column; gap: 20px; }
 .status.normal { border-top-color: var(--normal); background: linear-gradient(var(--normal-bg), var(--surface) 160px); }

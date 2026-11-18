@@ -58,7 +58,7 @@ def test_three_scenarios_and_csv_sqlite_persistence(client):
         },
         {
             "dispositivo_id": "esp32-02",
-            "tipo_dispositivo": "drone",
+            "tipo_dispositivo": "app",
             "metrica": "gas_voc",
             "valor": 980.0, "gas_co": 1120.0,
             "temperatura_c": 30.0,
@@ -93,7 +93,7 @@ def test_three_scenarios_and_csv_sqlite_persistence(client):
     assert len(listed) == 3
     crit = [item for item in listed if item["id"] == ids[2]][0]
     assert "<script>" not in crit["relato"]
-    assert "&lt;script&gt;" in crit["relato"]
+    assert "&lt;" not in crit["relato"] and "tosse na escola" in crit["relato"]
 
     # CSV persistence check
     csv_path = runtime_dir / "leituras.csv"
@@ -283,10 +283,13 @@ def test_relatos_are_sanitized_and_flag_urgency(client):
     r = c.post("/relatos", json={"local_id": "praca-da-se", "texto": "Fumaça forte <b>na praça</b>"})
     assert r.status_code == 201
     body = r.json()
-    assert body["urgente"] is True and "<b>" not in body["texto"]
+    assert body["urgente"] is True and body["texto"] == "Fumaça forte na praça"
+    # Apóstrofo continua legível (sem &#x27;) e texto só de espaços é recusado
+    assert c.post("/relatos", json={"local_id": "praca-da-se", "texto": "Cheiro forte perto da caixa d'água"}).json()["texto"].endswith("d'água")
+    assert c.post("/relatos", json={"local_id": "praca-da-se", "texto": "     "}).status_code == 400
     assert c.post("/relatos", json={"local_id": "outro-lugar", "texto": "oi tudo bem"}).status_code == 404
     praca = next(p for p in c.get("/locais").json() if p["id"] == "praca-da-se")
-    assert praca["relatos"][0]["id"] == body["id"]
+    assert body["id"] in [r["id"] for r in praca["relatos"]]
 
 
 def test_hourly_pattern_points_to_afternoon_window(client):
@@ -296,3 +299,23 @@ def test_hourly_pattern_points_to_afternoon_window(client):
     janela = body["melhor_janela"]
     assert 11 <= janela["inicio"] <= 15
     assert janela["pior_hora"] in (8, 9, 17)
+
+
+def test_demo_readings_never_hide_real_ones(client):
+    c, _, _ = client
+    c.post("/simulate", json={"cenario": "critico", "local_id": "ubs-vila-esperanca"})
+    assert c.get("/indicadores").json()["total_leituras"] == 0
+    real = {"dispositivo_id": "esp32-ubs-vila-maria", "tipo": "esp32", "metrica": "gas_voc", "valor": 706,
+            "gas_co": 925, "temperatura_c": 18, "umidade_pct": 55}
+    assert c.post("/ocorrencias", json=real).status_code == 201
+    c.post("/simulate", json={"cenario": "critico", "local_id": "ubs-vila-esperanca"})
+    ubs = next(p for p in c.get("/locais").json() if p["id"] == "ubs-vila-esperanca")
+    assert ubs["ultima_leitura"]["tipo"] == "esp32" and ubs["ultima_leitura"]["nivel_risco"] == "normal"
+    assert c.get("/indicadores").json()["total_leituras"] == 1
+
+
+def test_seal_is_keyed_even_without_env(client):
+    c, _, runtime_dir = client
+    assert c.get("/health").json()["selo_com_chave"] is True
+    key_file = runtime_dir / "seal.key"
+    assert key_file.exists() and (key_file.stat().st_mode & 0o777) == 0o600

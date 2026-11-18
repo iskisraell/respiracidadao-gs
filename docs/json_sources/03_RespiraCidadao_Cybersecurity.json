@@ -99,12 +99,12 @@
             [
               "R3. Script ou fórmula em relato",
               "Alta / Médio",
-              "Texto escapado antes de gravar; células de CSV que começam com = + - @ ganham prefixo"
+              "Tags e sinais < > removidos antes de gravar; células de CSV que começam com = + - @ ganham prefixo"
             ],
             [
               "R4. Histórico adulterado",
               "Baixa / Alto",
-              "Selo HMAC-SHA256 (chave RESPIRA_SEAL_KEY fora do banco) cobrindo todos os campos da leitura, conferido em GET /security/verify/{id}"
+              "Selo HMAC-SHA256 (chave em RESPIRA_SEAL_KEY ou gerada no primeiro uso em data/runtime/seal.key, fora do banco) cobrindo todos os campos da leitura, conferido em GET /security/verify/{id}"
             ],
             [
               "R5. Leitura absurda para enganar o modelo",
@@ -191,7 +191,7 @@
           "level": 0
         },
         {
-          "text": "Relato com <script>: gravado escapado. Valor \"=HYPERLINK(...)\" no CSV ganha prefixo e não vira fórmula.",
+          "text": "Relato com <script>: a marcação é removida antes de gravar. Valor \"=HYPERLINK(...)\" no CSV ganha prefixo e não vira fórmula.",
           "level": 0
         },
         {

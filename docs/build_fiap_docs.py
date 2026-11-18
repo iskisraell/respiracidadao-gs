@@ -17,11 +17,12 @@ JSON_DIR.mkdir(parents=True, exist_ok=True)
 
 _FIAP_GEN_CANDIDATES = [
     Path(os.environ["FIAP_DOC_GENERATOR"]) if os.environ.get("FIAP_DOC_GENERATOR") else None,
-    Path("/home/agent/.t3/worktrees/fleet/t3-c6e26525-b98cac6896f353a6/skills/fiap-doc/scripts/generate.py"),
     Path.home() / ".agents" / "skills" / "fiap-doc" / "scripts" / "generate.py",
     Path.home() / "projects" / "fleet" / "skills" / "fiap-doc" / "scripts" / "generate.py",
 ]
-FIAP_GEN = next((c for c in _FIAP_GEN_CANDIDATES if c and c.exists()), _FIAP_GEN_CANDIDATES[1])
+FIAP_GEN = next((c for c in _FIAP_GEN_CANDIDATES if c and c.exists()), None)
+if FIAP_GEN is None:
+    sys.exit("Gerador fiap-doc não encontrado. Defina FIAP_DOC_GENERATOR com o caminho de generate.py.")
 VENV_PY = str(ROOT / ".venv" / "bin" / "python")
 
 INTEGRANTES = (
@@ -218,7 +219,7 @@ def build_all():
                     }
                 ],
                 "body": [
-                    "O firmware classifica cada sensor separado. Fumaça e gases: abaixo de 830 bom, de 830 a 1140 carregado, acima de 1140 ruim. Monóxido: cortes em 1010 e 1280. Umidade abaixo de 30% conta como carregado, porque ar seco segura a fumaça perto do chão. A luz segue a medida de fumaça e gases, que sozinha acerta 84 de cada 100 horas na base real de 6.941 horas, e funciona sem rede. O monitor serial mostra o nível de cada sensor na linha SENSORES.",
+                    "O firmware classifica cada sensor separado. Fumaça e gases: abaixo de 830 bom, de 830 a 1139 carregado, 1140 ou mais ruim. Monóxido: cortes em 1010 e 1280. Umidade abaixo de 30% conta como carregado, porque ar seco segura a fumaça perto do chão. A luz segue a medida de fumaça e gases, que sozinha acerta 84 de cada 100 horas na base real de 6.941 horas, e funciona sem rede. O monitor serial mostra o nível de cada sensor na linha SENSORES.",
                     "A cada 3 segundos o ESP32 monta um JSON e envia por HTTP POST para a central: {dispositivo_id, tipo, latitude, longitude, metrica: \"gas_voc\", valor, gas_co, temperatura_c, umidade_pct}. É o mesmo contrato da API em Python e da função na nuvem. O sensor não manda relato; relato é coisa de pessoa.",
                 ],
             },
@@ -302,8 +303,8 @@ def build_all():
                         "rows": [
                             ["R1. Enxurrada de envios", "Alta / Alto", "Limite de 30 envios por minuto por endereço, resposta 429"],
                             ["R2. Apagar dados sem permissão", "Média / Crítico", "Chave X-API-Key, comparada de um jeito que não deixa adivinhar pelo tempo de resposta; sem chave configurada, a rota fica fechada"],
-                            ["R3. Script ou fórmula em relato", "Alta / Médio", "Texto escapado antes de gravar; células de CSV que começam com = + - @ ganham prefixo"],
-                            ["R4. Histórico adulterado", "Baixa / Alto", "Selo HMAC-SHA256 (chave RESPIRA_SEAL_KEY fora do banco) cobrindo todos os campos da leitura, conferido em GET /security/verify/{id}"],
+                            ["R3. Script ou fórmula em relato", "Alta / Médio", "Tags e sinais < > removidos antes de gravar; células de CSV que começam com = + - @ ganham prefixo"],
+                            ["R4. Histórico adulterado", "Baixa / Alto", "Selo HMAC-SHA256 (chave em RESPIRA_SEAL_KEY ou gerada no primeiro uso em data/runtime/seal.key, fora do banco) cobrindo todos os campos da leitura, conferido em GET /security/verify/{id}"],
                             ["R5. Leitura absurda para enganar o modelo", "Média / Alto", "Cada campo tem faixa válida (validada com Pydantic); fora da faixa vira 400 e não chega ao modelo"],
                             ["R6. Engenharia social", "Alta / Alto", "Canal oficial único, treino da equipe e MFA para quem administra"],
                         ],
@@ -339,7 +340,7 @@ def build_all():
                     {"text": "Limite de envios: com limite de teste em 10, os envios 11 e 12 voltam 429 e o evento rate_limit_blocked vai para o registro.", "level": 0},
                     {"text": "IP falso: trocar o cabeçalho X-Forwarded-For não dribla o limite, porque a central só confia nele atrás de um proxy declarado.", "level": 0},
                     {"text": "Chave: DELETE /ocorrencias sem chave ou com chave errada volta 401. Sem chave configurada no servidor, volta 503.", "level": 0},
-                    {"text": "Relato com <script>: gravado escapado. Valor \"=HYPERLINK(...)\" no CSV ganha prefixo e não vira fórmula.", "level": 0},
+                    {"text": "Relato com <script>: a marcação é removida antes de gravar. Valor \"=HYPERLINK(...)\" no CSV ganha prefixo e não vira fórmula.", "level": 0},
                     {"text": "Adulteração: editamos uma leitura direto no SQLite e GET /security/verify/{id} passou a responder integro=false.", "level": 0},
                 ],
             },

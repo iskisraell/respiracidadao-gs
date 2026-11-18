@@ -26,6 +26,7 @@ O RespiraCidadão avisa escolas, UBS e famílias quando o ar perto delas piora. 
 # Central (porta 8000)
 python -m venv .venv && .venv/bin/pip install -e apps/api
 export RESPIRA_API_KEY="uma-chave-local"   # só para apagar dados; sem ela a rota fica fechada
+export RESPIRA_SEAL_KEY="outra-chave-local"  # opcional; sem ela a central gera data/runtime/seal.key no primeiro uso
 .venv/bin/uvicorn app.main:app --app-dir apps/api --port 8000
 
 # App (porta 5173), em outro terminal

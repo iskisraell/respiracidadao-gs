@@ -4,7 +4,7 @@ Envia as 3 leituras que o sensor manda em cada nível, uma por lugar:
 
   UBS Vila Esperança       ar bom       luz verde, buzzer quieto
   Praça da Sé              ar carregado luz amarela, bipe curto
-  Escola Jardim Primavera  ar ruim      luz vermelha, alarme contínuo
+  Escola Jardim Primavera  ar ruim      luz vermelha, alarme a cada 3 s
 
 Os números são índices dos sensores de gás na mesma escala da base real de 6.941 horas.
 
@@ -42,7 +42,7 @@ CENARIOS = [
     },
     {
         "nome": "Ar ruim na Escola Jardim Primavera",
-        "luz": "vermelha, alarme contínuo",
+        "luz": "vermelha, alarme a cada 3 s",
         "payload": {
             "dispositivo_id": "esp32-escola-zona-norte",
             "latitude": -23.4892, "longitude": -46.6208,

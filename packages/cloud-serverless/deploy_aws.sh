@@ -58,7 +58,11 @@ cp "$AQUI/lambda_function.py" "$PACOTE/"
 rm -rf "$PACOTE"
 
 passo "Função Lambda ($FUNCAO)"
-AMBIENTE="Variables={DB_HOST=$DB_HOST,DB_PORT=5432,DB_NAME=$DB_NAME,DB_USER=$DB_USER,DB_PASSWORD=$DB_PASSWORD,HF_TOKEN=$HF_TOKEN}"
+# JSON em vez da forma curta Variables={...}: senha com , = { } não quebra o comando.
+AMBIENTE=$(DB_HOST="$DB_HOST" DB_NAME="$DB_NAME" DB_USER="$DB_USER" DB_PASSWORD="$DB_PASSWORD" HF_TOKEN="$HF_TOKEN" python3 -c '
+import json, os
+print(json.dumps({"Variables": {"DB_HOST": os.environ["DB_HOST"], "DB_PORT": "5432", "DB_NAME": os.environ["DB_NAME"],
+    "DB_USER": os.environ["DB_USER"], "DB_PASSWORD": os.environ["DB_PASSWORD"], "HF_TOKEN": os.environ.get("HF_TOKEN", "")}}))')
 if aws lambda get-function --function-name "$FUNCAO" >/dev/null 2>&1; then
   aws lambda update-function-code --function-name "$FUNCAO" --zip-file "fileb://$AQUI/funcao.zip" >/dev/null
   aws lambda wait function-updated --function-name "$FUNCAO"

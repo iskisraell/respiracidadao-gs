@@ -76,7 +76,7 @@
         }
       ],
       "body": [
-        "O firmware classifica cada sensor separado. Fumaça e gases: abaixo de 830 bom, de 830 a 1140 carregado, acima de 1140 ruim. Monóxido: cortes em 1010 e 1280. Umidade abaixo de 30% conta como carregado, porque ar seco segura a fumaça perto do chão. A luz segue a medida de fumaça e gases, que sozinha acerta 84 de cada 100 horas na base real de 6.941 horas, e funciona sem rede. O monitor serial mostra o nível de cada sensor na linha SENSORES.",
+        "O firmware classifica cada sensor separado. Fumaça e gases: abaixo de 830 bom, de 830 a 1139 carregado, 1140 ou mais ruim. Monóxido: cortes em 1010 e 1280. Umidade abaixo de 30% conta como carregado, porque ar seco segura a fumaça perto do chão. A luz segue a medida de fumaça e gases, que sozinha acerta 84 de cada 100 horas na base real de 6.941 horas, e funciona sem rede. O monitor serial mostra o nível de cada sensor na linha SENSORES.",
         "A cada 3 segundos o ESP32 monta um JSON e envia por HTTP POST para a central: {dispositivo_id, tipo, latitude, longitude, metrica: \"gas_voc\", valor, gas_co, temperatura_c, umidade_pct}. É o mesmo contrato da API em Python e da função na nuvem. O sensor não manda relato; relato é coisa de pessoa."
       ]
     },

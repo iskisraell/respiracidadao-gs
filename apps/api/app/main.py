@@ -19,6 +19,7 @@ from .classifier import (
 from .places import GUIDANCE, PLACE_BY_DEVICE, PLACE_BY_ID, PLACES, best_window, hourly_pattern
 from .schemas import OcorrenciaIn, OcorrenciaOut, PredictIn, RelatoIn, SimulateRequest
 from .security import (
+    SEAL_KEY,
     SecurityAuditor,
     SlidingWindowRateLimiter,
     compute_record_hash,
@@ -42,6 +43,8 @@ RUNTIME_DIR = Path(os.getenv("RESPIRA_DATA_DIR", str(ROOT_DIR / "data" / "runtim
 store = OccurrenceStore(RUNTIME_DIR)
 auditor = SecurityAuditor(RUNTIME_DIR / "security_audit.jsonl")
 rate_limiter = SlidingWindowRateLimiter()
+# Teste de leitura no app chama /predict a cada ajuste do controle; limite próprio, mais folgado.
+predict_limiter = SlidingWindowRateLimiter(max_requests=int(os.getenv("PREDICT_RATE_LIMIT", "120")))
 models = ModelBundle(ROOT_DIR)
 
 app = FastAPI(
@@ -155,6 +158,7 @@ def health():
         "ml_carregado": models.ml_model is not None,
         "nn_carregado": models.nn_model is not None,
         "limiares": THRESHOLDS,
+        "selo_com_chave": bool(SEAL_KEY),
     }
 
 
@@ -230,6 +234,11 @@ def create_relato(payload: RelatoIn, request: Request):
     if payload.local_id not in PLACE_BY_ID:
         raise HTTPException(status_code=404, detail="Lugar não encontrado.")
     texto = sanitize_text(payload.texto)
+    if contains_markup(payload.texto):
+        auditor.record(event="xss_sanitized", severity="warning", client_ip=client_ip,
+                       detail=f"Marcação removida de relato em {payload.local_id}.", status_code=201)
+    if len(texto) < 3:
+        raise HTTPException(status_code=400, detail="Escreva o que você está vendo ou sentindo.")
     sentimento, _, fonte = analyze_report_sentiment(texto)
     relato = store.add_relato(payload.local_id, texto, urgente=sentimento == "negative", ia_fonte=fonte)
     auditor.record(
@@ -262,6 +271,10 @@ def get_indicadores():
 @app.post("/predict")
 def predict_risk(payload: PredictIn, request: Request):
     client_ip = get_client_ip(request)
+    allowed, _, retry_after = predict_limiter.check(client_ip)
+    if not allowed:
+        raise HTTPException(status_code=429, detail="Muitas consultas seguidas. Tente de novo em instantes.",
+                            headers={"Retry-After": str(retry_after)})
     if models.ml_model is None or models.nn_model is None:
         models.reload()  # pick up artifacts trained after startup without reloading on every call
     result = models.predict(payload.model_dump())
@@ -333,7 +346,7 @@ def get_security_audit(limit: int = Query(default=40, ge=1, le=100)):
             "Rate Limiting (Sliding Window HTTP 429)",
             "Autenticação administrativa via X-API-Key (HMAC)",
             "Sanitização de texto contra XSS e log injection",
-            "Hash SHA-256 de integridade por ocorrência",
+            "Selo HMAC-SHA256 de integridade por ocorrência (chave fora do banco)",
             "Trilha de auditoria JSONL persistida",
         ],
         "events": auditor.list_events(limit=limit),
@@ -351,7 +364,7 @@ def verify_record_integrity(record_id: int, request: Request):
         event="integrity_check",
         severity="info" if integro else "critical",
         client_ip=get_client_ip(request),
-        detail=f"Verificação SHA-256 do registro #{record_id}: {'ÍNTEGRO' if integro else 'ADULTERADO'}.",
+        detail=f"Verificação do selo do registro #{record_id}: {'ÍNTEGRO' if integro else 'ADULTERADO'}.",
         status_code=200,
     )
     return {

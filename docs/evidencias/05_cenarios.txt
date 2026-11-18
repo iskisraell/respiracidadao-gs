@@ -12,5 +12,5 @@ Ar carregado na Praça da Sé
 
 Ar ruim na Escola Jardim Primavera
   sensor  gases 1280 | CO 1383 | 31.0 °C | 34.0%
-  luz     vermelha, alarme contínuo
+  luz     vermelha, alarme a cada 3 s
   gravado nível critico | central: critico (93%)

@@ -1,16 +1,16 @@
-$ curl -s localhost:8000/security/verify/14
+$ curl -s localhost:8000/security/verify/20
 {
-    "id": 14,
+    "id": 20,
     "integro": true,
-    "hash_armazenado": "d235cfffaeded1db7679d2a8fa5745d006645420e3499a11ceff66a93aaf9ea5",
-    "hash_recalculado": "d235cfffaeded1db7679d2a8fa5745d006645420e3499a11ceff66a93aaf9ea5"
+    "hash_armazenado": "bf5fd36fd67d1314decc9ddd36a287e5acad44a327df5f6707b882c92c101e1d",
+    "hash_recalculado": "bf5fd36fd67d1314decc9ddd36a287e5acad44a327df5f6707b882c92c101e1d"
 }
 
-$ sqlite3 data/runtime/ocorrencias.db "UPDATE ocorrencias SET nivel_risco='normal', valor=500 WHERE id=14"
-$ curl -s localhost:8000/security/verify/14
+$ sqlite3 data/runtime/ocorrencias.db "UPDATE ocorrencias SET nivel_risco='normal', valor=500 WHERE id=20"
+$ curl -s localhost:8000/security/verify/20
 {
-    "id": 14,
+    "id": 20,
     "integro": false,
-    "hash_armazenado": "d235cfffaeded1db7679d2a8fa5745d006645420e3499a11ceff66a93aaf9ea5",
-    "hash_recalculado": "0614bea120d35582927afe58375cebeec382d6303146372a4b62410e90d20147"
+    "hash_armazenado": "bf5fd36fd67d1314decc9ddd36a287e5acad44a327df5f6707b882c92c101e1d",
+    "hash_recalculado": "755fb504e2dcc6508a506d2b788a13ffb9c945763cdfd60c356dca5ed286fc56"
 }

@@ -4,8 +4,8 @@ import type { Level, PredictResult } from "../types";
 import { LEVEL_NAME, pct } from "../format";
 
 const FIELDS = [
-  { key: "gas_voc", label: "Fumaça e gases", min: 400, max: 1800, step: 10, unit: "" },
-  { key: "gas_co", label: "Monóxido de carbono", min: 650, max: 1800, step: 10, unit: "" },
+  { key: "gas_voc", label: "Fumaça e gases", min: 400, max: 1800, step: 1, unit: "" },
+  { key: "gas_co", label: "Monóxido de carbono", min: 650, max: 1800, step: 1, unit: "" },
   { key: "temperatura_c", label: "Temperatura", min: 0, max: 40, step: 1, unit: " °C" },
   { key: "umidade_pct", label: "Umidade do ar", min: 10, max: 90, step: 1, unit: "%" },
 ] as const;
@@ -21,9 +21,10 @@ const PRESETS: { name: string; v: Values }[] = [
 export function TryReading() {
   const [v, setV] = useState<Values>(PRESETS[1].v);
   const [res, setRes] = useState<PredictResult | null>(null);
+  const [offline, setOffline] = useState(false);
 
   useEffect(() => {
-    const t = setTimeout(() => api.predict(v).then(setRes).catch(() => setRes(null)), 250);
+    const t = setTimeout(() => api.predict(v).then((r) => { setRes(r); setOffline(false); }).catch(() => { setRes(null); setOffline(true); }), 250);
     return () => clearTimeout(t);
   }, [v]);
 
@@ -54,6 +55,7 @@ export function TryReading() {
           ))}
         </div>
         <ul className="answers" aria-live="polite">
+          {offline && <li className="vazio"><strong>Sem resposta da central</strong><small>Confira a conexão e tente de novo.</small></li>}
           {answers.map(([who, lvl, p]) => (
             <li key={who} className={lvl}>
               <small>{who}</small>

@@ -167,7 +167,18 @@ class OccurrenceStore:
         return [self._row_to_dict(r) for r in rows]
 
     def history(self, dispositivo_id: str, limit: int = 24) -> List[dict]:
-        """Últimas leituras de um sensor, da mais nova para a mais antiga."""
+        """Últimas leituras de um sensor, da mais nova para a mais antiga.
+
+        Leituras de demonstração só aparecem quando o sensor ainda não mandou nenhuma leitura real,
+        para a demonstração nunca esconder o estado verdadeiro de um lugar.
+        """
+        with self._connect() as conn:
+            rows = conn.execute(
+                "SELECT * FROM ocorrencias WHERE dispositivo_id = ? AND tipo != 'demo' ORDER BY id DESC LIMIT ?",
+                (dispositivo_id, limit),
+            ).fetchall()
+        if rows:
+            return [self._row_to_dict(r) for r in rows]
         return self.list_all(dispositivo_id=dispositivo_id, limit=limit)
 
     def add_relato(self, local_id: str, texto: str, urgente: bool, ia_fonte: str) -> dict:
@@ -201,15 +212,15 @@ class OccurrenceStore:
         """Aggregates over the whole table (not just the latest N rows)."""
         with self._connect() as conn:
             total, alertas, media, vmax, vmin = conn.execute(
-                "SELECT COUNT(*), COALESCE(SUM(alerta), 0), AVG(valor), MAX(valor), MIN(valor) FROM ocorrencias"
+                "SELECT COUNT(*), COALESCE(SUM(alerta), 0), AVG(valor), MAX(valor), MIN(valor) FROM ocorrencias WHERE tipo != 'demo'"
             ).fetchone()
             por_risco = {"normal": 0, "atencao": 0, "critico": 0}
-            for risco, qtd in conn.execute("SELECT nivel_risco, COUNT(*) FROM ocorrencias GROUP BY nivel_risco"):
+            for risco, qtd in conn.execute("SELECT nivel_risco, COUNT(*) FROM ocorrencias WHERE tipo != 'demo' GROUP BY nivel_risco"):
                 por_risco[risco] = qtd
             por_disp = {
                 d: qtd
                 for d, qtd in conn.execute(
-                    "SELECT dispositivo_id, COUNT(*) FROM ocorrencias GROUP BY dispositivo_id ORDER BY dispositivo_id"
+                    "SELECT dispositivo_id, COUNT(*) FROM ocorrencias WHERE tipo != 'demo' GROUP BY dispositivo_id ORDER BY dispositivo_id"
                 )
             }
 

@@ -6,6 +6,7 @@ Os logs ficam no CloudWatch. Mesmo contrato e mesmos limites do firmware e da AP
 
 import base64
 import json
+import re
 import logging
 import math
 import os
@@ -34,6 +35,16 @@ COLUNAS = (
     "dispositivo_id", "tipo_dispositivo", "latitude", "longitude", "metrica", "valor",
     *LEITURAS_EXTRAS, "relato", "sentimento", "confianca", "nivel_risco", "medido_em",
 )
+# Mesmas faixas válidas da API (apps/api/app/schemas.py).
+FAIXAS = {
+    "valor": (0.0, 100000.0),
+    "gas_co": (0.0, 5000.0),
+    "temperatura_c": (-40.0, 85.0),
+    "umidade_pct": (0.0, 100.0),
+    "latitude": (-90.0, 90.0),
+    "longitude": (-180.0, 180.0),
+}
+DISPOSITIVO_RE = re.compile(r"^[A-Za-z0-9_.:\-]{2,64}$")
 LIMITE_LOG_PAYLOAD = 2000
 LIMITE_RELATO = 500
 
@@ -178,6 +189,12 @@ def _corpo_requisicao(evento):
     return bruto
 
 
+def _limpar_texto(texto):
+    """Mesma limpeza da API: tira tags, sinais < > e caracteres de controle."""
+    sem_tags = re.sub(r"[<>]", "", re.sub(r"<[^>]*>", " ", str(texto)))
+    return " ".join(re.sub(r"[\x00-\x08\x0b-\x1f\x7f]", " ", sem_tags).split())
+
+
 def rota_ingestao(evento):
     bruto = _corpo_requisicao(evento)
     logger.info("PAYLOAD RECEBIDO: %s", bruto[:LIMITE_LOG_PAYLOAD])
@@ -205,18 +222,28 @@ def rota_ingestao(evento):
     erros = [e for e in (erro_valor, erro_lat, erro_lon, *(err for _, err in extras.values())) if e]
     if tipo_disp not in TIPOS_VALIDOS:
         erros.append(f"tipo_dispositivo deve ser um de {sorted(TIPOS_VALIDOS)}")
+    metrica = str(payload["metrica"]).strip()
+    if metrica not in LIMIARES:
+        erros.append(f"metrica deve ser um de {sorted(LIMIARES)}")
+    if not DISPOSITIVO_RE.match(str(payload["dispositivo_id"]).strip()):
+        erros.append("dispositivo_id aceita só letras, números e . _ : - (2 a 64)")
+    numeros = {"valor": valor, "latitude": latitude, "longitude": longitude, **{c: v for c, (v, _) in extras.items()}}
+    for campo, (minimo, maximo) in FAIXAS.items():
+        v = numeros.get(campo)
+        if v is not None and not (minimo <= v <= maximo):
+            erros.append(f"{campo} fora da faixa {minimo} a {maximo}")
     if erros:
         logger.warning("LEITURA DESCARTADA - campos invalidos: %s", erros)
         return resposta(400, {"erro": "campos invalidos", "detalhes": erros})
 
     relato = payload.get("relato")
-    relato = str(relato).strip()[:LIMITE_RELATO] if relato is not None else None
+    relato = _limpar_texto(relato)[:LIMITE_RELATO] if relato is not None else None
     dados = {
         "dispositivo_id": str(payload["dispositivo_id"]).strip(),
         "tipo_dispositivo": tipo_disp,
         "latitude": latitude,
         "longitude": longitude,
-        "metrica": str(payload["metrica"]).strip(),
+        "metrica": metrica,
         "valor": valor,
         **{c: v for c, (v, _) in extras.items()},
         "relato": relato,
