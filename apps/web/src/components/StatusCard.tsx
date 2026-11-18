@@ -27,7 +27,9 @@ export function StatusCard({ place }: { place: Place }) {
         <h2>Sem leitura recente</h2>
         <p>
           <CloudOff size={16} aria-hidden="true" /> A última medida é de {ago(medido)} e marcava {LEVEL_NAME[place.nivel].toLowerCase()}.
-          O sensor pode estar sem internet. A luz dele continua funcionando no local: confira por lá antes de decidir.
+          {place.sensor_simulado
+            ? "Este sensor ainda roda em simulador (Wokwi), não numa placa instalada aqui: não há luz no local para conferir."
+            : "O sensor pode estar sem internet. A luz dele continua funcionando no local: confira por lá antes de decidir."}
         </p>
       </section>
     );
