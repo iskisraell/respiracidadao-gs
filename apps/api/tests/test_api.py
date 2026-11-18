@@ -365,3 +365,47 @@ def test_seal_key_creation_is_race_safe(tmp_path, monkeypatch):
         keys = set(pool.map(lambda _: sec_mod._load_seal_key(), range(16)))
     assert len(keys) == 1 and len(next(iter(keys))) == 64
     assert [p.name for p in tmp_path.iterdir()] == ["seal.key"]
+
+
+def test_late_reading_does_not_hide_newer_one(client):
+    """Uma leitura que chega atrasada entra no histórico no lugar certo, sem virar a 'última'."""
+    from datetime import datetime, timedelta, timezone
+
+    c, _, _ = client
+    agora = c.post("/ocorrencias", json={"dispositivo_id": "esp32-escola-zona-norte", "valor": 900}).json()
+    antes = (datetime.now(timezone.utc) - timedelta(hours=2)).isoformat()
+    atrasada = c.post("/ocorrencias", json={"dispositivo_id": "esp32-escola-zona-norte", "valor": 100, "medido_em": antes}).json()
+    escola = next(p for p in c.get("/locais").json() if p["dispositivo_id"] == "esp32-escola-zona-norte")
+    assert escola["ultima_leitura"]["id"] == agora["id"]
+    assert escola["historico"][0]["criado_em"] == atrasada["medido_em"]
+
+
+def test_legacy_seal_without_medido_em_still_verifies(client):
+    """Registros gravados antes do campo medido_em continuam íntegros depois da migração."""
+    import sqlite3
+    from app.security import compute_record_hash
+
+    c, _, runtime_dir = client
+    rec = c.post("/ocorrencias", json={"dispositivo_id": "esp32-hash", "valor": 300.0}).json()
+    legado = {k: v for k, v in rec.items() if k != "medido_em"}
+    with sqlite3.connect(runtime_dir / "ocorrencias.db") as conn:
+        conn.execute(
+            "UPDATE ocorrencias SET medido_em = NULL, hash_integridade = ? WHERE id = ?",
+            (compute_record_hash(legado), rec["id"]),
+        )
+        conn.commit()
+    assert c.get(f"/security/verify/{rec['id']}").json()["integro"] is True
+
+
+def test_old_csv_is_kept_on_every_migration(tmp_path):
+    """Cada migração de cabeçalho guarda o CSV antigo com nome próprio, sem apagar a cópia anterior."""
+    api_dir = Path(__file__).resolve().parents[1]
+    if str(api_dir) not in sys.path:
+        sys.path.insert(0, str(api_dir))
+    from app.storage import OccurrenceStore
+
+    for i in range(2):
+        (tmp_path / "leituras.csv").write_text(f"cabecalho_velho\nlinha{i}\n", encoding="utf-8")
+        OccurrenceStore(tmp_path)
+    antigos = sorted(p.read_text() for p in tmp_path.glob("leituras.antigo-*.csv"))
+    assert antigos == ["cabecalho_velho\nlinha0\n", "cabecalho_velho\nlinha1\n"]

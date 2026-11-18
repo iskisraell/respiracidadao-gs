@@ -45,6 +45,12 @@ export function StatusCard({ place }: { place: Place }) {
         <span className="badge">{LEVEL_NAME[place.nivel]}</span>
       </div>
 
+      {place.sensor_simulado && !demo && (
+        <p className="note warn">
+          <FlaskConical size={16} aria-hidden="true" /> Teste: este sensor ainda roda em simulador (Wokwi), não numa placa instalada aqui. Não use este nível para decidir.
+        </p>
+      )}
+
       {demo && (
         <p className="note warn">
           <FlaskConical size={16} aria-hidden="true" /> Leitura de demonstração, gerada pelo modo demonstração. Não é uma medida real deste lugar.
@@ -66,9 +72,6 @@ export function StatusCard({ place }: { place: Place }) {
         <div>
           <h3>O que o sensor mediu {ago(medido)}</h3>
           <Sensors r={r} />
-          {place.sensor_simulado && !demo && (
-            <p className="muted sim-note">Sensor em simulador (Wokwi). A placa física ainda vai ser comparada com um medidor oficial.</p>
-          )}
           <SecondOpinion r={r} />
         </div>
       </div>

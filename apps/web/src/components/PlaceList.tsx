@@ -25,6 +25,7 @@ export function PlaceList({ places, selected, onSelect }: { places: Place[]; sel
               <span className={`level-pill ${nivel ?? "vazio"}`}>
                 <span className={`dot ${nivel ?? "vazio"}`} aria-hidden="true" />
                 {word}
+                {nivel && p.sensor_simulado && r?.tipo !== "demo" && <small> · teste</small>}
               </span>
             </button>
           );

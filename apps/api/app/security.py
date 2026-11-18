@@ -101,8 +101,10 @@ def compute_record_hash(payload: dict) -> str:
         "ia_confianca": num("ia_confianca"),
         "ia_fonte": payload.get("ia_fonte"),
         "criado_em": payload.get("criado_em"),
-        "medido_em": payload.get("medido_em"),
     }
+    # Registros gravados antes de existir medido_em não têm o campo: o selo antigo deles continua valendo.
+    if payload.get("medido_em") is not None:
+        canonical["medido_em"] = payload["medido_em"]
     encoded = json.dumps(canonical, sort_keys=True, ensure_ascii=False).encode("utf-8")
     return hmac.new(SEAL_KEY, encoded, hashlib.sha256).hexdigest()
 

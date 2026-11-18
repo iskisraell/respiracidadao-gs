@@ -110,7 +110,8 @@ class OccurrenceStore:
             with self.csv_path.open(newline="", encoding="utf-8") as f:
                 header = next(csv.reader(f), [])
             if header != CSV_HEADERS:
-                self.csv_path.rename(self.csv_path.with_suffix(".antigo.csv"))
+                carimbo = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%f")
+                self.csv_path.rename(self.csv_path.with_name(f"{self.csv_path.stem}.antigo-{carimbo}.csv"))
         if not self.csv_path.exists():
             with self.csv_path.open("w", newline="", encoding="utf-8") as f:
                 csv.writer(f).writerow(CSV_HEADERS)
@@ -179,14 +180,15 @@ class OccurrenceStore:
         return [self._row_to_dict(r) for r in rows]
 
     def history(self, dispositivo_id: str, limit: int = 24) -> List[dict]:
-        """Últimas leituras de um sensor, da mais nova para a mais antiga.
+        """Últimas leituras de um sensor, da medida mais nova para a mais antiga (uma leitura atrasada não passa à frente).
 
         Leituras de demonstração só aparecem quando o sensor ainda não mandou nenhuma leitura real,
         para a demonstração nunca esconder o estado verdadeiro de um lugar.
         """
         with self._connect() as conn:
             rows = conn.execute(
-                "SELECT * FROM ocorrencias WHERE dispositivo_id = ? AND tipo != 'demo' ORDER BY id DESC LIMIT ?",
+                "SELECT * FROM ocorrencias WHERE dispositivo_id = ? AND tipo != 'demo' "
+                "ORDER BY COALESCE(medido_em, criado_em) DESC, id DESC LIMIT ?",
                 (dispositivo_id, limit),
             ).fetchall()
         if rows:
