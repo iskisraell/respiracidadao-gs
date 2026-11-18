@@ -29,7 +29,7 @@
       "title": "1. DADOS E ALVO",
       "body": [
         "Base real UCI Air Quality: 9.357 horas medidas numa cidade italiana. Depois de tirar as horas com código de falha do sensor (-200), ficaram 6.941 completas.",
-        "O alvo é o nível do ar pelo monóxido medido em laboratório: abaixo de 1,5 mg/m³ bom, até 3,0 carregado, acima ruim. As entradas são só as 4 medidas que nosso ESP32 tem: dois sensores de gás, temperatura e umidade. O valor de laboratório nunca entra como entrada, então não há vazamento.",
+        "O alvo é o nível do ar pelo monóxido medido em laboratório: abaixo de 1,5 mg/m³ bom, até 3,0 carregado, acima ruim. As entradas são só as 4 medidas que nosso ESP32 tem: dois sensores de gás, temperatura e umidade. O modelo serve ao ODS 3 (aviso antes da crise respiratória), ao ODS 10 (sensor barato onde a estação oficial não chega) e ao ODS 11 (dado local aberto). O valor de laboratório nunca entra como entrada, então não há vazamento.",
         "Separamos 80% para treino e 20% para teste antes de qualquer ajuste, com proporção de classes igual nos dois. Usamos um Pipeline do scikit-learn, que junta a padronização e o modelo num bloco só. Assim a média e o desvio usados para padronizar saem só do treino, e o teste continua sendo dado que o modelo nunca viu. A padronização importa para KNN e regressão logística, que medem distância e somam pesos. Para as árvores ela não muda nada, mas o mesmo Pipeline em todos os modelos deixa a comparação justa."
       ],
       "images": [
@@ -46,8 +46,8 @@
         {
           "headers": [
             "Modelo",
-            "Treino",
-            "Teste",
+            "Acurácia (treino)",
+            "Acurácia (teste)",
             "F1-macro (teste)",
             "Diferença"
           ],
@@ -105,7 +105,7 @@
         }
       ],
       "body": [
-        "A Random Forest sem ajuste decorou o treino (100%) e caiu no teste. Com busca aleatória de hiperparâmetros e validação cruzada em 5 partes do treino (F1-macro médio de 0,870 nas 5 partes), ela ficou com 87,1% no teste e só 1,5 ponto de diferença para o treino. Os valores escolhidos: 250 árvores, profundidade máxima 8, pelo menos 16 horas em cada folha e 10 para dividir um nó. Árvores mais rasas e folhas maiores impedem que ela decore casos isolados.",
+        "A Random Forest sem ajuste decorou o treino (100%) e caiu no teste. Com busca aleatória de hiperparâmetros (RandomizedSearchCV) e validação cruzada em 5 partes do treino (F1-macro médio de 0,870 nas 5 partes), ela ficou com 87,1% no teste e só 1,5 ponto de diferença para o treino. Os valores escolhidos: 250 árvores, profundidade máxima 8, pelo menos 16 horas em cada folha, 10 para dividir um nó e as 4 medidas consideradas em cada divisão. Árvores mais rasas e folhas maiores impedem que ela decore casos isolados.",
         "A regressão logística ficou 2 horas à frente em 1.389. Na prática é empate. Ficamos com a floresta porque o sensor de gás responde de forma não linear: a mesma fumaça dá leitura diferente com calor ou umidade alta. A floresta aprende essas combinações sem que a gente precise inventá-las, e mostra o peso de cada medida na decisão: fumaça e gases 83,7%, temperatura 10,0%, monóxido 4,4%, umidade 1,9%."
       ],
       "images": [
@@ -155,7 +155,7 @@
         }
       ],
       "body": [
-        "Entre as 1389 horas de teste, nenhuma hora de ar bom virou ar ruim e nenhuma de ar ruim virou bom. Os erros ficam entre níveis vizinhos.",
+        "Entre as 1.389 horas de teste, nenhuma hora de ar bom virou ar ruim e nenhuma de ar ruim virou bom. Os erros ficam entre níveis vizinhos.",
         "A última linha é o teste mais duro. O teste normal sorteia horas, e uma hora de teste pode ter a vizinha no treino. No teste temporal o modelo treinou nos primeiros 80% do calendário e foi avaliado nos 20% finais, meses que nunca viu. Caiu de 87 para 85, e é esse número que prometemos a quem instala."
       ]
     },
@@ -172,7 +172,7 @@
             [
               "Manhã limpa perto da UBS",
               "Bom",
-              "100%"
+              "acima de 99%"
             ],
             [
               "Trânsito pesado no fim da tarde",

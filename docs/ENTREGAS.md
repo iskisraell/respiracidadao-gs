@@ -51,7 +51,7 @@ Abra http://localhost:5173. Se a lista de lugares estiver vazia, clique em "Modo
 **03 Cybersecurity.** Mostre as 5 camadas e a matriz de 6 riscos do PDF. Ao vivo, com a central rodando:
 
 ```bash
-.venv/bin/pytest apps/api/tests -q        # 21 testes, cada proteção tem o seu
+.venv/bin/pytest apps/api/tests -q        # 24 testes, cada proteção tem o seu
 for i in $(seq 1 32); do curl -s -o /dev/null -w "%{http_code} " -X POST localhost:8000/relatos \
   -H 'Content-Type: application/json' -d '{"local_id":"praca-da-se","texto":"teste"}'; done   # termina em 429
 curl -s -X DELETE localhost:8000/ocorrencias -w "\n%{http_code}\n"   # 401 sem chave

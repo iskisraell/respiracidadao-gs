@@ -12,7 +12,7 @@ import math
 import os
 import urllib.error
 import urllib.request
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
 import pg8000 as driver
@@ -84,7 +84,7 @@ def listar_ocorrencias(limite=20):
         cur.execute(
             """
             SELECT id, dispositivo_id, tipo_dispositivo, metrica, valor, gas_co,
-                   nivel_risco, sentimento, confianca, relato, criado_em
+                   nivel_risco, sentimento, confianca, relato, medido_em, criado_em
               FROM ocorrencias
              ORDER BY id DESC
              LIMIT %s
@@ -102,6 +102,7 @@ def listar_ocorrencias(limite=20):
             "sentimento",
             "confianca",
             "relato",
+            "medido_em",
             "criado_em",
         ]
         return [dict(zip(colunas, linha)) for linha in cur.fetchall()]
@@ -172,14 +173,18 @@ def _numero(valor, nome, obrigatorio=False):
 
 
 def _data_medicao(texto):
+    """Mesma regra da API local: ISO 8601, no maximo 5 minutos no futuro; devolve (data, erro)."""
+    agora = datetime.now(timezone.utc)
     if not texto:
-        return datetime.now(timezone.utc)
+        return agora, None
     try:
         data = datetime.fromisoformat(str(texto).replace("Z", "+00:00"))
     except ValueError:
-        logger.warning("medido_em invalido (%s): usando horario do servidor", texto)
-        return datetime.now(timezone.utc)
-    return data if data.tzinfo else data.replace(tzinfo=timezone.utc)
+        return None, "medido_em deve estar no formato ISO 8601"
+    data = (data if data.tzinfo else data.replace(tzinfo=timezone.utc)).astimezone(timezone.utc)
+    if data > agora + timedelta(minutes=5):
+        return None, "medido_em nao pode estar no futuro"
+    return data, None
 
 
 def _corpo_requisicao(evento):
@@ -238,6 +243,9 @@ def rota_ingestao(evento):
     if erros:
         logger.warning("LEITURA DESCARTADA - campos invalidos: %s", erros)
         return resposta(400, {"erro": "campos invalidos", "detalhes": erros})
+    medido_em, erro_data = _data_medicao(payload.get("medido_em"))
+    if erro_data:
+        return resposta(400, {"erro": "campos invalidos", "detalhes": [erro_data]})
 
     relato = payload.get("relato")
     relato = _limpar_texto(relato) if relato is not None else None
@@ -250,7 +258,7 @@ def rota_ingestao(evento):
         "valor": valor,
         **{c: v for c, (v, _) in extras.items()},
         "relato": relato,
-        "medido_em": _data_medicao(payload.get("medido_em")),
+        "medido_em": medido_em,
     }
 
     logger.info(
@@ -299,6 +307,7 @@ def rota_ingestao(evento):
             "sentimento": dados["sentimento"],
             "confianca": dados["confianca"],
             "alerta": dados["nivel_risco"] == "critico",
+            "medido_em": dados["medido_em"].isoformat(),
             "criado_em": criado_em,
         },
     )

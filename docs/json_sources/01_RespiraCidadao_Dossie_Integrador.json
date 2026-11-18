@@ -85,7 +85,7 @@
             [
               "Central (API)",
               "Recebe, valida, classifica, guarda em CSV e banco, responde ao app",
-              "05 Python: FastAPI, 21 testes automáticos"
+              "05 Python: FastAPI, 24 testes automáticos"
             ],
             [
               "Central na nuvem",
@@ -183,7 +183,7 @@
         }
       ],
       "body": [
-        "Gestão: dividimos o trabalho em três frentes que se encontram no mesmo contrato de dados. Uma cuidou do sensor e da nuvem, outra da estatística e dos modelos, e a terceira da central, do app e das proteções. Toda decisão ficou registrada num plano único no repositório, com o motivo ao lado.",
+        "Gestão: dividimos o trabalho em três frentes que se encontram no mesmo contrato de dados. Uma cuidou do sensor e da nuvem, outra da estatística e dos modelos, e a terceira da central, do app e das proteções. Registramos cada decisão, com o motivo, num plano único no repositório (docs/PLANO-PRODUTO.md) e só fechávamos uma fase com os testes automáticos da central passando.",
         "Duas dificuldades mudaram o projeto. A primeira: o modelo com 11 medidas de laboratório acertava mais, mas nenhuma escola teria aquele equipamento. Cortamos para as 4 medidas que o ESP32 tem e aceitamos perder alguns pontos. A segunda: o Wokwi gratuito não alcança um servidor fora do navegador. Em vez de esconder isso, fizemos o sensor tratar a falta de rede como caso normal, com a luz local funcionando, e provamos o envio com um receptor em Python."
       ]
     },

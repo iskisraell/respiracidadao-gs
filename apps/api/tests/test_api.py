@@ -325,21 +325,18 @@ def test_seal_refuses_to_run_without_key(tmp_path, monkeypatch):
     """Sem chave no ambiente e sem onde gravar uma, a central não sobe com selo fraco."""
     import app.security as sec_mod
 
-    blocked = tmp_path / "somente_leitura"
-    blocked.mkdir()
-    blocked.chmod(0o500)
+    # Um arquivo comum no lugar da pasta impede criar a chave mesmo rodando como root.
+    blocked = tmp_path / "nao_e_pasta"
+    blocked.write_text("")
     monkeypatch.delenv("RESPIRA_SEAL_KEY", raising=False)
     monkeypatch.setenv("RESPIRA_SEAL_KEY_FILE", str(blocked / "sub" / "seal.key"))
-    try:
-        with pytest.raises(RuntimeError):
-            sec_mod._load_seal_key()
-        empty = tmp_path / "vazia.key"
-        empty.write_text("")
-        monkeypatch.setenv("RESPIRA_SEAL_KEY_FILE", str(empty))
-        with pytest.raises(RuntimeError):
-            sec_mod._load_seal_key()
-    finally:
-        blocked.chmod(0o700)
+    with pytest.raises(RuntimeError):
+        sec_mod._load_seal_key()
+    empty = tmp_path / "vazia.key"
+    empty.write_text("")
+    monkeypatch.setenv("RESPIRA_SEAL_KEY_FILE", str(empty))
+    with pytest.raises(RuntimeError):
+        sec_mod._load_seal_key()
 
 
 def test_medido_em_is_stored_and_checked(client):

@@ -34,7 +34,7 @@ Tudo no produto existe para essa frase ser verdadeira, rápida e confiável.
 
 ### 1. Coerência de dados [feito]
 - [x] Modelos treinados com as 4 leituras que o sensor mede (antes usavam 11 variáveis de laboratório).
-- [x] API grava a leitura com a regra local e o veredito do modelo. 21 testes passando.
+- [x] API grava a leitura com a regra local e o veredito do modelo. 24 testes passando.
 - [x] Firmware e circuito do ESP32 no mesmo contrato.
 
 ### 2. API de produto [feito]

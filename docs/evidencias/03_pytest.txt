@@ -20,4 +20,7 @@ test_seal_is_keyed_even_without_env PASSED
 test_seal_refuses_to_run_without_key PASSED
 test_medido_em_is_stored_and_checked PASSED
 test_seal_key_creation_is_race_safe PASSED
-============================= 21 passed in 21.28s
+test_late_reading_does_not_hide_newer_one PASSED
+test_legacy_seal_without_medido_em_still_verifies PASSED
+test_old_csv_is_kept_on_every_migration PASSED
+============================= 24 passed in 26.71s

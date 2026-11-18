@@ -148,8 +148,11 @@ def run_tests():
             assert r["statusCode"] == 201, r
             assert json.loads(r["body"])["sentimento"] is None
 
-        # 8) medido_em invalido nao quebra; body base64 (Function URL) e aceito
-        assert post({**base, "medido_em": "ontem a noite"})["statusCode"] == 201
+        # 8) medido_em invalido ou no futuro: 400, igual a API local; body base64 (Function URL) e aceito
+        assert post({**base, "medido_em": "ontem a noite"})["statusCode"] == 400
+        assert post({**base, "medido_em": "2099-01-01T00:00:00Z"})["statusCode"] == 400
+        ok = json.loads(post({**base, "medido_em": "2026-01-10T08:00:00-03:00"})["body"])
+        assert ok["medido_em"] == "2026-01-10T11:00:00+00:00"
         import base64
 
         r = post(base64.b64encode(json.dumps(base).encode()).decode(), isBase64Encoded=True)

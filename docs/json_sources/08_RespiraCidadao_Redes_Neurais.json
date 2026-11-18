@@ -29,7 +29,7 @@
       "title": "1. ETAPAS 1 A 4: PROBLEMA, DADOS, PREPARO E ARQUITETURA",
       "bullets": [
         {
-          "text": "Etapa 1, problema: dizer se o ar está bom, carregado ou ruim a partir das 4 medidas do sensor, para avisar escola e UBS antes da crise.",
+          "text": "Etapa 1, problema: dizer se o ar está bom, carregado ou ruim a partir das 4 medidas do sensor, para avisar escola e UBS antes da crise. Apoia o ODS 3 (saúde) e o ODS 11 (cidades sustentáveis).",
           "level": 0
         },
         {
@@ -53,9 +53,9 @@
           "headers": [
             "Experimento",
             "Épocas",
-            "Treino",
-            "Teste",
-            "F1 médio",
+            "Acurácia (treino)",
+            "Acurácia (teste)",
+            "F1-macro",
             "Diferença"
           ],
           "rows": [
@@ -85,12 +85,12 @@
             ]
           ],
           "col_widths": [
-            64,
-            18,
-            24,
-            24,
-            24,
-            26
+            58,
+            16,
+            28,
+            28,
+            22,
+            28
           ]
         }
       ],
@@ -108,7 +108,7 @@
       ],
       "body": [
         "A rede A (128 e 64 neurônios, taxa de aprendizado 0,003, sem regularização, 150 épocas) teve a menor perda de validação na época 41 (0,289); depois disso a perda de validação subiu até 0,327 enquanto a de treino seguia caindo. Ela chegou a 90,9% no treino e 85,7% no teste: 5,2 pontos de diferença, sinal de que decorava. A rede B (64 e 32 neurônios, taxa 0,001) tem quatro freios. BatchNorm reajusta a escala dos números entre camadas para o treino não oscilar. Dropout de 0,25 desliga um quarto dos neurônios ao acaso em cada passo, para nenhum deles virar muleta. Weight decay pune pesos grandes. A parada antecipada encerra o treino quando a validação passa 15 épocas sem melhorar. Parou na época 34, voltou ao melhor estado (época 19) e ficou com 86,1% no teste e 1,1 ponto de diferença.",
-        "Nas 1042 horas de teste, nenhuma hora de ar bom virou ruim e nenhuma ruim virou bom. A regra simples do sensor acerta 82% nessas horas; a rede ganha uns 4 pontos sobre ela. No documento do modelo da central a mesma regra aparece com 84%: lá o teste tem 1.389 horas (20% da base) e aqui 1.042 (15%), então são horas diferentes."
+        "Nas 1042 horas de teste, nenhuma hora de ar bom virou ruim e nenhuma ruim virou bom. A regra simples do sensor acerta 82% nessas horas; a rede B acerta 3,6 pontos a mais (86,1% contra 82,4%). No documento do modelo da central a mesma regra aparece com 84%: lá o teste tem 1.389 horas (20% da base) e aqui 1.042 (15%), então são horas diferentes."
       ]
     },
     {
@@ -145,7 +145,7 @@
         }
       ],
       "body": [
-        "No produto, os pesos (air_quality_mlp.pt) rodam na central a cada leitura, ao lado da Random Forest. Na tela Como funciona, o card \"Segunda opinião\" mostra o veredito da rede para a leitura que a pessoa montar.",
+        "No produto, a Random Forest confere cada leitura que chega em POST /ocorrencias. A rede (air_quality_mlp.pt) responde em POST /predict: na tela Como funciona, o card \"Segunda opinião\" mostra o veredito dela ao lado da regra do sensor e da Random Forest, para a leitura que a pessoa montar.",
         "Limites: base de outra cidade; precisa de recalibração em cada bairro. A rede acerta um pouco menos que a floresta, por isso é segunda opinião e não a voz principal. Próximo passo: uma rede recorrente (LSTM ou GRU) olhando janelas das últimas horas, para prever a piora nas próximas horas, antes de o ar chegar ao nível ruim."
       ],
       "bullets": [
@@ -154,7 +154,7 @@
           "level": 0
         },
         {
-          "text": "Segurança: as 4 entradas passam por checagem de faixa antes de virar tensor, e os pesos carregam com torch.load(weights_only=True), que não executa código escondido no arquivo.",
+          "text": "Segurança: as 4 entradas passam por checagem de faixa antes de virar a matriz numérica (tensor) que a rede lê, e os pesos carregam com torch.load(weights_only=True), que não executa código escondido no arquivo.",
           "level": 0
         },
         {

@@ -29,7 +29,7 @@
       "title": "1. A SOLUÇÃO EM UMA PÁGINA",
       "body": [
         "O RespiraCidadão avisa escolas, UBS e famílias quando o ar perto delas piora. Público: crianças, idosos e pessoas com asma na periferia. Problema: exposição à fumaça sem aviso a tempo.",
-        "Caminho dos dados: sensor ESP32 ou pessoa no app, central (API FastAPI), banco (SQLite e CSV no local, PostgreSQL na nuvem) e modelos de IA que conferem cada leitura. Um alarme falso faz a escola cancelar aula à toa. Um alarme perdido deixa criança respirando fumaça. As proteções impedem que alguém dispare alertas falsos em massa, apague leituras ou altere o histórico no banco."
+        "Arquitetura simplificada: Usuário (pessoa no app) e sensor ESP32 | Aplicação (app web e central FastAPI) | Banco (SQLite e CSV no local, PostgreSQL na nuvem) | IA (Random Forest, rede neural e leitura de relatos). O ESP32 entra pela mesma porta da central que o app: passa pelas mesmas faixas de valor e pelo mesmo limite de envios. Um alarme falso faz a escola cancelar aula à toa. Um alarme perdido deixa criança respirando fumaça. As proteções impedem que alguém dispare alertas falsos em massa, apague leituras ou altere o histórico no banco."
       ]
     },
     {
@@ -156,7 +156,7 @@
             [
               "Criptografia",
               "HTTPS na URL da função, SSL obrigatório na conexão com o banco, disco do banco cifrado",
-              "SSL feito no código; resto na publicação"
+              "SSL feito no código; na nuvem, o resto entra na publicação. No protótipo local, SQLite e CSV ficam sem cifra no disco"
             ],
             [
               "Monitoramento",
@@ -180,7 +180,7 @@
     {
       "title": "5. PROTEÇÕES FUNCIONANDO",
       "body": [
-        "Cada proteção abaixo tem um teste automático em apps/api/tests/test_api.py. Os 21 testes passam. Também rodamos cada ataque à mão contra a central ligada e guardamos a saída do terminal."
+        "Cada proteção abaixo tem um teste automático em apps/api/tests/test_api.py. Os 24 testes passam. Também rodamos cada ataque à mão contra a central ligada e guardamos a saída do terminal."
       ],
       "bullets": [
         {
@@ -220,7 +220,7 @@
         },
         {
           "path": "/home/agent/projects/respiracidadao-gs/docs/evidencias/03_pytest.png",
-          "caption": "Figura 3: Os 21 testes automáticos passando.",
+          "caption": "Figura 3: Os 24 testes automáticos passando.",
           "width": 160
         }
       ]

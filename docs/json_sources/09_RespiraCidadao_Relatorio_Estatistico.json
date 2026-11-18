@@ -80,7 +80,7 @@
       "body": [
         "A média (2,18) fica acima da mediana (1,9): a cauda direita é longa. Por isso P(X > mediana) sob a Normal dá 57,8%, e não 50%. As horas de ar ruim (3,0 mg/m³ ou mais) são 1.692 de 6.941, quase 1 em cada 4, e é essa parcela que o alerta precisa pegar.",
         "Nos testes Z usamos a média e o desvio da base inteira como população: média 2,1825 mg/m³ e sigma 1,4411 mg/m³. Z = (média da amostra - 2,1825) / (1,4411 / raiz de n).",
-        "Nos dois testes não rejeitamos H0: as amostras sorteadas (n = 20 e n = 25) não diferem da média da base. É o resultado esperado para amostras tiradas da mesma população."
+        "Nos dois testes não rejeitamos H0. As médias sorteadas caíram do lado oposto ao da hipótese alternativa (2,31, acima de μ, no teste à esquerda; 1,86, abaixo de μ, no teste à direita), por isso os valores p ficaram altos. É o esperado para amostras tiradas da mesma população."
       ],
       "images": [
         {
@@ -121,7 +121,7 @@
         "c) No gráfico de correlação (Figura 5), os três medidores de monóxido e gases formam o bloco de valores mais altos, porque sobem juntos: 0,877, 0,914 e 0,886. A única relação negativa forte é temperatura com umidade (-0,564): tarde quente costuma ser tarde seca.",
         "d) Equação: CO(GT) = -2,6608 + (0,00130)*PT08.S1(CO) + (0,00426)*PT08.S2(NMHC) + (-0,03046)*T + (-0,00314)*RH.",
         "e) R² = 88,07% (ajustado 88,06%) e teste F = 12797,13 (p < 0,0001). As quatro medidas juntas explicam 88% da variação, contra 77% de um sensor só. Temperatura e umidade entram com sinal negativo, embora sozinhas tenham correlação positiva com o CO: na equação elas corrigem a deriva dos sensores de gás com o clima. Como os dois sensores de gás têm r = 0,886 entre si, cada coeficiente sozinho não deve ser lido como efeito isolado; a previsão do conjunto é o que vale.",
-        "f) Previsões: Ar carregado (Praça da Sé) = 2,105 mg/m³ (carregado); Ar ruim (Escola) = 3,537 mg/m³ (ruim)."
+        "f) Previsões, com entradas na ordem PT08.S1, PT08.S2, T e RH: Ar carregado (Praça da Sé) (1120, 980, 24 °C, 42%) = 2,105 mg/m³ (carregado); Ar ruim (Escola) (1383, 1280, 31 °C, 34%) = 3,537 mg/m³ (ruim)."
       ],
       "tables": [
         {
@@ -202,7 +202,7 @@
       "title": "5. AR RUIM OU NÃO: REGRESSÃO LOGÍSTICA (ITEM 06)",
       "body": [
         "a) P é a probabilidade de ar ruim, CO(GT) de 3,0 mg/m³ ou mais. Equação: logit(P) = -24,6774 + (0,00313)*PT08.S1(CO) + (0,02139)*PT08.S2(NMHC) + (-0,16795)*T + (-0,01122)*RH. A probabilidade sai da sigmoide: P = 1 / (1 + e elevado a -logit). Treinamos com 75% das horas (5.205) e testamos nos 25% restantes (1.736).",
-        "b) No teste, com 1736 horas: 1263 horas boas reconhecidas, 365 horas ruins reconhecidas, 50 alarmes falsos e 58 horas ruins perdidas. Acurácia 93,78%, precisão 87,95%, recall 86,29%. De cada 100 horas de ar ruim, o modelo pega 86 e deixa passar 14.",
+        "b) No teste, com 1.736 horas: 1.263 horas sem ar ruim (bom ou carregado, classe 0) reconhecidas, 365 horas ruins reconhecidas, 50 alarmes falsos e 58 horas ruins perdidas. Acurácia 93,78%, precisão 87,95%, recall 86,29%. De cada 100 horas de ar ruim, o modelo pega 86 e deixa passar 14.",
         "c) Classificação: Ar carregado (Praça da Sé) deu P(ruim) = 0,89%, classe 0. Ar ruim (Escola) deu P(ruim) = 80,92%, classe 1."
       ],
       "images": [

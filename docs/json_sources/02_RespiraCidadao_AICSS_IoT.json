@@ -76,7 +76,7 @@
         }
       ],
       "body": [
-        "O firmware classifica cada sensor separado. Fumaça e gases: abaixo de 830 bom, de 830 a 1139 carregado, 1140 ou mais ruim. Monóxido: cortes em 1010 e 1280. Umidade abaixo de 30% aparece como carregado na linha SENSORES do monitor serial e segue no JSON para a central, mas não muda a luz. A luz e o buzzer seguem só a medida de fumaça e gases, e funcionam sem rede. Testada nas 1.389 horas separadas para teste da base real, essa regra simples acerta 84 de cada 100. Os índices 830 e 1140 estão na mesma escala dos sensores de óxido metálico da base UCI (de 380 a 2250), que os potenciômetros do Wokwi reproduzem.",
+        "O firmware classifica cada sensor separado. Fumaça e gases: abaixo de 830 bom, de 830 a 1139 carregado, 1140 ou mais ruim. Monóxido: cortes em 1010 e 1280. Umidade abaixo de 30% aparece como umidade=atencao na linha SENSORES do monitor serial e segue no JSON para a central, mas não muda a luz. A luz e o buzzer seguem só a medida de fumaça e gases, e funcionam sem rede. Avaliamos essa regra nas 1.389 horas separadas para teste da base real: ela acerta 84 de cada 100, sem depender de internet. Os índices 830 e 1140 estão na mesma escala dos sensores de óxido metálico da base UCI (de 380 a 2250), que os potenciômetros do Wokwi reproduzem.",
         "A cada 3 segundos o ESP32 monta um JSON e envia por HTTP POST para a central: {dispositivo_id, tipo, latitude, longitude, metrica: \"gas_voc\", valor, gas_co, temperatura_c, umidade_pct}. É o mesmo contrato da API em Python e da função na nuvem. O sensor não manda relato; relato é coisa de pessoa."
       ]
     },
@@ -119,7 +119,7 @@
         }
       ],
       "body": [
-        "Leitura na ordem: fumaça e gases / monóxido / temperatura / umidade. Os prints abaixo são do simulador Wokwi rodando o firmware deste pacote."
+        "Leitura na ordem: fumaça e gases / monóxido / temperatura / umidade. A tabela vem de run_3_cenarios.py enviando os três estados para a central; a coluna Na central é a resposta dela. Nos prints do Wokwi, os potenciômetros girados à mão pararam a uma unidade desses valores (706/926 e 1279/1384) e acenderam as mesmas luzes."
       ]
     },
     {
