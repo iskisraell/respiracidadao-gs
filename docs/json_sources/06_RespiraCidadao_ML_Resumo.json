@@ -1,0 +1,201 @@
+{
+  "title": "RESPIRACIDADÃO: O MODELO DA CENTRAL",
+  "subtitle": [
+    "Como a central decide se o ar está bom, carregado ou ruim",
+    "Resumo técnico que acompanha os slides"
+  ],
+  "meta": [
+    {
+      "label": "Sala:",
+      "value": "1TIAPZ1"
+    },
+    {
+      "label": "Matéria:",
+      "value": "Machine Learning & Modelling"
+    },
+    {
+      "label": "Grupo:",
+      "value": "Perceptron"
+    },
+    {
+      "label": "Integrantes:",
+      "value": "Giovanni Henrique Pereira Hessel (RM 570574)\nSuellen Pereira da Silva (RM 573862)\nIsrael Carneiro de Toledo (RM 573854)"
+    }
+  ],
+  "output_dir": "/home/agent/projects/respiracidadao-gs/docs/06-machine-learning-and-modelling",
+  "filename": "06_RespiraCidadao_ML_Resumo",
+  "sections": [
+    {
+      "title": "1. DADOS E ALVO",
+      "body": [
+        "Base real UCI Air Quality: 9.357 horas medidas numa cidade italiana. Depois de tirar as horas com código de falha do sensor (-200), ficaram 6.941 completas.",
+        "O alvo é o nível do ar pelo monóxido medido em laboratório: abaixo de 1,5 mg/m³ bom, até 3,0 carregado, acima ruim. As entradas são só as 4 medidas que nosso ESP32 tem: dois sensores de gás, temperatura e umidade. O modelo serve ao ODS 3 (aviso antes da crise respiratória), ao ODS 10 (sensor barato onde a estação oficial não chega) e ao ODS 11 (dado local aberto). O valor de laboratório nunca entra como entrada, então não há vazamento.",
+        "Separamos 80% para treino e 20% para teste antes de qualquer ajuste, com proporção de classes igual nos dois. Usamos um Pipeline do scikit-learn, que junta a padronização e o modelo num bloco só. Assim a média e o desvio usados para padronizar saem só do treino, e o teste continua sendo dado que o modelo nunca viu. A padronização importa para KNN e regressão logística, que medem distância e somam pesos. Para as árvores ela não muda nada, mas o mesmo Pipeline em todos os modelos deixa a comparação justa."
+      ],
+      "images": [
+        {
+          "path": "/home/agent/projects/respiracidadao-gs/packages/ml-modelling/charts/01_eda_classes_box.png",
+          "caption": "Figura 1: Quantas horas em cada nível e como a medida de gases se separa entre eles.",
+          "width": 150
+        }
+      ]
+    },
+    {
+      "title": "2. SEIS MODELOS NO MESMO TESTE",
+      "tables": [
+        {
+          "headers": [
+            "Modelo",
+            "Acurácia (treino)",
+            "Acurácia (teste)",
+            "F1-macro (teste)",
+            "Diferença"
+          ],
+          "rows": [
+            [
+              "LogisticRegression (baseline)",
+              "86,5%",
+              "87,3%",
+              "87,5%",
+              "-0,7 pp"
+            ],
+            [
+              "GradientBoosting",
+              "89,4%",
+              "87,1%",
+              "87,4%",
+              "+2,3 pp"
+            ],
+            [
+              "RandomForest (default)",
+              "100,0%",
+              "87,0%",
+              "87,3%",
+              "+13,0 pp"
+            ],
+            [
+              "KNN (k=15)",
+              "87,8%",
+              "86,9%",
+              "87,2%",
+              "+0,9 pp"
+            ],
+            [
+              "DecisionTree (depth=8)",
+              "88,8%",
+              "86,1%",
+              "86,3%",
+              "+2,8 pp"
+            ],
+            [
+              "RandomForest (tuned, CV=5)",
+              "88,6%",
+              "87,1%",
+              "87,4%",
+              "+1,5 pp"
+            ]
+          ],
+          "col_widths": [
+            68,
+            26,
+            26,
+            30,
+            30
+          ]
+        }
+      ],
+      "body": [
+        "A Random Forest sem ajuste decorou o treino (100%) e caiu no teste. Com busca aleatória de hiperparâmetros (RandomizedSearchCV) e validação cruzada em 5 partes do treino (F1-macro médio de 0,870 nas 5 partes), ela ficou com 87,1% no teste e só 1,5 ponto de diferença para o treino. Os valores escolhidos: 250 árvores, profundidade máxima 8, pelo menos 16 horas em cada folha, 10 para dividir um nó e as 4 medidas consideradas em cada divisão. Árvores mais rasas e folhas maiores impedem que ela decore casos isolados.",
+        "A regressão logística ficou 2 horas à frente em 1.389. Na prática é empate. Ficamos com a floresta porque o sensor de gás responde de forma não linear: a mesma fumaça dá leitura diferente com calor ou umidade alta. A floresta aprende essas combinações sem que a gente precise inventá-las, e mostra o peso de cada medida na decisão: fumaça e gases 83,7%, temperatura 10,0%, monóxido 4,4%, umidade 1,9%."
+      ],
+      "images": [
+        {
+          "path": "/home/agent/projects/respiracidadao-gs/packages/ml-modelling/charts/02_confusao_feature_importance.png",
+          "caption": "Figura 2: Onde o modelo erra e quanto cada medida pesa.",
+          "width": 150
+        }
+      ]
+    },
+    {
+      "title": "3. POR QUE SÓ AS MEDIDAS DO SENSOR",
+      "tables": [
+        {
+          "headers": [
+            "Opção",
+            "Acerta de cada 100 horas",
+            "Funciona num bairro?"
+          ],
+          "rows": [
+            [
+              "Regra simples do sensor (sem internet)",
+              "84",
+              "Sim, até sem rede"
+            ],
+            [
+              "Modelo com as 4 medidas do sensor",
+              "87",
+              "Sim"
+            ],
+            [
+              "Modelo com 11 medidas de laboratório",
+              "88",
+              "Não. Exige equipamento de estação oficial"
+            ],
+            [
+              "4 medidas, testado em meses mais recentes",
+              "85",
+              "É o número mais honesto para quem instala hoje"
+            ]
+          ],
+          "col_widths": [
+            76,
+            44,
+            60
+          ]
+        }
+      ],
+      "body": [
+        "Entre as 1.389 horas de teste, nenhuma hora de ar bom virou ar ruim e nenhuma de ar ruim virou bom. Os erros ficam entre níveis vizinhos.",
+        "A última linha é o teste mais duro. O teste normal sorteia horas, e uma hora de teste pode ter a vizinha no treino. No teste temporal o modelo treinou nos primeiros 80% do calendário e foi avaliado nos 20% finais, meses que nunca viu. Caiu de 87 para 85, e é esse número que prometemos a quem instala."
+      ]
+    },
+    {
+      "title": "4. APLICAÇÃO NO PRODUTO E LIMITES",
+      "tables": [
+        {
+          "headers": [
+            "Leitura nunca vista",
+            "Veredito",
+            "Confiança"
+          ],
+          "rows": [
+            [
+              "Manhã limpa perto da UBS",
+              "Bom",
+              "acima de 99%"
+            ],
+            [
+              "Trânsito pesado no fim da tarde",
+              "Carregado",
+              "95%"
+            ],
+            [
+              "Fumaça de queimada perto da escola",
+              "Ruim",
+              "93%"
+            ]
+          ],
+          "col_widths": [
+            90,
+            45,
+            45
+          ]
+        }
+      ],
+      "body": [
+        "A central roda o modelo a cada leitura e o app mostra \"A central conferiu e concorda: Ruim, com 93% de confiança.\" Quando discorda da luz do sensor, o app mostra os dois níveis e diz para seguir o mais cuidadoso.",
+        "Limite: dados de outro país e clima. Em cada bairro novo o sensor fica algumas semanas ao lado de uma estação oficial (CETESB) para recalibrar. Sensores de gás também envelhecem e precisam de troca."
+      ]
+    }
+  ]
+}

@@ -1,15 +1,17 @@
--- RespiraCidadao - FIAP GS 2026.2 (07 Cloud Computing)
--- Tabela no Amazon RDS PostgreSQL para ingestao serverless de ocorrencias respiratorias
+-- RespiraCidadao: leituras dos sensores e relatos, gravados pela funcao na nuvem (RDS PostgreSQL)
 
 CREATE TABLE IF NOT EXISTS ocorrencias (
     id                SERIAL PRIMARY KEY,
     dispositivo_id    TEXT        NOT NULL,
-    tipo_dispositivo  TEXT        NOT NULL,              -- esp32 | drone | app
+    tipo_dispositivo  TEXT        NOT NULL,              -- esp32 | app
     latitude          DOUBLE PRECISION,
     longitude         DOUBLE PRECISION,
-    metrica           TEXT        NOT NULL,              -- fumaca_ppm | co_mg_m3 | no2_ug_m3
+    metrica           TEXT        NOT NULL,              -- gas_voc | gas_co
     valor             DOUBLE PRECISION NOT NULL,
-    relato            TEXT,                              -- texto do cidadao analisado via HF Router
+    gas_co            DOUBLE PRECISION,                  -- indice de monoxido de carbono
+    temperatura_c     DOUBLE PRECISION,
+    umidade_pct       DOUBLE PRECISION,
+    relato            TEXT,                              -- relato de quem esta no lugar, lido pela IA
     sentimento        TEXT,                              -- rotulo retornado pela IA
     confianca         NUMERIC(5,4),                      -- score da IA
     nivel_risco       TEXT        NOT NULL,              -- normal | atencao | critico | desconhecido
@@ -22,7 +24,7 @@ CREATE INDEX IF NOT EXISTS idx_ocorrencias_risco       ON ocorrencias (nivel_ris
 CREATE INDEX IF NOT EXISTS idx_ocorrencias_criado      ON ocorrencias (criado_em DESC);
 
 -- Consultas de verificacao (evidencia RDS)
-SELECT id, dispositivo_id, tipo_dispositivo, metrica, valor,
+SELECT id, dispositivo_id, tipo_dispositivo, metrica, valor, gas_co,
        nivel_risco, sentimento, confianca, criado_em
   FROM ocorrencias
  ORDER BY id DESC

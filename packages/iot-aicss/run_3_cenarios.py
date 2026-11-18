@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 """
-Demonstra 3 comportamentos distintos do no ESP32 RespiraCidadao:
-  1) Normal (fumaca_ppm=68.4 -> LED Verde, Buzzer desligado -> API normal -> CSV)
-  2) Atencao (fumaca_ppm=168.0 -> LED Amarelo, Buzzer pulso curto -> API atencao -> CSV)
-  3) Critico (fumaca_ppm=312.5 -> LED Vermelho, Buzzer continuo -> API critico -> CSV)
+Envia as 3 leituras que o sensor manda em cada nível, uma por lugar:
+
+  UBS Vila Esperança       ar bom       luz verde, buzzer quieto
+  Praça da Sé              ar carregado luz amarela, bipe curto
+  Escola Jardim Primavera  ar ruim      luz vermelha, alarme a cada 3 s
+
+Os números são índices dos sensores de gás na mesma escala da base real de 6.941 horas.
 
 Uso:
-  python run_3_cenarios.py --url http://127.0.0.1:8000
+  python run_3_cenarios.py                              # API em 127.0.0.1:8000
+  python run_3_cenarios.py --url http://127.0.0.1:8085  # receptor_csv.py
 """
 
 import argparse
@@ -15,84 +19,74 @@ import sys
 import urllib.error
 import urllib.request
 
-
-SCENARIOS = [
+CENARIOS = [
     {
-        "nome": "Comportamento 1 - Ar Limpo (NORMAL)",
-        "atuador_esperado": "LED Verde ligado | Buzzer silencioso",
+        "nome": "Ar bom na UBS Vila Esperança",
+        "luz": "verde, buzzer quieto",
         "payload": {
-            "dispositivo_id": "esp32-respira-01",
-            "tipo": "esp32",
-            "latitude": -23.5641,
-            "longitude": -46.6524,
-            "metrica": "fumaca_ppm",
-            "valor": 68.4,
-            "temperatura_c": 23.5,
-            "umidade_pct": 58.0,
-            "relato": "Ar limpo na regiao da Avenida Paulista.",
+            "dispositivo_id": "esp32-ubs-vila-maria",
+            "latitude": -23.5122, "longitude": -46.5917,
+            "metrica": "gas_voc", "valor": 706.0, "gas_co": 925.0,
+            "temperatura_c": 18.0, "umidade_pct": 55.0,
         },
     },
     {
-        "nome": "Comportamento 2 - Fumaca Moderada (ATENCAO)",
-        "atuador_esperado": "LED Amarelo ligado | Buzzer pulso 180ms",
+        "nome": "Ar carregado na Praça da Sé",
+        "luz": "amarela, bipe curto",
         "payload": {
-            "dispositivo_id": "esp32-respira-02",
-            "tipo": "esp32",
-            "latitude": -23.5505,
-            "longitude": -46.6333,
-            "metrica": "fumaca_ppm",
-            "valor": 168.0,
-            "temperatura_c": 31.2,
-            "umidade_pct": 34.0,
-            "relato": "Cheiro forte de fumaca e neblina seca.",
+            "dispositivo_id": "esp32-centro-01",
+            "latitude": -23.5505, "longitude": -46.6333,
+            "metrica": "gas_voc", "valor": 980.0, "gas_co": 1120.0,
+            "temperatura_c": 24.0, "umidade_pct": 42.0,
         },
     },
     {
-        "nome": "Comportamento 3 - Fumaca Densa (CRITICO)",
-        "atuador_esperado": "LED Vermelho ligado | Buzzer alarme 1800Hz",
+        "nome": "Ar ruim na Escola Jardim Primavera",
+        "luz": "vermelha, alarme a cada 3 s",
         "payload": {
-            "dispositivo_id": "esp32-respira-03",
-            "tipo": "esp32",
-            "latitude": -23.4892,
-            "longitude": -46.6208,
-            "metrica": "fumaca_ppm",
-            "valor": 312.5,
-            "temperatura_c": 36.8,
-            "umidade_pct": 21.0,
-            "relato": "Fumaca intensa de queimada perto da escola.",
+            "dispositivo_id": "esp32-escola-zona-norte",
+            "latitude": -23.4892, "longitude": -46.6208,
+            "metrica": "gas_voc", "valor": 1280.0, "gas_co": 1383.0,
+            "temperatura_c": 31.0, "umidade_pct": 34.0,
         },
     },
 ]
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--url", default="http://127.0.0.1:8000", help="URL base da API")
-    args = parser.parse_args()
-    endpoint = args.url.rstrip("/") + "/ocorrencias"
-    falhas = 0
+def enviar(endpoint: str, payload: dict) -> dict:
+    req = urllib.request.Request(
+        endpoint,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    with urllib.request.urlopen(req, timeout=10) as resp:
+        return json.loads(resp.read().decode("utf-8"))
 
-    for sc in SCENARIOS:
-        print("=" * 72)
-        print(sc["nome"])
-        print("Atuador local :", sc["atuador_esperado"])
-        print("JSON enviado  :", json.dumps(sc["payload"], ensure_ascii=False))
-        req = urllib.request.Request(
-            endpoint,
-            data=json.dumps(sc["payload"], ensure_ascii=False).encode("utf-8"),
-            headers={"Content-Type": "application/json"},
-            method="POST",
-        )
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--url", default="http://127.0.0.1:8000", help="endereço da API ou do receptor")
+    endpoint = parser.parse_args().url.rstrip("/") + "/ocorrencias"
+    falhas = 0
+    for c in CENARIOS:
+        p = c["payload"]
+        print(f"\n{c['nome']}")
+        print(f"  sensor  gases {p['valor']:.0f} | CO {p['gas_co']:.0f} | {p['temperatura_c']} °C | {p['umidade_pct']}%")
+        print(f"  luz     {c['luz']}")
         try:
-            with urllib.request.urlopen(req, timeout=10) as resp:
-                body = json.loads(resp.read().decode("utf-8"))
-            print(f"HTTP {resp.status}     :", json.dumps(body, ensure_ascii=False))
+            r = enviar(endpoint, p)
         except urllib.error.HTTPError as err:
-            print(f"HTTP {err.code}     :", err.read().decode("utf-8", "replace"))
+            print(f"  ERRO    HTTP {err.code}: {err.read().decode('utf-8', 'replace')}")
             falhas += 1
+            continue
         except urllib.error.URLError as err:
-            print(f"ERRO de conexao com {endpoint}: {err.reason}")
+            print(f"  ERRO    sem conexão com {endpoint}: {err.reason}")
             falhas += 1
+            continue
+        nivel = r.get("nivel_risco") or r.get("status_local")
+        extra = f" | central: {r['ia_risco']} ({r['ia_risco_prob']:.0%})" if r.get("ia_risco") else ""
+        print(f"  gravado nível {nivel}{extra}")
     sys.exit(1 if falhas else 0)
 
 

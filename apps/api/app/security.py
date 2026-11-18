@@ -1,9 +1,9 @@
 import hashlib
 import hmac
-import html
 import json
 import os
 import re
+import secrets
 import time
 from collections import defaultdict, deque
 from datetime import datetime, timezone
@@ -19,18 +19,56 @@ RATE_LIMIT_MAX_REQUESTS = int(os.getenv("RATE_LIMIT_MAX_REQUESTS", "30"))
 RATE_LIMIT_WINDOW_SEC = int(os.getenv("RATE_LIMIT_WINDOW_SEC", "60"))
 # Only honour X-Forwarded-For when the API sits behind a trusted reverse proxy.
 # Otherwise any client could spoof the header and bypass the per-IP rate limiter.
+# Chave do selo de integridade. O selo é HMAC-SHA256: quem altera o banco sem a chave
+# não consegue refazer o selo. Sem chave a central não sobe (não existe selo "fraco").
+def _load_seal_key() -> bytes:
+    """RESPIRA_SEAL_KEY do ambiente; sem ela, usa ou cria uma chave local fora do banco (arquivo 0600, ignorado pelo git)."""
+    env = os.getenv("RESPIRA_SEAL_KEY", "").strip()
+    if env:
+        return env.encode("utf-8")
+    data_dir = Path(os.getenv("RESPIRA_DATA_DIR", Path(__file__).resolve().parents[3] / "data" / "runtime"))
+    key_file = Path(os.getenv("RESPIRA_SEAL_KEY_FILE", data_dir / "seal.key"))
+    try:
+        if not key_file.exists():
+            # Escreve num arquivo temporário e publica com link(): é atômico, então dois workers
+            # subindo juntos nunca leem um arquivo pela metade; quem perde a corrida lê o do vencedor.
+            key_file.parent.mkdir(parents=True, exist_ok=True)
+            tmp = key_file.with_name(f".{key_file.name}.{os.getpid()}.{secrets.token_hex(4)}")
+            fd = os.open(str(tmp), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                f.write(secrets.token_hex(32))
+            try:
+                os.link(tmp, key_file)
+            except FileExistsError:
+                pass
+            finally:
+                tmp.unlink(missing_ok=True)
+        key = key_file.read_text(encoding="utf-8").strip()
+    except OSError as exc:
+        raise RuntimeError(f"Sem chave do selo: defina RESPIRA_SEAL_KEY ou libere escrita em {key_file}") from exc
+    if not key:
+        raise RuntimeError(f"Arquivo de chave do selo vazio: {key_file}")
+    return key.encode("utf-8")
+
+
+SEAL_KEY = _load_seal_key()
 TRUST_PROXY = os.getenv("RESPIRA_TRUST_PROXY", "").strip().lower() in {"1", "true", "yes"}
 
 _CONTROL_CHARS = re.compile(r"[\x00-\x08\x0b-\x1f\x7f]")
 _MARKUP_CHARS = re.compile(r"[<>]")
+_TAGS = re.compile(r"<[^>]*>")
 
 
 def sanitize_text(value: Optional[str]) -> str:
-    """Escape HTML/script payloads and normalize whitespace to mitigate XSS/log injection."""
+    """Remove tags e sinais < >, caracteres de controle e espaços repetidos.
+
+    Não converte para entidades HTML: o app (React) já escapa o texto na tela, e entidades
+    apareceriam cruas para quem lê (d&#x27;água). Fórmulas de planilha são tratadas no CSV.
+    """
     if not value:
         return ""
-    stripped = " ".join(_CONTROL_CHARS.sub(" ", value).split())
-    return html.escape(stripped, quote=True)
+    no_tags = _MARKUP_CHARS.sub("", _TAGS.sub(" ", value))
+    return " ".join(_CONTROL_CHARS.sub(" ", no_tags).split())
 
 
 def contains_markup(value: Optional[str]) -> bool:
@@ -39,18 +77,36 @@ def contains_markup(value: Optional[str]) -> bool:
 
 
 def compute_record_hash(payload: dict) -> str:
-    """Compute deterministic SHA-256 integrity digest for a persisted occurrence."""
+    """Selo de integridade de uma leitura: HMAC-SHA256 com a chave do selo (nunca sem chave)."""
+    def num(key: str):
+        v = payload.get(key)
+        return None if v is None or v == "" else round(float(v), 4)
+
     canonical = {
         "dispositivo_id": payload.get("dispositivo_id"),
         "tipo": payload.get("tipo"),
+        "latitude": num("latitude"),
+        "longitude": num("longitude"),
         "metrica": payload.get("metrica"),
-        "valor": round(float(payload.get("valor", 0.0)), 4),
+        "valor": num("valor"),
+        "gas_co": num("gas_co"),
+        "temperatura_c": num("temperatura_c"),
+        "umidade_pct": num("umidade_pct"),
         "nivel_risco": payload.get("nivel_risco"),
+        "ia_risco": payload.get("ia_risco"),
+        "ia_risco_prob": num("ia_risco_prob"),
         "relato": payload.get("relato", ""),
+        "alerta": bool(payload.get("alerta")),
+        "ia_sentimento": payload.get("ia_sentimento"),
+        "ia_confianca": num("ia_confianca"),
+        "ia_fonte": payload.get("ia_fonte"),
         "criado_em": payload.get("criado_em"),
     }
+    # Registros gravados antes de existir medido_em não têm o campo: o selo antigo deles continua valendo.
+    if payload.get("medido_em") is not None:
+        canonical["medido_em"] = payload["medido_em"]
     encoded = json.dumps(canonical, sort_keys=True, ensure_ascii=False).encode("utf-8")
-    return hashlib.sha256(encoded).hexdigest()
+    return hmac.new(SEAL_KEY, encoded, hashlib.sha256).hexdigest()
 
 
 class SlidingWindowRateLimiter:

@@ -1,0 +1,11 @@
+$ python receiver_csv.py
+Receptor do sensor ativo em http://127.0.0.1:8085 -> CSV: leituras_iot.csv
+[2026-11-18T04:54:50+00:00] esp32-ubs-vila-maria | gas_voc=706.0 | STATUS=normal
+[2026-11-18T04:54:50+00:00] esp32-centro-01 | gas_voc=980.0 | STATUS=atencao
+[2026-11-18T04:54:50+00:00] esp32-escola-zona-norte | gas_voc=1280.0 | STATUS=critico
+
+$ cut -d, -f2,5-9 leituras_iot.csv
+dispositivo_id,valor,gas_co,temperatura_c,umidade_pct,status_local
+esp32-ubs-vila-maria,706.0,925.0,18.0,55.0,normal
+esp32-centro-01,980.0,1120.0,24.0,42.0,atencao
+esp32-escola-zona-norte,1280.0,1383.0,31.0,34.0,critico

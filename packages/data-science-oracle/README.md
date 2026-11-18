@@ -1,4 +1,4 @@
-# 04 — Cognitive Data Science (`Inclusive Mobility Rover`)
+# 04: Cognitive Data Science (`Inclusive Mobility Rover`)
 
 Esta disciplina é **standalone** (não usa o tema RespiraCidadão) e exige **submissão individual** no SurveyMonkey:
 `https://pt.surveymonkey.com/r/VQNNZZZ`

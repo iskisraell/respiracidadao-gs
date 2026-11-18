@@ -34,7 +34,7 @@ def test_health(client):
     assert resp.status_code == 200
     body = resp.json()
     assert body["status"] == "ok"
-    assert "fumaca_ppm" in body["limiares"]
+    assert "gas_voc" in body["limiares"]
 
 
 def test_validation_returns_400_on_missing_fields(client):
@@ -50,17 +50,17 @@ def test_three_scenarios_and_csv_sqlite_persistence(client):
         {
             "dispositivo_id": "esp32-01",
             "tipo": "esp32",
-            "metrica": "fumaca_ppm",
-            "valor": 55.0,
+            "metrica": "gas_voc",
+            "valor": 700.0, "gas_co": 920.0,
             "temperatura_c": 22.0,
             "umidade_pct": 60.0,
             "relato": "Ar limpo na estação.",
         },
         {
             "dispositivo_id": "esp32-02",
-            "tipo_dispositivo": "drone",
-            "metrica": "fumaca_ppm",
-            "valor": 165.0,
+            "tipo_dispositivo": "app",
+            "metrica": "gas_voc",
+            "valor": 980.0, "gas_co": 1120.0,
             "temperatura_c": 30.0,
             "umidade_pct": 35.0,
             "relato": "Cheiro de fumaça e neblina.",
@@ -68,8 +68,8 @@ def test_three_scenarios_and_csv_sqlite_persistence(client):
         {
             "dispositivo_id": "esp32-03",
             "tipo": "esp32",
-            "metrica": "fumaca_ppm",
-            "valor": 310.0,
+            "metrica": "gas_voc",
+            "valor": 1300.0, "gas_co": 1390.0,
             "temperatura_c": 37.5,
             "umidade_pct": 19.0,
             "relato": "Fumaça densa de queimada, tosse na escola <script>alert(1)</script>",
@@ -93,7 +93,7 @@ def test_three_scenarios_and_csv_sqlite_persistence(client):
     assert len(listed) == 3
     crit = [item for item in listed if item["id"] == ids[2]][0]
     assert "<script>" not in crit["relato"]
-    assert "&lt;script&gt;" in crit["relato"]
+    assert "&lt;" not in crit["relato"] and "tosse na escola" in crit["relato"]
 
     # CSV persistence check
     csv_path = runtime_dir / "leituras.csv"
@@ -106,7 +106,7 @@ def test_three_scenarios_and_csv_sqlite_persistence(client):
     ind = c.get("/indicadores").json()
     assert ind["total_leituras"] == 3
     assert ind["total_alertas"] == 2
-    assert ind["max_valor"] == 310.0
+    assert ind["max_valor"] == 1300.0
 
     # Integrity verification
     ver = c.get(f"/security/verify/{ids[0]}").json()
@@ -142,7 +142,7 @@ def test_api_key_protection_and_rate_limiter(client):
             "/ocorrencias",
             json={
                 "dispositivo_id": "esp32-burst",
-                "metrica": "fumaca_ppm",
+                "metrica": "gas_voc",
                 "valor": 40.0 + i,
             },
         )
@@ -150,7 +150,8 @@ def test_api_key_protection_and_rate_limiter(client):
     assert statuses.count(201) == 10
     assert statuses.count(429) == 2
 
-    audit = c.get("/security/audit").json()
+    assert c.get("/security/audit").status_code == 401  # trilha tem IP: só com a chave
+    audit = c.get("/security/audit", headers={"X-API-Key": "test-only-key"}).json()
     assert any(ev["event"] == "rate_limit_blocked" for ev in audit["events"])
 
 
@@ -160,7 +161,7 @@ def test_integrity_detects_tampering(client):
     c, _, runtime_dir = client
     rec = c.post(
         "/ocorrencias",
-        json={"dispositivo_id": "esp32-hash", "metrica": "fumaca_ppm", "valor": 300.0, "relato": "Fumaça forte"},
+        json={"dispositivo_id": "esp32-hash", "metrica": "gas_voc", "valor": 300.0, "relato": "Fumaça forte"},
     ).json()
     assert c.get(f"/security/verify/{rec['id']}").json()["integro"] is True
 
@@ -172,10 +173,20 @@ def test_integrity_detects_tampering(client):
     assert ver["hash_armazenado"] != ver["hash_recalculado"]
     assert c.get("/security/verify/9999").status_code == 404
 
+    # O selo cobre também temperatura e umidade.
+    rec2 = c.post(
+        "/ocorrencias",
+        json={"dispositivo_id": "esp32-hash", "metrica": "gas_voc", "valor": 700.0, "temperatura_c": 20, "umidade_pct": 50},
+    ).json()
+    with sqlite3.connect(runtime_dir / "ocorrencias.db") as conn:
+        conn.execute("UPDATE ocorrencias SET umidade_pct = 90 WHERE id = ?", (rec2["id"],))
+        conn.commit()
+    assert c.get(f"/security/verify/{rec2['id']}").json()["integro"] is False
+
 
 def test_markup_in_identifiers_is_rejected_with_400(client):
     c, _, _ = client
-    bad = {"dispositivo_id": "<img src=x onerror=alert(1)>", "metrica": "fumaca_ppm", "valor": 10}
+    bad = {"dispositivo_id": "<img src=x onerror=alert(1)>", "metrica": "gas_voc", "valor": 10}
     assert c.post("/ocorrencias", json=bad).status_code == 400
     bad = {"dispositivo_id": "esp32-ok", "metrica": "<script>", "valor": 10}
     assert c.post("/ocorrencias", json=bad).status_code == 400
@@ -188,7 +199,7 @@ def test_spoofed_forwarded_header_does_not_bypass_rate_limit(client):
     for i in range(12):
         r = c.post(
             "/ocorrencias",
-            json={"dispositivo_id": "esp32-spoof", "metrica": "fumaca_ppm", "valor": 20.0},
+            json={"dispositivo_id": "esp32-spoof", "metrica": "gas_voc", "valor": 20.0},
             headers={"X-Forwarded-For": f"10.0.0.{i}"},
         )
         codes.append(r.status_code)
@@ -199,7 +210,7 @@ def test_csv_formula_injection_and_missing_value(client):
     c, _, runtime_dir = client
     r = c.post(
         "/ocorrencias",
-        json={"dispositivo_id": "esp32-csv", "metrica": "fumaca_ppm", "valor": 5, "relato": "=HYPERLINK(\"http://x\")"},
+        json={"dispositivo_id": "esp32-csv", "metrica": "gas_voc", "valor": 5, "relato": "=HYPERLINK(\"http://x\")"},
     )
     assert r.status_code == 201
     with (runtime_dir / "leituras.csv").open(encoding="utf-8") as f:
@@ -216,7 +227,7 @@ def test_indicators_cover_all_rows_not_only_last_1000(client):
         main_mod.store.insert(
             {
                 "dispositivo_id": "esp32-bulk", "tipo": "esp32", "latitude": None, "longitude": None,
-                "metrica": "fumaca_ppm", "valor": 10.0, "temperatura_c": None, "umidade_pct": None,
+                "metrica": "gas_voc", "valor": 10.0, "temperatura_c": None, "umidade_pct": None,
                 "relato": "", "ia_sentimento": "sem_relato", "ia_confianca": None, "ia_fonte": "local-vazio",
                 "nivel_risco": "normal", "alerta": False,
             }
@@ -235,3 +246,163 @@ def test_admin_route_fails_closed_without_configured_key(tmp_path, monkeypatch):
     with TestClient(main_mod.app) as c:
         assert c.delete("/ocorrencias", headers={"X-API-Key": ""}).status_code == 503
         assert c.delete("/ocorrencias", headers={"X-API-Key": "perceptron-fiap-2026"}).status_code == 503
+
+
+def test_full_reading_gets_model_verdict(client):
+    c, _, _ = client
+    r = c.post("/ocorrencias", json={"dispositivo_id": "esp32-ia", "metrica": "gas_voc", "valor": 1280.0,
+                                     "gas_co": 1383.0, "temperatura_c": 31.0, "umidade_pct": 34.0}).json()
+    assert r["nivel_risco"] == "critico"
+    assert r["ia_risco"] == "critico" and r["ia_risco_prob"] > 0.5
+    partial = c.post("/ocorrencias", json={"dispositivo_id": "esp32-ia", "metrica": "gas_voc", "valor": 700.0}).json()
+    assert partial["ia_risco"] is None
+
+
+def test_predict_returns_three_verdicts(client):
+    c, _, _ = client
+    body = c.post("/predict", json={"gas_co": 925, "gas_voc": 706, "temperatura_c": 18, "umidade_pct": 55}).json()
+    assert body["ml"]["classe"] == body["nn"]["classe"] == body["regra_local"]["classe"] == "normal"
+
+
+def test_places_show_latest_reading_and_guidance(client):
+    c, _, _ = client
+    places = c.get("/locais").json()
+    assert len(places) == 3 and all(p["nivel"] is None for p in places)
+    c.post("/simulate", json={"cenario": "critico", "local_id": "escola-jardim-primavera"})
+    escola = next(p for p in c.get("/locais").json() if p["id"] == "escola-jardim-primavera")
+    assert escola["nivel"] == "critico"
+    assert escola["orientacao"]["titulo"] == "Ar ruim agora"
+    assert escola["ultima_leitura"]["ia_risco"] == "critico"
+    assert len(escola["historico"]) == 1
+    assert escola["ultima_leitura"]["tipo"] == "demo"
+    assert c.post("/simulate", json={"cenario": "normal", "local_id": "nao-existe"}).status_code == 404
+
+
+def test_relatos_are_sanitized_and_flag_urgency(client):
+    c, _, _ = client
+    r = c.post("/relatos", json={"local_id": "praca-da-se", "texto": "Fumaça forte <b>na praça</b>"})
+    assert r.status_code == 201
+    body = r.json()
+    assert body["urgente"] is True and body["texto"] == "Fumaça forte na praça"
+    # Apóstrofo continua legível (sem &#x27;) e texto só de espaços é recusado
+    assert c.post("/relatos", json={"local_id": "praca-da-se", "texto": "Cheiro forte perto da caixa d'água"}).json()["texto"].endswith("d'água")
+    assert c.post("/relatos", json={"local_id": "praca-da-se", "texto": "     "}).status_code == 400
+    assert c.post("/relatos", json={"local_id": "outro-lugar", "texto": "oi tudo bem"}).status_code == 404
+    praca = next(p for p in c.get("/locais").json() if p["id"] == "praca-da-se")
+    assert body["id"] in [r["id"] for r in praca["relatos"]]
+
+
+def test_hourly_pattern_points_to_afternoon_window(client):
+    c, _, _ = client
+    body = c.get("/padrao-horario").json()
+    assert len(body["horas"]) == 24
+    janela = body["melhor_janela"]
+    assert 11 <= janela["inicio"] <= 15
+    assert janela["pior_hora"] in (8, 9, 17)
+
+
+def test_demo_readings_never_hide_real_ones(client):
+    c, _, _ = client
+    c.post("/simulate", json={"cenario": "critico", "local_id": "ubs-vila-esperanca"})
+    assert c.get("/indicadores").json()["total_leituras"] == 0
+    real = {"dispositivo_id": "esp32-ubs-vila-maria", "tipo": "esp32", "metrica": "gas_voc", "valor": 706,
+            "gas_co": 925, "temperatura_c": 18, "umidade_pct": 55}
+    assert c.post("/ocorrencias", json=real).status_code == 201
+    c.post("/simulate", json={"cenario": "critico", "local_id": "ubs-vila-esperanca"})
+    ubs = next(p for p in c.get("/locais").json() if p["id"] == "ubs-vila-esperanca")
+    assert ubs["ultima_leitura"]["tipo"] == "esp32" and ubs["ultima_leitura"]["nivel_risco"] == "normal"
+    assert c.get("/indicadores").json()["total_leituras"] == 1
+
+
+def test_seal_is_keyed_even_without_env(client):
+    c, _, runtime_dir = client
+    assert c.get("/health").json()["selo_com_chave"] is True
+    key_file = runtime_dir / "seal.key"
+    assert key_file.exists() and (key_file.stat().st_mode & 0o777) == 0o600
+
+
+def test_seal_refuses_to_run_without_key(tmp_path, monkeypatch):
+    """Sem chave no ambiente e sem onde gravar uma, a central não sobe com selo fraco."""
+    import app.security as sec_mod
+
+    # Um arquivo comum no lugar da pasta impede criar a chave mesmo rodando como root.
+    blocked = tmp_path / "nao_e_pasta"
+    blocked.write_text("")
+    monkeypatch.delenv("RESPIRA_SEAL_KEY", raising=False)
+    monkeypatch.setenv("RESPIRA_SEAL_KEY_FILE", str(blocked / "sub" / "seal.key"))
+    with pytest.raises(RuntimeError):
+        sec_mod._load_seal_key()
+    empty = tmp_path / "vazia.key"
+    empty.write_text("")
+    monkeypatch.setenv("RESPIRA_SEAL_KEY_FILE", str(empty))
+    with pytest.raises(RuntimeError):
+        sec_mod._load_seal_key()
+
+
+def test_medido_em_is_stored_and_checked(client):
+    c, _, _ = client
+    base = {"dispositivo_id": "esp32-escola-01", "valor": 900}
+    old = c.post("/ocorrencias", json={**base, "medido_em": "2026-01-10T08:00:00-03:00"})
+    assert old.status_code == 201
+    assert old.json()["medido_em"] == "2026-01-10T11:00:00+00:00"
+    assert c.post("/ocorrencias", json={**base, "medido_em": "2099-01-01T00:00:00Z"}).status_code in (400, 422)
+    assert c.post("/ocorrencias", json={**base, "medido_em": "ontem"}).status_code in (400, 422)
+    sem = c.post("/ocorrencias", json=base).json()
+    assert sem["medido_em"] == sem["criado_em"]
+
+
+def test_seal_key_creation_is_race_safe(tmp_path, monkeypatch):
+    """Vários workers subindo juntos chegam todos à mesma chave."""
+    from concurrent.futures import ThreadPoolExecutor
+    import app.security as sec_mod
+
+    monkeypatch.delenv("RESPIRA_SEAL_KEY", raising=False)
+    monkeypatch.setenv("RESPIRA_SEAL_KEY_FILE", str(tmp_path / "seal.key"))
+    with ThreadPoolExecutor(8) as pool:
+        keys = set(pool.map(lambda _: sec_mod._load_seal_key(), range(16)))
+    assert len(keys) == 1 and len(next(iter(keys))) == 64
+    assert [p.name for p in tmp_path.iterdir()] == ["seal.key"]
+
+
+def test_late_reading_does_not_hide_newer_one(client):
+    """Uma leitura que chega atrasada entra no histórico no lugar certo, sem virar a 'última'."""
+    from datetime import datetime, timedelta, timezone
+
+    c, _, _ = client
+    agora = c.post("/ocorrencias", json={"dispositivo_id": "esp32-escola-zona-norte", "valor": 900}).json()
+    antes = (datetime.now(timezone.utc) - timedelta(hours=2)).isoformat()
+    atrasada = c.post("/ocorrencias", json={"dispositivo_id": "esp32-escola-zona-norte", "valor": 100, "medido_em": antes}).json()
+    escola = next(p for p in c.get("/locais").json() if p["dispositivo_id"] == "esp32-escola-zona-norte")
+    assert escola["ultima_leitura"]["id"] == agora["id"]
+    assert escola["historico"][0]["criado_em"] == atrasada["medido_em"]
+
+
+def test_legacy_seal_without_medido_em_still_verifies(client):
+    """Registros gravados antes do campo medido_em continuam íntegros depois da migração."""
+    import sqlite3
+    from app.security import compute_record_hash
+
+    c, _, runtime_dir = client
+    rec = c.post("/ocorrencias", json={"dispositivo_id": "esp32-hash", "valor": 300.0}).json()
+    legado = {k: v for k, v in rec.items() if k != "medido_em"}
+    with sqlite3.connect(runtime_dir / "ocorrencias.db") as conn:
+        conn.execute(
+            "UPDATE ocorrencias SET medido_em = NULL, hash_integridade = ? WHERE id = ?",
+            (compute_record_hash(legado), rec["id"]),
+        )
+        conn.commit()
+    assert c.get(f"/security/verify/{rec['id']}").json()["integro"] is True
+
+
+def test_old_csv_is_kept_on_every_migration(tmp_path):
+    """Cada migração de cabeçalho guarda o CSV antigo com nome próprio, sem apagar a cópia anterior."""
+    api_dir = Path(__file__).resolve().parents[1]
+    if str(api_dir) not in sys.path:
+        sys.path.insert(0, str(api_dir))
+    from app.storage import OccurrenceStore
+
+    for i in range(2):
+        (tmp_path / "leituras.csv").write_text(f"cabecalho_velho\nlinha{i}\n", encoding="utf-8")
+        OccurrenceStore(tmp_path)
+    antigos = sorted(p.read_text() for p in tmp_path.glob("leituras.antigo-*.csv"))
+    assert antigos == ["cabecalho_velho\nlinha0\n", "cabecalho_velho\nlinha1\n"]

@@ -1,0 +1,238 @@
+{
+  "title": "RELATÓRIO ESTATÍSTICO DO AR",
+  "subtitle": [
+    "O sensor barato consegue dizer quando o ar está ruim?",
+    "Análise da base real UCI Air Quality"
+  ],
+  "meta": [
+    {
+      "label": "Sala:",
+      "value": "1TIAPZ1"
+    },
+    {
+      "label": "Matéria:",
+      "value": "Statistical Computing with R & Python"
+    },
+    {
+      "label": "Grupo:",
+      "value": "Perceptron"
+    },
+    {
+      "label": "Integrantes:",
+      "value": "Giovanni Henrique Pereira Hessel (RM 570574)\nSuellen Pereira da Silva (RM 573862)\nIsrael Carneiro de Toledo (RM 573854)"
+    }
+  ],
+  "output_dir": "/home/agent/projects/respiracidadao-gs/docs/09-statistical-computing-r-python",
+  "filename": "09_RespiraCidadao_Relatorio_Estatistico",
+  "sections": [
+    {
+      "title": "1. A PERGUNTA E A BASE (ITEM 01)",
+      "body": [
+        "Cliente: secretaria municipal que quer instalar sensores de baixo custo em escolas e UBS. Pergunta: as medidas de um sensor barato explicam o monóxido de carbono que uma estação oficial mediria? Se sim, dá para avisar escolas sem pagar por uma estação em cada bairro (ODS 3 e 11).",
+        "Base: UCI Air Quality (Vito et al., 2008), dados públicos do repositório da UC Irvine. São 9357 horas em que um sensor de baixo custo e um analisador de referência mediram o mesmo ar urbano. Tiramos as horas com falha (-200) e ficamos com 6941. Escolhemos essa base porque ela tem o par que nos interessa: sensor barato ao lado de medida oficial.",
+        "Níveis pelo CO(GT): 2531 horas bom (abaixo de 1,5 mg/m³), 2718 carregado (1,5 a 3,0) e 1692 ruim (3,0 ou mais)."
+      ]
+    },
+    {
+      "title": "2. DISTRIBUIÇÃO NORMAL E TESTES DE HIPÓTESE (ITENS 02 E 03)",
+      "tables": [
+        {
+          "headers": [
+            "Item",
+            "Pergunta",
+            "Resultado",
+            "Decisão"
+          ],
+          "rows": [
+            [
+              "02a",
+              "P(X < média) de CO(GT)",
+              "50,00% (média 2,1825 mg/m³)",
+              "Evento equiprovável (50/50 sob simetria normal)"
+            ],
+            [
+              "02b",
+              "P(X > mediana) de CO(GT)",
+              "57,77% (mediana 1,9 mg/m³)",
+              "Evento provável / frequente"
+            ],
+            [
+              "03a",
+              "H0: média = média da base. H1: média < média da base (n=20, alfa=6%)",
+              "média da amostra 2,31; Z=0,3958; Z crítico -1,5548; p=0,6539",
+              "Não rejeitar H0"
+            ],
+            [
+              "03b",
+              "H0: média = média da base. H1: média > média da base (n=25, alfa=9%)",
+              "média da amostra 1,86; Z=-1,1189; Z crítico 1,3408; p=0,8684",
+              "Não rejeitar H0"
+            ]
+          ],
+          "col_widths": [
+            14,
+            52,
+            70,
+            44
+          ]
+        }
+      ],
+      "body": [
+        "A média (2,18) fica acima da mediana (1,9): a cauda direita é longa. Por isso P(X > mediana) sob a Normal dá 57,8%, e não 50%. As horas de ar ruim (3,0 mg/m³ ou mais) são 1.692 de 6.941, quase 1 em cada 4, e é essa parcela que o alerta precisa pegar.",
+        "Nos testes Z usamos a média e o desvio da base inteira como população: média 2,1825 mg/m³ e sigma 1,4411 mg/m³. Z = (média da amostra - 2,1825) / (1,4411 / raiz de n).",
+        "Nos dois testes não rejeitamos H0. As médias sorteadas caíram do lado oposto ao da hipótese alternativa (2,31, acima de μ, no teste à esquerda; 1,86, abaixo de μ, no teste à direita), por isso os valores p ficaram altos. É o esperado para amostras tiradas da mesma população."
+      ],
+      "images": [
+        {
+          "path": "/home/agent/projects/respiracidadao-gs/packages/stats-r-python/charts/02_distribuicao_normal_co.png",
+          "caption": "Figura 1: Distribuição de CO(GT) e a curva Normal com a mesma média e desvio.",
+          "width": 140
+        }
+      ]
+    },
+    {
+      "title": "3. UM SENSOR SÓ: REGRESSÃO SIMPLES (ITEM 04)",
+      "body": [
+        "a) A dispersão entre o sensor de monóxido PT08.S1(CO) e o CO(GT) da estação forma uma nuvem estreita que sobe para a direita. Quando o sensor sobe, o monóxido real sobe junto.",
+        "b) Covariância 276,46 e correlação de Pearson r = 0,877, com p < 0,0001. Relação positiva e forte.",
+        "c) O gráfico por decis mostra a média de CO(GT) subindo de forma quase reta a cada faixa do sensor.",
+        "d) Equação: CO(GT) = -4,2888 + 0,00578 * PT08.S1(CO).",
+        "e) R² = 76,92% e teste F = 23119,89 (p < 0,0001). Só o sensor de monóxido já explica três quartos da variação do monóxido real.",
+        "f) Previsão: com o sensor em 1350, o CO previsto é 3,512 mg/m³, nível ruim."
+      ],
+      "images": [
+        {
+          "path": "/home/agent/projects/respiracidadao-gs/packages/stats-r-python/charts/04_dispersao_regressao_simples.png",
+          "caption": "Figura 2: Dispersão com a reta ajustada e o ponto previsto.",
+          "width": 140
+        },
+        {
+          "path": "/home/agent/projects/respiracidadao-gs/packages/stats-r-python/charts/04_correlacao_bivariada.png",
+          "caption": "Figura 3: Correlação por decis do sensor.",
+          "width": 140
+        }
+      ]
+    },
+    {
+      "title": "4. AS QUATRO MEDIDAS DO SENSOR: REGRESSÃO MÚLTIPLA (ITEM 05)",
+      "body": [
+        "Usamos as quatro medidas que nosso ESP32 tem: os dois sensores de gás PT08.S1(CO) e PT08.S2(NMHC), temperatura (T) e umidade (RH).",
+        "a) e b) Os dois sensores de gás andam com o CO(GT) (r = 0,877 e 0,914) e entre si (r = 0,886), então carregam informação parecida. Temperatura e umidade quase não se relacionam com o CO sozinhas (r = 0,018 e 0,065), mas se relacionam entre si (r = -0,564) e corrigem a leitura dos sensores de gás, que mudam com o clima.",
+        "c) No gráfico de correlação (Figura 5), os três medidores de monóxido e gases formam o bloco de valores mais altos, porque sobem juntos: 0,877, 0,914 e 0,886. A única relação negativa forte é temperatura com umidade (-0,564): tarde quente costuma ser tarde seca.",
+        "d) Equação: CO(GT) = -2,6608 + (0,00130)*PT08.S1(CO) + (0,00426)*PT08.S2(NMHC) + (-0,03046)*T + (-0,00314)*RH.",
+        "e) R² = 88,07% (ajustado 88,06%) e teste F = 12797,13 (p < 0,0001). As quatro medidas juntas explicam 88% da variação, contra 77% de um sensor só. Temperatura e umidade entram com sinal negativo, embora sozinhas tenham correlação positiva com o CO: na equação elas corrigem a deriva dos sensores de gás com o clima. Como os dois sensores de gás têm r = 0,886 entre si, cada coeficiente sozinho não deve ser lido como efeito isolado; a previsão do conjunto é o que vale.",
+        "f) Previsões, com entradas na ordem PT08.S1, PT08.S2, T e RH: Ar carregado (Praça da Sé) (1120, 980, 24 °C, 42%) = 2,105 mg/m³ (carregado); Ar ruim (Escola) (1383, 1280, 31 °C, 34%) = 3,537 mg/m³ (ruim)."
+      ],
+      "tables": [
+        {
+          "headers": [
+            "Covariância",
+            "CO(GT)",
+            "PT08.S1(CO)",
+            "PT08.S2(NMHC)",
+            "T",
+            "RH"
+          ],
+          "rows": [
+            [
+              "CO(GT)",
+              "2,08",
+              "276,46",
+              "347,94",
+              "0,23",
+              "1,63"
+            ],
+            [
+              "PT08.S1(CO)",
+              "276,46",
+              "47844,46",
+              "51177,30",
+              "54,71",
+              "645,33"
+            ],
+            [
+              "PT08.S2(NMHC)",
+              "347,94",
+              "51177,30",
+              "69725,04",
+              "533,28",
+              "-212,14"
+            ],
+            [
+              "T",
+              "0,23",
+              "54,71",
+              "533,28",
+              "78,23",
+              "-86,95"
+            ],
+            [
+              "RH",
+              "1,63",
+              "645,33",
+              "-212,14",
+              "-86,95",
+              "303,92"
+            ]
+          ],
+          "col_widths": [
+            34,
+            26,
+            32,
+            34,
+            26,
+            28
+          ]
+        }
+      ],
+      "images": [
+        {
+          "path": "/home/agent/projects/respiracidadao-gs/packages/stats-r-python/charts/05_dispersao_multivariada.png",
+          "caption": "Figura 4: Cada medida do sensor contra o CO(GT).",
+          "width": 140
+        },
+        {
+          "path": "/home/agent/projects/respiracidadao-gs/packages/stats-r-python/charts/05_matriz_correlacao.png",
+          "caption": "Figura 5: Matriz de correlação de Pearson.",
+          "width": 140
+        }
+      ]
+    },
+    {
+      "title": "5. AR RUIM OU NÃO: REGRESSÃO LOGÍSTICA (ITEM 06)",
+      "body": [
+        "a) P é a probabilidade de ar ruim, CO(GT) de 3,0 mg/m³ ou mais. Equação: logit(P) = -24,6774 + (0,00313)*PT08.S1(CO) + (0,02139)*PT08.S2(NMHC) + (-0,16795)*T + (-0,01122)*RH. A probabilidade sai da sigmoide: P = 1 / (1 + e elevado a -logit). Treinamos com 75% das horas (5.205) e testamos nos 25% restantes (1.736).",
+        "b) No teste, com 1.736 horas: 1.263 horas sem ar ruim (bom ou carregado, classe 0) reconhecidas, 365 horas ruins reconhecidas, 50 alarmes falsos e 58 horas ruins perdidas. Acurácia 93,78%, precisão 87,95%, recall 86,29%. De cada 100 horas de ar ruim, o modelo pega 86 e deixa passar 14.",
+        "c) Classificação: Ar carregado (Praça da Sé) deu P(ruim) = 0,89%, classe 0. Ar ruim (Escola) deu P(ruim) = 80,92%, classe 1."
+      ],
+      "images": [
+        {
+          "path": "/home/agent/projects/respiracidadao-gs/packages/stats-r-python/charts/06_matriz_confusao_logistica.png",
+          "caption": "Figura 6: Matriz de confusão da regressão logística.",
+          "width": 140
+        }
+      ]
+    },
+    {
+      "title": "6. O QUE RECOMENDAMOS (ITEM 07)",
+      "bullets": [
+        {
+          "text": "O sensor barato serve para avisar o bairro. As quatro medidas explicam 88% do monóxido real e acertam 94% das horas na decisão ar ruim ou não.",
+          "level": 0
+        },
+        {
+          "text": "Instale com as quatro medidas, não só com o sensor de gás. Temperatura e umidade sozinhas não dizem nada, mas somadas aos gases sobem o R² de 77% para 88%.",
+          "level": 0
+        },
+        {
+          "text": "Mantenha a luz local no sensor. Ela continua avisando quem está no prédio quando a internet cai e a central não responde.",
+          "level": 0
+        },
+        {
+          "text": "Recalibre em cada bairro. A base é de outra cidade e outro clima, e os sensores de gás mudam com o clima. Algumas semanas ao lado de uma estação CETESB ajustam os coeficientes ao lugar novo.",
+          "level": 0
+        }
+      ]
+    }
+  ]
+}

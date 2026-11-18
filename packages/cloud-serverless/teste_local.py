@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Teste automatizado local da lambda_function sem depender de RDS ou HF_TOKEN."""
+"""Testa a função da nuvem sem RDS e sem token da IA."""
 
 import json
 import sys
@@ -54,11 +54,13 @@ def run_tests():
                 "rawPath": "/ocorrencias",
                 "body": json.dumps(
                     {
-                        "dispositivo_id": "esp32-respira-01",
+                        "dispositivo_id": "esp32-ubs-vila-maria",
                         "tipo_dispositivo": "esp32",
-                        "metrica": "fumaca_ppm",
-                        "valor": 62.0,
-                        "relato": "Ar limpo hoje",
+                        "metrica": "gas_voc",
+                        "valor": 706.0,
+                        "gas_co": 925.0,
+                        "temperatura_c": 18.0,
+                        "umidade_pct": 55.0,
                     }
                 ),
             },
@@ -74,11 +76,12 @@ def run_tests():
                 "rawPath": "/ocorrencias",
                 "body": json.dumps(
                     {
-                        "dispositivo_id": "drone-respira-03",
-                        "tipo_dispositivo": "drone",
-                        "metrica": "fumaca_ppm",
-                        "valor": 320.0,
-                        "relato": "Fumaca densa de queimada na escola",
+                        "dispositivo_id": "esp32-escola-zona-norte",
+                        "tipo_dispositivo": "esp32",
+                        "metrica": "gas_voc",
+                        "valor": 1280.0,
+                        "gas_co": 1383.0,
+                        "relato": "Fumaca de queimada no portao, criancas tossindo",
                     }
                 ),
             },
@@ -88,6 +91,7 @@ def run_tests():
         body4 = json.loads(r4["body"])
         assert body4["nivel_risco"] == "critico"
         assert body4["alerta"] is True
+        assert body4["gas_co"] == 1383.0 and body4["temperatura_c"] is None
 
         # 5) GET /ocorrencias
         r5 = lambda_function.lambda_handler(
@@ -105,7 +109,7 @@ def run_tests():
             }
             return lambda_function.lambda_handler(evento, None)
 
-        base = {"dispositivo_id": "esp32-edge", "metrica": "fumaca_ppm", "valor": 10}
+        base = {"dispositivo_id": "esp32-centro-01", "metrica": "gas_voc", "valor": 980}
 
         # 6) Entradas invalidas devem virar 400 (nunca 500) e nao gravar nada
         antes = len(BANCO_MEMORIA)
@@ -114,9 +118,13 @@ def run_tests():
         assert post({**base, "valor": "abc"})["statusCode"] == 400
         assert post({**base, "valor": "NaN"})["statusCode"] == 400
         assert post({**base, "latitude": "norte"})["statusCode"] == 400
-        assert post({**base, "tipo_dispositivo": "geladeira"})["statusCode"] == 400
+        assert post({**base, "tipo_dispositivo": "drone"})["statusCode"] == 400
+        assert post({**base, "gas_co": "alto"})["statusCode"] == 400
         assert post({**base, "dispositivo_id": "   "})["statusCode"] == 400
+        assert post({**base, "relato": "x" * 501})["statusCode"] == 400  # igual à API: rejeita, não corta
         assert len(BANCO_MEMORIA) == antes
+        sem_metrica = {k: v for k, v in base.items() if k != "metrica"}
+        assert post(sem_metrica)["statusCode"] == 201  # metrica padrão gas_voc, igual à API
 
         # 7) Falha/resposta estranha da IA nao derruba a ingestao
         class _Resp:
@@ -140,8 +148,11 @@ def run_tests():
             assert r["statusCode"] == 201, r
             assert json.loads(r["body"])["sentimento"] is None
 
-        # 8) medido_em invalido nao quebra; body base64 (Function URL) e aceito
-        assert post({**base, "medido_em": "ontem a noite"})["statusCode"] == 201
+        # 8) medido_em invalido ou no futuro: 400, igual a API local; body base64 (Function URL) e aceito
+        assert post({**base, "medido_em": "ontem a noite"})["statusCode"] == 400
+        assert post({**base, "medido_em": "2099-01-01T00:00:00Z"})["statusCode"] == 400
+        ok = json.loads(post({**base, "medido_em": "2026-01-10T08:00:00-03:00"})["body"])
+        assert ok["medido_em"] == "2026-01-10T11:00:00+00:00"
         import base64
 
         r = post(base64.b64encode(json.dumps(base).encode()).decode(), isBase64Encoded=True)

@@ -1,0 +1,289 @@
+{
+  "dataset": {
+    "nome": "UCI Air Quality (Vito et al., 2008)",
+    "registros_brutos": 9357,
+    "registros_limpos": 6941,
+    "variavel_alvo": "CO(GT) [mg/m³]",
+    "distribuicao_risco": {
+      "atencao": 2718,
+      "normal": 2531,
+      "critico": 1692
+    },
+    "estatisticas_descritivas": {
+      "CO(GT)": {
+        "count": 6941.0,
+        "mean": 2.1825,
+        "std": 1.4412,
+        "min": 0.1,
+        "25%": 1.1,
+        "50%": 1.9,
+        "75%": 2.9,
+        "max": 11.9
+      },
+      "PT08.S1(CO)": {
+        "count": 6941.0,
+        "mean": 1119.9133,
+        "std": 218.7338,
+        "min": 647.0,
+        "25%": 956.0,
+        "50%": 1085.0,
+        "75%": 1254.0,
+        "max": 2040.0
+      },
+      "PT08.S2(NMHC)": {
+        "count": 6941.0,
+        "mean": 958.543,
+        "std": 264.055,
+        "min": 390.0,
+        "25%": 760.0,
+        "50%": 931.0,
+        "75%": 1135.0,
+        "max": 2214.0
+      },
+      "T": {
+        "count": 6941.0,
+        "mean": 17.7553,
+        "std": 8.8449,
+        "min": -1.9,
+        "25%": 11.2,
+        "50%": 16.8,
+        "75%": 23.7,
+        "max": 44.6
+      },
+      "RH": {
+        "count": 6941.0,
+        "mean": 48.8819,
+        "std": 17.4332,
+        "min": 9.2,
+        "25%": 35.3,
+        "50%": 49.2,
+        "75%": 62.2,
+        "max": 88.7
+      }
+    }
+  },
+  "item_02_normal": {
+    "variavel": "CO(GT)",
+    "media": 2.1825,
+    "desvio_padrao": 1.4412,
+    "mediana": 1.9,
+    "p_menor_media": 0.5,
+    "classificacao_a": "Evento equiprovável (50/50 sob simetria normal)",
+    "p_maior_mediana": 0.5777,
+    "classificacao_b": "Evento provável / frequente"
+  },
+  "item_03_testes_hipotese": {
+    "variavel": "CO(GT)",
+    "media_pop": 2.1825,
+    "sigma_pop": 1.4411,
+    "teste_3a_unilateral_esquerda": {
+      "n": 20,
+      "alpha": 0.06,
+      "media_amostral": 2.31,
+      "z_calculado": 0.3958,
+      "z_critico": -1.5548,
+      "p_valor": 0.6539,
+      "rejeita_h0": false,
+      "decisao": "Não rejeitar H0"
+    },
+    "teste_3b_unilateral_direita": {
+      "n": 25,
+      "alpha": 0.09,
+      "media_amostral": 1.86,
+      "z_calculado": -1.1189,
+      "z_critico": 1.3408,
+      "p_valor": 0.8684,
+      "rejeita_h0": false,
+      "decisao": "Não rejeitar H0"
+    }
+  },
+  "item_04_regressao_simples": {
+    "x": "PT08.S1(CO)",
+    "y": "CO(GT)",
+    "covariancia": 276.4609,
+    "pearson_r": 0.877,
+    "pearson_p_valor": 0.0,
+    "intercepto_b0": -4.2888,
+    "inclinacao_b1": 0.005778,
+    "equacao": "CO(GT) = -4.2888 + 0.00578 * PT08.S1(CO)",
+    "r2": 0.7692,
+    "teste_f": 23119.89,
+    "f_p_valor": 0.0,
+    "previsao_exemplo": {
+      "PT08.S1(CO)": 1350.0,
+      "co_previsto": 3.512
+    }
+  },
+  "item_05_regressao_multipla": {
+    "variaveis_explicativas": [
+      "PT08.S1(CO)",
+      "PT08.S2(NMHC)",
+      "T",
+      "RH"
+    ],
+    "alvo": "CO(GT)",
+    "matriz_covariancia": {
+      "CO(GT)": {
+        "CO(GT)": 2.0769,
+        "PT08.S1(CO)": 276.4609,
+        "PT08.S2(NMHC)": 347.9361,
+        "T": 0.2337,
+        "RH": 1.6269
+      },
+      "PT08.S1(CO)": {
+        "CO(GT)": 276.4609,
+        "PT08.S1(CO)": 47844.455,
+        "PT08.S2(NMHC)": 51177.3045,
+        "T": 54.7065,
+        "RH": 645.3281
+      },
+      "PT08.S2(NMHC)": {
+        "CO(GT)": 347.9361,
+        "PT08.S1(CO)": 51177.3045,
+        "PT08.S2(NMHC)": 69725.0439,
+        "T": 533.2816,
+        "RH": -212.1383
+      },
+      "T": {
+        "CO(GT)": 0.2337,
+        "PT08.S1(CO)": 54.7065,
+        "PT08.S2(NMHC)": 533.2816,
+        "T": 78.2324,
+        "RH": -86.9519
+      },
+      "RH": {
+        "CO(GT)": 1.6269,
+        "PT08.S1(CO)": 645.3281,
+        "PT08.S2(NMHC)": -212.1383,
+        "T": -86.9519,
+        "RH": 303.9162
+      }
+    },
+    "matriz_correlacao": {
+      "CO(GT)": {
+        "CO(GT)": 1.0,
+        "PT08.S1(CO)": 0.877,
+        "PT08.S2(NMHC)": 0.9143,
+        "T": 0.0183,
+        "RH": 0.0648
+      },
+      "PT08.S1(CO)": {
+        "CO(GT)": 0.877,
+        "PT08.S1(CO)": 1.0,
+        "PT08.S2(NMHC)": 0.8861,
+        "T": 0.0283,
+        "RH": 0.1692
+      },
+      "PT08.S2(NMHC)": {
+        "CO(GT)": 0.9143,
+        "PT08.S1(CO)": 0.8861,
+        "PT08.S2(NMHC)": 1.0,
+        "T": 0.2283,
+        "RH": -0.0461
+      },
+      "T": {
+        "CO(GT)": 0.0183,
+        "PT08.S1(CO)": 0.0283,
+        "PT08.S2(NMHC)": 0.2283,
+        "T": 1.0,
+        "RH": -0.5639
+      },
+      "RH": {
+        "CO(GT)": 0.0648,
+        "PT08.S1(CO)": 0.1692,
+        "PT08.S2(NMHC)": -0.0461,
+        "T": -0.5639,
+        "RH": 1.0
+      }
+    },
+    "coeficientes": {
+      "const": -2.66079,
+      "PT08.S1(CO)": 0.0013,
+      "PT08.S2(NMHC)": 0.00426,
+      "T": -0.03046,
+      "RH": -0.00314
+    },
+    "equacao": "CO(GT) = -2.6608 + (0.00130)*PT08.S1(CO) + (0.00426)*PT08.S2(NMHC) + (-0.03046)*T + (-0.00314)*RH",
+    "r2": 0.8807,
+    "r2_ajustado": 0.8806,
+    "teste_f": 12797.13,
+    "f_p_valor": 0.0,
+    "previsoes": [
+      {
+        "cenario": "Ar carregado (Praça da Sé)",
+        "entrada": {
+          "PT08.S1(CO)": 1120.0,
+          "PT08.S2(NMHC)": 980.0,
+          "T": 24.0,
+          "RH": 42.0
+        },
+        "co_previsto": 2.1054
+      },
+      {
+        "cenario": "Ar ruim (Escola)",
+        "entrada": {
+          "PT08.S1(CO)": 1383.0,
+          "PT08.S2(NMHC)": 1280.0,
+          "T": 31.0,
+          "RH": 34.0
+        },
+        "co_previsto": 3.537
+      }
+    ]
+  },
+  "item_06_regressao_logistica": {
+    "variaveis_explicativas": [
+      "PT08.S1(CO)",
+      "PT08.S2(NMHC)",
+      "T",
+      "RH"
+    ],
+    "alvo_binario": "alerta_critico (1 se CO(GT) >= 3.0 mg/m³)",
+    "intercepto_b0": -24.6774,
+    "coeficientes": {
+      "PT08.S1(CO)": 0.00313,
+      "PT08.S2(NMHC)": 0.02139,
+      "T": -0.16795,
+      "RH": -0.01122
+    },
+    "equacao_logit": "logit(P) = -24.6774 + (0.00313)*PT08.S1(CO) + (0.02139)*PT08.S2(NMHC) + (-0.16795)*T + (-0.01122)*RH",
+    "acuracia_teste": 0.9378,
+    "matriz_confusao": [
+      [
+        1263,
+        50
+      ],
+      [
+        58,
+        365
+      ]
+    ],
+    "precision_critico": 0.8795,
+    "recall_critico": 0.8629,
+    "f1_critico": 0.8711,
+    "classificacoes_exemplo": [
+      {
+        "cenario": "Ar carregado (Praça da Sé)",
+        "entrada": {
+          "PT08.S1(CO)": 1120.0,
+          "PT08.S2(NMHC)": 980.0,
+          "T": 24.0,
+          "RH": 42.0
+        },
+        "prob_critico": 0.0089,
+        "classe_predita": 0
+      },
+      {
+        "cenario": "Ar ruim (Escola)",
+        "entrada": {
+          "PT08.S1(CO)": 1383.0,
+          "PT08.S2(NMHC)": 1280.0,
+          "T": 31.0,
+          "RH": 34.0
+        },
+        "prob_critico": 0.8092,
+        "classe_predita": 1
+      }
+    ]
+  }
+}

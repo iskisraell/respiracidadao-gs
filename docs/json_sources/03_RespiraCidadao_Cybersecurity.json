@@ -1,0 +1,269 @@
+{
+  "title": "RESPIRACIDADÃO: SEGURANÇA E DADOS PESSOAIS",
+  "subtitle": [
+    "Onde o produto pode ser atacado e como se defende",
+    "Consultoria de cibersegurança e LGPD"
+  ],
+  "meta": [
+    {
+      "label": "Sala:",
+      "value": "1TIAPZ1"
+    },
+    {
+      "label": "Matéria:",
+      "value": "Cognitive Cybersecurity"
+    },
+    {
+      "label": "Grupo:",
+      "value": "Perceptron"
+    },
+    {
+      "label": "Integrantes:",
+      "value": "Giovanni Henrique Pereira Hessel (RM 570574)\nSuellen Pereira da Silva (RM 573862)\nIsrael Carneiro de Toledo (RM 573854)"
+    }
+  ],
+  "output_dir": "/home/agent/projects/respiracidadao-gs/docs/03-cognitive-cybersecurity",
+  "filename": "03_RespiraCidadao_Cybersecurity",
+  "sections": [
+    {
+      "title": "1. A SOLUÇÃO EM UMA PÁGINA",
+      "body": [
+        "O RespiraCidadão avisa escolas, UBS e famílias quando o ar perto delas piora. Público: crianças, idosos e pessoas com asma na periferia. Problema: exposição à fumaça sem aviso a tempo.",
+        "Arquitetura simplificada: Usuário (pessoa no app) e sensor ESP32 | Aplicação (app web e central FastAPI) | Banco (SQLite e CSV no local, PostgreSQL na nuvem) | IA (Random Forest, rede neural e leitura de relatos). O ESP32 entra pela mesma porta da central que o app: passa pelas mesmas faixas de valor e pelo mesmo limite de envios. Um alarme falso faz a escola cancelar aula à toa. Um alarme perdido deixa criança respirando fumaça. As proteções impedem que alguém dispare alertas falsos em massa, apague leituras ou altere o histórico no banco."
+      ]
+    },
+    {
+      "title": "2. ONDE O PRODUTO PODE SER ATACADO (5 CAMADAS)",
+      "tables": [
+        {
+          "headers": [
+            "Camada",
+            "Ameaça",
+            "O que acontece se der certo"
+          ],
+          "rows": [
+            [
+              "Usuários",
+              "Mensagem falsa pedindo a chave de administração; relato falso em massa",
+              "Alguém apaga o histórico ou cria pânico num bairro"
+            ],
+            [
+              "Aplicação",
+              "Script escondido no texto do relato; fórmula no CSV",
+              "Código roda no navegador de quem lê ou na planilha de quem abre o CSV"
+            ],
+            [
+              "API",
+              "Enxurrada de envios; IP falso no cabeçalho para driblar o limite",
+              "Central fora do ar justamente durante uma queimada"
+            ],
+            [
+              "Banco",
+              "Edição direta no arquivo; injeção de SQL",
+              "Histórico adulterado sem ninguém perceber"
+            ],
+            [
+              "Modelo de IA",
+              "Leituras fora de faixa para enganar o modelo",
+              "Modelo diz ar bom com fumaça de verdade"
+            ]
+          ],
+          "col_widths": [
+            26,
+            80,
+            74
+          ]
+        }
+      ]
+    },
+    {
+      "title": "3. MATRIZ DE RISCOS",
+      "tables": [
+        {
+          "headers": [
+            "Risco",
+            "Prob. / Impacto",
+            "Controle"
+          ],
+          "rows": [
+            [
+              "R1. Enxurrada de envios",
+              "Alta / Alto",
+              "Limite de 30 envios por minuto por endereço, resposta 429"
+            ],
+            [
+              "R2. Apagar dados sem permissão",
+              "Média / Crítico",
+              "Chave X-API-Key, comparada de um jeito que não deixa adivinhar pelo tempo de resposta; sem chave configurada, a rota fica fechada"
+            ],
+            [
+              "R3. Script ou fórmula em relato",
+              "Alta / Médio",
+              "Marcações HTML como <script> são removidas antes de gravar; textos que começam com = + - ou @ ganham um apóstrofo no CSV para não virarem fórmula no Excel"
+            ],
+            [
+              "R4. Histórico adulterado",
+              "Baixa / Alto",
+              "Selo HMAC-SHA256 (chave em RESPIRA_SEAL_KEY ou gerada no primeiro uso em data/runtime/seal.key, fora do banco; se não conseguir ler nem criar a chave, a central não sobe) cobrindo todos os campos da leitura, inclusive a hora da medida, conferido em GET /security/verify/{id}"
+            ],
+            [
+              "R5. Leitura absurda para enganar o modelo",
+              "Média / Alto",
+              "Cada campo tem faixa válida (validada com Pydantic); fora da faixa vira 400 e não chega ao modelo"
+            ],
+            [
+              "R6. Engenharia social",
+              "Alta / Alto",
+              "Canal oficial único, treino da equipe e MFA para quem administra"
+            ]
+          ],
+          "col_widths": [
+            50,
+            28,
+            102
+          ]
+        }
+      ]
+    },
+    {
+      "title": "4. CONTROLES POR CATEGORIA",
+      "body": [
+        "Priorizamos o que dá para provar em código e custa pouco. O dado do produto é público e o morador não faz login, então não faz sentido proteger leitura com senha. O que precisa de proteção é escrita e apagamento: limite de envios contra enxurrada, chave só para administrar e selo HMAC para provar que o histórico não mudou. O que depende da conta de nuvem está marcado como proposto."
+      ],
+      "tables": [
+        {
+          "headers": [
+            "Categoria",
+            "Controle",
+            "Situação"
+          ],
+          "rows": [
+            [
+              "Autenticação",
+              "Chave para rotas de administração; MFA para gestores de escola e UBS",
+              "Chave feita; MFA proposto"
+            ],
+            [
+              "Firewall / WAF",
+              "Limite de envios por IP na central; filtro de ataques web (AWS WAF) na URL pública; banco aceitando só a porta 5432. CORS só impede que outro site, aberto no navegador da vítima, chame a central; quem usa curl ignora CORS, por isso ele não conta como barreira",
+              "Limite feito; WAF proposto"
+            ],
+            [
+              "Backup",
+              "Snapshot diário do PostgreSQL e cópia do CSV com o selo de cada linha",
+              "Proposto"
+            ],
+            [
+              "Criptografia",
+              "HTTPS na URL da função, SSL obrigatório na conexão com o banco, disco do banco cifrado",
+              "SSL feito no código; na nuvem, o resto entra na publicação. No protótipo local, SQLite e CSV ficam sem cifra no disco"
+            ],
+            [
+              "Monitoramento",
+              "Registro de eventos de segurança (security_audit.jsonl), lido só com chave, e avisos no CloudWatch para leitura descartada",
+              "Feito; alarmes propostos"
+            ],
+            [
+              "Integridade do modelo",
+              "Os pesos da rede carregam com weights_only=True. Próximo passo: conferir o hash dos arquivos .joblib e .pt ao subir, contra troca do modelo em disco",
+              "Parcial"
+            ]
+          ],
+          "col_widths": [
+            30,
+            104,
+            46
+          ]
+        }
+      ]
+    },
+    {
+      "title": "5. PROTEÇÕES FUNCIONANDO",
+      "body": [
+        "Cada proteção abaixo tem um teste automático em apps/api/tests/test_api.py. Os 24 testes passam. Também rodamos cada ataque à mão contra a central ligada e guardamos a saída do terminal."
+      ],
+      "bullets": [
+        {
+          "text": "Limite de envios: com limite de teste em 10, os envios 11 e 12 voltam 429 e o evento rate_limit_blocked vai para o registro.",
+          "level": 0
+        },
+        {
+          "text": "IP falso: trocar o cabeçalho X-Forwarded-For não dribla o limite, porque a central só confia nele atrás de um proxy declarado.",
+          "level": 0
+        },
+        {
+          "text": "Chave: DELETE /ocorrencias sem chave ou com chave errada volta 401. Sem chave configurada no servidor, volta 503.",
+          "level": 0
+        },
+        {
+          "text": "Relato com <script>: a marcação é removida antes de gravar. Valor \"=HYPERLINK(...)\" no CSV ganha prefixo e não vira fórmula.",
+          "level": 0
+        },
+        {
+          "text": "Adulteração: editamos uma leitura direto no SQLite e GET /security/verify/{id} passou a responder integro=false.",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "title": "6. PROVAS NO TERMINAL",
+      "images": [
+        {
+          "path": "/home/agent/projects/respiracidadao-gs/docs/evidencias/03_limite_chave.png",
+          "caption": "Figura 1: Envios além do limite voltam 429. Apagar sem chave ou com chave errada volta 401.",
+          "width": 160
+        },
+        {
+          "path": "/home/agent/projects/respiracidadao-gs/docs/evidencias/03_selo.png",
+          "caption": "Figura 2: Selo íntegro, edição direta no banco, selo quebrado. Desfeita a edição, o selo volta a bater.",
+          "width": 160
+        },
+        {
+          "path": "/home/agent/projects/respiracidadao-gs/docs/evidencias/03_pytest.png",
+          "caption": "Figura 3: Os 24 testes automáticos passando.",
+          "width": 160
+        }
+      ]
+    },
+    {
+      "title": "7. LGPD E ENGENHARIA SOCIAL",
+      "tables": [
+        {
+          "headers": [
+            "Pergunta",
+            "Resposta"
+          ],
+          "rows": [
+            [
+              "Que dados pessoais tratamos?",
+              "O endereço IP é dado pessoal (LGPD, art. 5º, I). Ele fica só no registro de segurança, para aplicar o limite e investigar ataque, com base no legítimo interesse de prevenir abuso (art. 7º, IX). Fora isso, não há cadastro: leitura de sensor tem ID do aparelho e coordenada pública do prédio, e relato tem só texto e lugar."
+            ],
+            [
+              "Quem vê o registro de segurança?",
+              "Só quem tem a chave de administração (GET /security/audit exige X-API-Key). Proposta para produção: apagar o registro depois de 30 dias."
+            ],
+            [
+              "Pode haver dado sensível?",
+              "Sim. Um relato como \"meu filho está com falta de ar\" fala de saúde. Por isso não pedimos nome nem localização da pessoa."
+            ],
+            [
+              "Como protegemos?",
+              "Coleta mínima, texto limpo, chave para apagar, SSL até o banco e selo de integridade."
+            ],
+            [
+              "Como a pessoa sabe?",
+              "O formulário diz \"Sem nome, sem localização sua. Só o texto.\" e a tela Como funciona explica o resto."
+            ]
+          ],
+          "col_widths": [
+            50,
+            130
+          ]
+        }
+      ],
+      "body": [
+        "Cenário de engenharia social: chega no WhatsApp da diretora uma mensagem \"da Defesa Civil\" pedindo para instalar um aplicativo novo de alerta ou mandar a chave do painel. Contramedidas: o produto só existe num endereço HTTPS divulgado pela secretaria, a equipe aprende a desconfiar de pedido de chave por mensagem e contas de administração usam MFA."
+      ]
+    }
+  ]
+}

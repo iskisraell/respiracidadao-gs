@@ -1,0 +1,25 @@
+$ curl -s localhost:8000/security/verify/27
+{
+    "id": 27,
+    "integro": true,
+    "hash_armazenado": "1b547adc8f491e16f7032a3e5bfd72645ab7cff015459f83c58a4f9e04c3f7a5",
+    "hash_recalculado": "1b547adc8f491e16f7032a3e5bfd72645ab7cff015459f83c58a4f9e04c3f7a5"
+}
+
+$ sqlite3 data/runtime/ocorrencias.db "UPDATE ocorrencias SET nivel_risco='normal', valor=500 WHERE id=27"
+$ curl -s localhost:8000/security/verify/27
+{
+    "id": 27,
+    "integro": false,
+    "hash_armazenado": "1b547adc8f491e16f7032a3e5bfd72645ab7cff015459f83c58a4f9e04c3f7a5",
+    "hash_recalculado": "fd87f9238d3f2f8aa5cd44facdd4b0123a40a5ff16692106c4fd44e2d03afde0"
+}
+
+# devolvendo os valores originais, o selo volta a bater
+$ curl -s localhost:8000/security/verify/27
+{
+    "id": 27,
+    "integro": true,
+    "hash_armazenado": "1b547adc8f491e16f7032a3e5bfd72645ab7cff015459f83c58a4f9e04c3f7a5",
+    "hash_recalculado": "1b547adc8f491e16f7032a3e5bfd72645ab7cff015459f83c58a4f9e04c3f7a5"
+}

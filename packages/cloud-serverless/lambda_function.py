@@ -1,16 +1,18 @@
 """
-RespiraCidadão - FIAP GS 2026.2 (07 Plataformas, Serviços Cognitivos & Cloud Computing)
-AWS Lambda Serverless (Function URL fora da VPC -> CloudWatch Logs -> HF Router -> RDS PostgreSQL).
+Central do RespiraCidadão na nuvem: recebe a leitura do sensor por uma Function URL,
+classifica o nível, lê o relato com IA (quando houver) e grava no PostgreSQL (RDS).
+Os logs ficam no CloudWatch. Mesmo contrato e mesmos limites do firmware e da API.
 """
 
 import base64
 import json
+import re
 import logging
 import math
 import os
 import urllib.error
 import urllib.request
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
 import pg8000 as driver
@@ -22,17 +24,27 @@ HF_MODEL = os.environ.get("HF_MODEL", "cardiffnlp/twitter-xlm-roberta-base-senti
 HF_API_URL = os.environ.get("HF_API_URL", "https://router.huggingface.co/hf-inference/models")
 HF_TOKEN = os.environ.get("HF_TOKEN", "").strip()
 
+# Índices dos sensores de gás, na escala da base real de 6.941 horas.
 LIMIARES = {
-    "fumaca_ppm": {"atencao": 120.0, "critico": 250.0},
-    "co_mg_m3": {"atencao": 4.0, "critico": 9.0},
-    "no2_ug_m3": {"atencao": 100.0, "critico": 200.0},
-    "pm25_ug_m3": {"atencao": 25.0, "critico": 50.0},
-    "temperatura_c": {"atencao": 35.0, "critico": 40.0},
-    "umidade_solo_pct": {"atencao": 20.0, "critico": 10.0},
+    "gas_voc": {"atencao": 830.0, "critico": 1140.0},
+    "gas_co": {"atencao": 1010.0, "critico": 1280.0},
 }
-
-INVERTIDAS = {"umidade_solo_pct"}
-TIPOS_VALIDOS = {"esp32", "drone", "app"}
+TIPOS_VALIDOS = {"esp32", "app"}
+LEITURAS_EXTRAS = ("gas_co", "temperatura_c", "umidade_pct")
+COLUNAS = (
+    "dispositivo_id", "tipo_dispositivo", "latitude", "longitude", "metrica", "valor",
+    *LEITURAS_EXTRAS, "relato", "sentimento", "confianca", "nivel_risco", "medido_em",
+)
+# Mesmas faixas válidas da API (apps/api/app/schemas.py).
+FAIXAS = {
+    "valor": (0.0, 100000.0),
+    "gas_co": (0.0, 5000.0),
+    "temperatura_c": (-40.0, 85.0),
+    "umidade_pct": (0.0, 100.0),
+    "latitude": (-90.0, 90.0),
+    "longitude": (-180.0, 180.0),
+}
+DISPOSITIVO_RE = re.compile(r"^[A-Za-z0-9_.:\-]{2,64}$")
 LIMITE_LOG_PAYLOAD = 2000
 LIMITE_RELATO = 500
 
@@ -44,36 +56,20 @@ def conectar():
         database=os.environ["DB_NAME"],
         user=os.environ["DB_USER"],
         password=os.environ["DB_PASSWORD"],
+        # O RDS com PostgreSQL 15+ recusa conexão sem SSL (rds.force_ssl=1).
+        ssl_context=os.environ.get("DB_SSL", "1") != "0" or None,
     )
 
 
 def gravar_ocorrencia(dados):
-    sql = """
-        INSERT INTO ocorrencias
-            (dispositivo_id, tipo_dispositivo, latitude, longitude,
-             metrica, valor, relato, sentimento, confianca, nivel_risco, medido_em)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        RETURNING id, criado_em
-    """
+    sql = (
+        f"INSERT INTO ocorrencias ({', '.join(COLUNAS)}) "
+        f"VALUES ({', '.join(['%s'] * len(COLUNAS))}) RETURNING id, criado_em"
+    )
     conn = conectar()
     try:
         cur = conn.cursor()
-        cur.execute(
-            sql,
-            (
-                dados["dispositivo_id"],
-                dados["tipo_dispositivo"],
-                dados["latitude"],
-                dados["longitude"],
-                dados["metrica"],
-                dados["valor"],
-                dados["relato"],
-                dados["sentimento"],
-                dados["confianca"],
-                dados["nivel_risco"],
-                dados["medido_em"],
-            ),
-        )
+        cur.execute(sql, tuple(dados[c] for c in COLUNAS))
         novo_id, criado_em = cur.fetchone()
         conn.commit()
         return novo_id, criado_em
@@ -87,8 +83,8 @@ def listar_ocorrencias(limite=20):
         cur = conn.cursor()
         cur.execute(
             """
-            SELECT id, dispositivo_id, tipo_dispositivo, metrica, valor,
-                   nivel_risco, sentimento, confianca, relato, criado_em
+            SELECT id, dispositivo_id, tipo_dispositivo, metrica, valor, gas_co,
+                   nivel_risco, sentimento, confianca, relato, medido_em, criado_em
               FROM ocorrencias
              ORDER BY id DESC
              LIMIT %s
@@ -101,10 +97,12 @@ def listar_ocorrencias(limite=20):
             "tipo_dispositivo",
             "metrica",
             "valor",
+            "gas_co",
             "nivel_risco",
             "sentimento",
             "confianca",
             "relato",
+            "medido_em",
             "criado_em",
         ]
         return [dict(zip(colunas, linha)) for linha in cur.fetchall()]
@@ -116,12 +114,6 @@ def classificar_risco(metrica, valor):
     faixa = LIMIARES.get(metrica)
     if faixa is None or valor is None:
         return "desconhecido"
-    if metrica in INVERTIDAS:
-        if valor <= faixa["critico"]:
-            return "critico"
-        if valor <= faixa["atencao"]:
-            return "atencao"
-        return "normal"
     if valor >= faixa["critico"]:
         return "critico"
     if valor >= faixa["atencao"]:
@@ -181,14 +173,19 @@ def _numero(valor, nome, obrigatorio=False):
 
 
 def _data_medicao(texto):
+    """Mesma regra da API local: ISO 8601, no maximo 5 minutos no futuro; devolve (data, erro)."""
+    agora = datetime.now(timezone.utc)
+    texto = str(texto).strip() if texto is not None else ""
     if not texto:
-        return datetime.now(timezone.utc)
+        return agora, None
     try:
-        data = datetime.fromisoformat(str(texto).replace("Z", "+00:00"))
+        data = datetime.fromisoformat(texto.replace("Z", "+00:00"))
     except ValueError:
-        logger.warning("medido_em invalido (%s): usando horario do servidor", texto)
-        return datetime.now(timezone.utc)
-    return data if data.tzinfo else data.replace(tzinfo=timezone.utc)
+        return None, "medido_em deve estar no formato ISO 8601"
+    data = (data if data.tzinfo else data.replace(tzinfo=timezone.utc)).astimezone(timezone.utc)
+    if data > agora + timedelta(minutes=5):
+        return None, "medido_em nao pode estar no futuro"
+    return data, None
 
 
 def _corpo_requisicao(evento):
@@ -196,6 +193,12 @@ def _corpo_requisicao(evento):
     if evento.get("isBase64Encoded"):
         bruto = base64.b64decode(bruto).decode("utf-8", "replace")
     return bruto
+
+
+def _limpar_texto(texto):
+    """Mesma limpeza da API: tira tags, sinais < > e caracteres de controle."""
+    sem_tags = re.sub(r"[<>]", "", re.sub(r"<[^>]*>", " ", str(texto)))
+    return " ".join(re.sub(r"[\x00-\x08\x0b-\x1f\x7f]", " ", sem_tags).split())
 
 
 def rota_ingestao(evento):
@@ -211,7 +214,7 @@ def rota_ingestao(evento):
         logger.warning("LEITURA DESCARTADA - corpo deve ser um objeto JSON")
         return resposta(400, {"erro": "corpo deve ser um objeto JSON"})
 
-    obrigatorios = ["dispositivo_id", "metrica", "valor"]
+    obrigatorios = ["dispositivo_id", "valor"]
     faltando = [c for c in obrigatorios if payload.get(c) is None or str(payload.get(c)).strip() == ""]
     if faltando:
         logger.warning("LEITURA DESCARTADA - campos ausentes: %s", faltando)
@@ -220,25 +223,43 @@ def rota_ingestao(evento):
     valor, erro_valor = _numero(payload["valor"], "valor", obrigatorio=True)
     latitude, erro_lat = _numero(payload.get("latitude"), "latitude")
     longitude, erro_lon = _numero(payload.get("longitude"), "longitude")
+    extras = {c: _numero(payload.get(c), c) for c in LEITURAS_EXTRAS}
     tipo_disp = str(payload.get("tipo_dispositivo") or payload.get("tipo") or "esp32").strip().lower()
-    erros = [e for e in (erro_valor, erro_lat, erro_lon) if e]
+    erros = [e for e in (erro_valor, erro_lat, erro_lon, *(err for _, err in extras.values())) if e]
     if tipo_disp not in TIPOS_VALIDOS:
         erros.append(f"tipo_dispositivo deve ser um de {sorted(TIPOS_VALIDOS)}")
+    metrica = str(payload.get("metrica") or "gas_voc").strip()  # mesmo padrão da API local
+    if metrica not in LIMIARES:
+        erros.append(f"metrica deve ser um de {sorted(LIMIARES)}")
+    if not DISPOSITIVO_RE.match(str(payload["dispositivo_id"]).strip()):
+        erros.append("dispositivo_id aceita só letras, números e . _ : - (2 a 64)")
+    numeros = {"valor": valor, "latitude": latitude, "longitude": longitude, **{c: v for c, (v, _) in extras.items()}}
+    for campo, (minimo, maximo) in FAIXAS.items():
+        v = numeros.get(campo)
+        if v is not None and not (minimo <= v <= maximo):
+            erros.append(f"{campo} fora da faixa {minimo} a {maximo}")
+    relato_bruto = payload.get("relato")
+    if relato_bruto is not None and len(str(relato_bruto)) > LIMITE_RELATO:
+        erros.append(f"relato passa de {LIMITE_RELATO} caracteres")
+    medido_em, erro_data = _data_medicao(payload.get("medido_em"))
+    if erro_data:
+        erros.append(erro_data)
     if erros:
         logger.warning("LEITURA DESCARTADA - campos invalidos: %s", erros)
         return resposta(400, {"erro": "campos invalidos", "detalhes": erros})
 
     relato = payload.get("relato")
-    relato = str(relato).strip()[:LIMITE_RELATO] if relato is not None else None
+    relato = _limpar_texto(relato) if relato is not None else None
     dados = {
         "dispositivo_id": str(payload["dispositivo_id"]).strip(),
         "tipo_dispositivo": tipo_disp,
         "latitude": latitude,
         "longitude": longitude,
-        "metrica": str(payload["metrica"]).strip(),
+        "metrica": metrica,
         "valor": valor,
+        **{c: v for c, (v, _) in extras.items()},
         "relato": relato,
-        "medido_em": _data_medicao(payload.get("medido_em")),
+        "medido_em": medido_em,
     }
 
     logger.info(
@@ -282,10 +303,12 @@ def rota_ingestao(evento):
             "longitude": dados["longitude"],
             "metrica": dados["metrica"],
             "valor": dados["valor"],
+            **{c: dados[c] for c in LEITURAS_EXTRAS},
             "nivel_risco": dados["nivel_risco"],
             "sentimento": dados["sentimento"],
             "confianca": dados["confianca"],
             "alerta": dados["nivel_risco"] == "critico",
+            "medido_em": dados["medido_em"].isoformat(),
             "criado_em": criado_em,
         },
     )

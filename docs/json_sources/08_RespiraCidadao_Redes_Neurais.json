@@ -1,0 +1,171 @@
+{
+  "title": "RESPIRACIDADÃO: A SEGUNDA OPINIÃO",
+  "subtitle": [
+    "Rede neural em PyTorch que confere o veredito da central",
+    "As 8 etapas do projeto"
+  ],
+  "meta": [
+    {
+      "label": "Sala:",
+      "value": "1TIAPZ1"
+    },
+    {
+      "label": "Matéria:",
+      "value": "Redes Neurais Artificiais, Deep Learning e Algoritmos Genéticos"
+    },
+    {
+      "label": "Grupo:",
+      "value": "Perceptron"
+    },
+    {
+      "label": "Integrantes:",
+      "value": "Giovanni Henrique Pereira Hessel (RM 570574)\nSuellen Pereira da Silva (RM 573862)\nIsrael Carneiro de Toledo (RM 573854)"
+    }
+  ],
+  "output_dir": "/home/agent/projects/respiracidadao-gs/docs/08-redes-neurais-deep-learning-ag",
+  "filename": "08_RespiraCidadao_Redes_Neurais",
+  "sections": [
+    {
+      "title": "1. ETAPAS 1 A 4: PROBLEMA, DADOS, PREPARO E ARQUITETURA",
+      "bullets": [
+        {
+          "text": "Etapa 1, problema: dizer se o ar está bom, carregado ou ruim a partir das 4 medidas do sensor, para avisar escola e UBS antes da crise. Apoia o ODS 3 (saúde) e o ODS 11 (cidades sustentáveis).",
+          "level": 0
+        },
+        {
+          "text": "Etapa 2, dados: UCI Air Quality real, 6941 horas completas. Nada sintético.",
+          "level": 0
+        },
+        {
+          "text": "Etapa 3, preparo: 70% treino (4.858), 15% validação (1.041) e 15% teste (1.042), com a mesma proporção de níveis. A padronização aprende só com o treino.",
+          "level": 0
+        },
+        {
+          "text": "Etapa 4, arquitetura: AirQualityMLP (4 -> 64 -> 32 -> 3, BatchNorm1d + ReLU + Dropout 0.25). Os dados são 4 números por hora, sem imagem nem sequência longa, então uma rede densa (MLP) basta. CNN e RNN resolveriam problemas que não temos.",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "title": "2. ETAPAS 5 A 7: TREINO, REGULARIZAÇÃO E AVALIAÇÃO",
+      "tables": [
+        {
+          "headers": [
+            "Experimento",
+            "Épocas",
+            "Acurácia (treino)",
+            "Acurácia (teste)",
+            "F1-macro",
+            "Diferença"
+          ],
+          "rows": [
+            [
+              "Regra do ESP32 (gas_voc)",
+              "0",
+              "sem treino",
+              "82,4%",
+              "82,9%",
+              "não se aplica"
+            ],
+            [
+              "A baseline (128-64, sem regularização)",
+              "150",
+              "90,9%",
+              "85,7%",
+              "86,2%",
+              "5,2 pp"
+            ],
+            [
+              "B regularizado (64-32, BN + Dropout + ES)",
+              "34",
+              "87,2%",
+              "86,1%",
+              "86,5%",
+              "1,1 pp"
+            ]
+          ],
+          "col_widths": [
+            58,
+            16,
+            28,
+            28,
+            22,
+            28
+          ]
+        }
+      ],
+      "images": [
+        {
+          "path": "/home/agent/projects/respiracidadao-gs/packages/neural-networks/charts/01_curvas_treinamento.png",
+          "caption": "Figura 1: Perda e acerto por época, rede sem e com regularização.",
+          "width": 150
+        },
+        {
+          "path": "/home/agent/projects/respiracidadao-gs/packages/neural-networks/charts/02_matriz_confusao_nn.png",
+          "caption": "Figura 2: Onde a rede regularizada erra no teste.",
+          "width": 150
+        }
+      ],
+      "body": [
+        "A rede A (128 e 64 neurônios, taxa de aprendizado 0,003, sem regularização, 150 épocas) teve a menor perda de validação na época 41 (0,289); depois disso a perda de validação subiu até 0,327 enquanto a de treino seguia caindo. Ela chegou a 90,9% no treino e 85,7% no teste: 5,2 pontos de diferença, sinal de que decorava. A rede B (64 e 32 neurônios, taxa 0,001) tem quatro freios. BatchNorm reajusta a escala dos números entre camadas para o treino não oscilar. Dropout de 0,25 desliga um quarto dos neurônios ao acaso em cada passo, para nenhum deles virar muleta. Weight decay pune pesos grandes. A parada antecipada encerra o treino quando a validação passa 15 épocas sem melhorar. Parou na época 34, voltou ao melhor estado (época 19) e ficou com 86,1% no teste e 1,1 ponto de diferença.",
+        "Nas 1.042 horas de teste, nenhuma hora de ar bom virou ruim e nenhuma ruim virou bom. A regra simples do sensor acerta 82% nessas horas; a rede B acerta 3,6 pontos a mais (86,1% contra 82,4%). No documento do modelo da central a mesma regra aparece com 84%: lá o teste tem 1.389 horas (20% da base) e aqui 1.042 (15%), então são horas diferentes."
+      ]
+    },
+    {
+      "title": "3. ETAPA 8: DEMONSTRAÇÃO, LIMITES E DADOS PESSOAIS",
+      "tables": [
+        {
+          "headers": [
+            "Leitura nunca vista",
+            "Veredito",
+            "Bom / Carregado / Ruim"
+          ],
+          "rows": [
+            [
+              "Manhã limpa perto da UBS",
+              "Bom",
+              "97,0% / 3,0% / 0,0%"
+            ],
+            [
+              "Trânsito pesado no fim da tarde",
+              "Carregado",
+              "4,3% / 94,8% / 0,9%"
+            ],
+            [
+              "Fumaça de queimada perto da escola",
+              "Ruim",
+              "0,2% / 20,6% / 79,2%"
+            ]
+          ],
+          "col_widths": [
+            70,
+            30,
+            80
+          ]
+        }
+      ],
+      "body": [
+        "No produto, a Random Forest confere cada leitura que chega em POST /ocorrencias. A rede (air_quality_mlp.pt) responde em POST /predict: na tela Como funciona, o card \"Segunda opinião\" mostra o veredito dela ao lado da regra do sensor e da Random Forest, para a leitura que a pessoa montar.",
+        "Limites: base de outra cidade; precisa de recalibração em cada bairro. A rede acerta um pouco menos que a floresta, por isso é segunda opinião e não a voz principal. Próximo passo: uma rede recorrente (LSTM ou GRU) olhando janelas das últimas horas, para prever a piora nas próximas horas, antes de o ar chegar ao nível ruim."
+      ],
+      "bullets": [
+        {
+          "text": "Acessibilidade: o resultado chega como cor e palavra (Bom, Carregado, Ruim), não como probabilidade crua.",
+          "level": 0
+        },
+        {
+          "text": "Segurança: as 4 entradas passam por checagem de faixa antes de virar a matriz numérica (tensor) que a rede lê, e os pesos carregam com torch.load(weights_only=True), que não executa código escondido no arquivo.",
+          "level": 0
+        },
+        {
+          "text": "LGPD: a rede só recebe 4 números ambientais, nunca dado de pessoa.",
+          "level": 0
+        },
+        {
+          "text": "Sustentabilidade: treina numa CPU comum em segundos e o arquivo de pesos tem 17 KB.",
+          "level": 0
+        }
+      ]
+    }
+  ]
+}

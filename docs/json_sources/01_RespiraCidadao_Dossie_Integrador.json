@@ -1,0 +1,212 @@
+{
+  "title": "RESPIRACIDADÃO",
+  "subtitle": [
+    "O ar perto de você, em uma frase",
+    "Visão geral do produto"
+  ],
+  "subtitle_note": "Problema, arquitetura, demonstração e o que vem depois",
+  "meta": [
+    {
+      "label": "Sala:",
+      "value": "1TIAPZ1"
+    },
+    {
+      "label": "Matéria:",
+      "value": "AI Challenges"
+    },
+    {
+      "label": "Grupo:",
+      "value": "Perceptron"
+    },
+    {
+      "label": "Integrantes:",
+      "value": "Giovanni Henrique Pereira Hessel (RM 570574)\nSuellen Pereira da Silva (RM 573862)\nIsrael Carneiro de Toledo (RM 573854)"
+    }
+  ],
+  "output_dir": "/home/agent/projects/respiracidadao-gs/docs/01-ai-challenges",
+  "filename": "01_RespiraCidadao_Dossie_Integrador",
+  "sections": [
+    {
+      "title": "1. O PROBLEMA E PARA QUEM",
+      "body": [
+        "Uma diretora abre o celular às 7h40 e lê: \"Ar ruim perto da escola agora. Mantenha as janelas fechadas e deixe a educação física para depois do almoço.\" O RespiraCidadão existe para essa frase chegar a tempo e ser verdadeira.",
+        "A Organização Mundial da Saúde estima cerca de 7 milhões de mortes por ano ligadas à poluição do ar. Fumaça de queimada e trânsito pesado pioram crises de asma e de bronquite crônica (DPOC). Quem sente primeiro são crianças, idosos e pacientes de UBS na periferia, onde quase não há estação oficial de medição. O boletim público, quando sai, é da cidade inteira e chega horas depois.",
+        "Nosso público são três pessoas: a coordenação de escola ou UBS, que decide se a atividade é ao ar livre; a família com criança, idoso ou alguém com asma, que quer saber se é hora de sair; e o vizinho que viu fumaça e quer avisar alguém."
+      ],
+      "bullets": [
+        {
+          "text": "ODS 3, saúde e bem-estar: aviso antes da crise respiratória.",
+          "level": 0
+        },
+        {
+          "text": "ODS 10, redução das desigualdades: um sensor barato onde a estação oficial não chega.",
+          "level": 0
+        },
+        {
+          "text": "ODS 11, cidades sustentáveis: dado aberto e conferível por bairro.",
+          "level": 0
+        },
+        {
+          "text": "Do tema CitizenTech da live de lançamento, levamos a ideia de tecnologia que o cidadão comum entende e usa sem treinamento. Por isso o app fala de ar, lugar, horário e ação, e deixa modelo e métrica para a tela Como funciona.",
+          "level": 0
+        }
+      ]
+    },
+    {
+      "title": "2. COMO A INFORMAÇÃO CHEGA ATÉ A PESSOA",
+      "body": [
+        "Um sensor na parede mede fumaça, monóxido, temperatura e umidade. Se o ar piora, a luz muda de cor e o alarme toca na hora, mesmo sem internet. A leitura vai para a central, que confere com um modelo treinado a partir de uma base real de 6.941 horas de medição e devolve o nível com uma porcentagem de confiança. O app mostra a cor, uma frase e o que fazer."
+      ],
+      "images": [
+        {
+          "path": "/home/agent/projects/respiracidadao-gs/docs/assets/arquitetura_uml_respiracidadao.png",
+          "caption": "Figura 1: Componentes do produto e por onde a leitura passa.",
+          "width": 165
+        },
+        {
+          "path": "/home/agent/projects/respiracidadao-gs/docs/assets/uml_sequencia_leitura.png",
+          "caption": "Figura 2: Diagrama de sequência UML de uma leitura de ar ruim. Foi com ele que fechamos o contrato JSON entre sensor, central e app antes de escrever código.",
+          "width": 165
+        }
+      ],
+      "tables": [
+        {
+          "headers": [
+            "Parte do produto",
+            "O que faz",
+            "Disciplina e evidência"
+          ],
+          "rows": [
+            [
+              "Sensor",
+              "Mede 4 coisas, acende a luz certa e envia a leitura em JSON",
+              "02 AICSS: firmware, circuito Wokwi, 3 prints dos estados"
+            ],
+            [
+              "Central (API)",
+              "Recebe, valida, classifica, guarda em CSV e banco, responde ao app",
+              "05 Python: FastAPI, 24 testes automáticos"
+            ],
+            [
+              "Central na nuvem",
+              "A mesma central sem servidor ligado: função + banco gerenciado. Pronta para publicar, testada localmente; ainda não está no ar",
+              "07 Cloud: Lambda, PostgreSQL, script de publicação"
+            ],
+            [
+              "Proteções",
+              "Limite de envios, chave para apagar, texto limpo, selo de integridade",
+              "03 Cybersecurity: testes que provam cada proteção"
+            ],
+            [
+              "Modelo da central",
+              "Acerta 87 de cada 100 horas com as 4 medidas do sensor",
+              "06 ML: 6 modelos comparados, Random Forest ajustada"
+            ],
+            [
+              "Segunda opinião",
+              "Rede neural que confirma o veredito (86% no teste)",
+              "08 Redes Neurais: 8 etapas em PyTorch"
+            ],
+            [
+              "Base e limiares",
+              "Mostra que as medidas do sensor explicam o monóxido real",
+              "09 Estatística: R² de 88,1%"
+            ]
+          ],
+          "col_widths": [
+            36,
+            76,
+            68
+          ]
+        }
+      ]
+    },
+    {
+      "title": "3. DEMONSTRAÇÃO",
+      "body": [
+        "O app tem duas telas. \"Agora\" mostra cada lugar com sua cor, o que fazer, o melhor horário para atividade ao ar livre e o que os vizinhos estão contando. \"Como funciona\" explica o caminho da informação, deixa testar uma leitura e diz o que ainda não resolvemos."
+      ],
+      "images": [
+        {
+          "path": "/home/agent/projects/respiracidadao-gs/docs/assets/app_agora.png",
+          "caption": "Figura 3: Tela Agora com a escola em ar ruim e a central concordando com 93% de confiança.",
+          "width": 160
+        },
+        {
+          "path": "/home/agent/projects/respiracidadao-gs/docs/assets/app_horario_relatos.png",
+          "caption": "Figura 4: Melhor horário calculado da base real e relato de vizinho marcado como urgente.",
+          "width": 160
+        },
+        {
+          "path": "/home/agent/projects/respiracidadao-gs/packages/iot-aicss/evidencias/wokwi_3_ar_ruim.png",
+          "caption": "Figura 5: O sensor no simulador Wokwi com o LED vermelho aceso.",
+          "width": 160
+        }
+      ]
+    },
+    {
+      "title": "4. O QUE FUNCIONA HOJE E O QUE VEM DEPOIS",
+      "tables": [
+        {
+          "headers": [
+            "Parte",
+            "Funciona hoje",
+            "Próximo passo"
+          ],
+          "rows": [
+            [
+              "Sensor",
+              "Circuito completo no Wokwi, regra de luz e alarme, envio JSON",
+              "Placa física com bateria solar e rádio LoRa onde não há Wi-Fi"
+            ],
+            [
+              "Central",
+              "API local com modelo, histórico, relatos e padrão por hora",
+              "Publicar na nuvem com o script pronto (falta só a conta AWS)"
+            ],
+            [
+              "Modelo",
+              "Treinado em base real italiana, testado em horas que nunca viu",
+              "Recalibrar com algumas semanas ao lado de uma estação CETESB"
+            ],
+            [
+              "Aviso",
+              "App web no celular e no computador",
+              "Notificação no WhatsApp quando o lugar favorito ficar vermelho"
+            ]
+          ],
+          "col_widths": [
+            26,
+            80,
+            74
+          ]
+        }
+      ],
+      "body": [
+        "Gestão: dividimos o trabalho em três frentes que se encontram no mesmo contrato de dados. Uma cuidou do sensor e da nuvem, outra da estatística e dos modelos, e a terceira da central, do app e das proteções. Registramos cada decisão, com o motivo, num plano único no repositório (docs/PLANO-PRODUTO.md) e só fechávamos uma fase com os testes automáticos da central passando.",
+        "Duas dificuldades mudaram o projeto. A primeira: o modelo com 11 medidas de laboratório acertava mais, mas nenhuma escola teria aquele equipamento. Cortamos para as 4 medidas que o ESP32 tem e aceitamos perder alguns pontos. A segunda: o Wokwi gratuito não alcança um servidor fora do navegador. Em vez de esconder isso, fizemos o sensor tratar a falta de rede como caso normal, com a luz local funcionando, e provamos o envio com um receptor em Python."
+      ]
+    },
+    {
+      "title": "5. ACESSIBILIDADE, SEGURANÇA, DADOS PESSOAIS E SUSTENTABILIDADE",
+      "bullets": [
+        {
+          "text": "Acessibilidade: cada alerta junta cor, palavra (Bom, Carregado ou Ruim) e, no sensor, um alarme de 1800 Hz para quem não está olhando a tela ou não distingue cores.",
+          "level": 0
+        },
+        {
+          "text": "Segurança: limite de 30 envios por minuto por endereço, chave obrigatória para apagar dados, texto de relato limpo antes de gravar e selo digital em cada leitura.",
+          "level": 0
+        },
+        {
+          "text": "Dados pessoais (LGPD): o relato não pede nome, telefone nem localização. Guardamos só o texto e o lugar escolhido.",
+          "level": 0
+        },
+        {
+          "text": "Sustentabilidade: modelos pequenos que rodam numa máquina comum, sensor de baixo consumo e nuvem que só cobra quando recebe leitura.",
+          "level": 0
+        }
+      ]
+    }
+  ]
+}

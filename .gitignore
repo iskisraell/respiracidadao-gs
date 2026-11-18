@@ -18,6 +18,7 @@ apps/web/dist/
 *secret*
 *token*
 !.env.example
+!apps/web/src/styles/fiap-tokens.css
 *.db
 data/runtime/
 apps/api/data/leituras.csv

@@ -1,0 +1,18 @@
+$ python teste_local.py   # a função Lambda rodando sem AWS, banco em memória
+LEITURA DESCARTADA - campos ausentes: ['valor']
+ALERTA CIDADAO: gas_voc em esp32-escola-zona-norte atingiu 1280.0 (critico)
+LEITURA DESCARTADA - JSON invalido
+LEITURA DESCARTADA - corpo deve ser um objeto JSON
+LEITURA DESCARTADA - campos invalidos: ['valor deve ser numerico']
+LEITURA DESCARTADA - campos invalidos: ['valor deve ser um numero finito']
+LEITURA DESCARTADA - campos invalidos: ['latitude deve ser numerico']
+LEITURA DESCARTADA - campos invalidos: ["tipo_dispositivo deve ser um de ['app', 'esp32']"]
+LEITURA DESCARTADA - campos invalidos: ['gas_co deve ser numerico']
+LEITURA DESCARTADA - campos ausentes: ['dispositivo_id']
+LEITURA DESCARTADA - campos invalidos: ['relato passa de 500 caracteres']
+Resposta inesperada do Hugging Face (0): ingestao segue normalmente.
+Resposta inesperada do Hugging Face ('str' object has no attribute 'get'): ingestao segue normalmente.
+Falha ao chamar Hugging Face (Expecting value: line 1 column 1 (char 0)): ingestao segue normalmente.
+LEITURA DESCARTADA - campos invalidos: ['medido_em deve estar no formato ISO 8601']
+LEITURA DESCARTADA - campos invalidos: ['medido_em nao pode estar no futuro']
+CLOUD LAMBDA LOCAL TESTS PASSED (8/8)

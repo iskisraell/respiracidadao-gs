@@ -15,6 +15,7 @@ CSV_HEADERS = [
     "longitude",
     "metrica",
     "valor",
+    "gas_co",
     "temperatura_c",
     "umidade_pct",
     "relato",
@@ -23,8 +24,11 @@ CSV_HEADERS = [
     "ia_fonte",
     "nivel_risco",
     "alerta",
+    "ia_risco",
+    "ia_risco_prob",
     "hash_integridade",
     "criado_em",
+    "medido_em",
 ]
 
 
@@ -67,6 +71,7 @@ class OccurrenceStore:
                     longitude REAL,
                     metrica TEXT NOT NULL,
                     valor REAL NOT NULL,
+                    gas_co REAL,
                     temperatura_c REAL,
                     umidade_pct REAL,
                     relato TEXT NOT NULL,
@@ -75,14 +80,38 @@ class OccurrenceStore:
                     ia_fonte TEXT NOT NULL,
                     nivel_risco TEXT NOT NULL,
                     alerta INTEGER NOT NULL,
+                    ia_risco TEXT,
+                    ia_risco_prob REAL,
                     hash_integridade TEXT NOT NULL,
+                    criado_em TEXT NOT NULL,
+                    medido_em TEXT
+                )
+                """
+            )
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS relatos (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    local_id TEXT NOT NULL,
+                    texto TEXT NOT NULL,
+                    urgente INTEGER NOT NULL,
+                    ia_fonte TEXT NOT NULL,
                     criado_em TEXT NOT NULL
                 )
                 """
             )
+            cols = {r[1] for r in conn.execute("PRAGMA table_info(ocorrencias)")}
+            if "medido_em" not in cols:
+                conn.execute("ALTER TABLE ocorrencias ADD COLUMN medido_em TEXT")
             conn.commit()
 
     def _init_csv(self) -> None:
+        if self.csv_path.exists():
+            with self.csv_path.open(newline="", encoding="utf-8") as f:
+                header = next(csv.reader(f), [])
+            if header != CSV_HEADERS:
+                carimbo = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%f")
+                self.csv_path.rename(self.csv_path.with_name(f"{self.csv_path.stem}.antigo-{carimbo}.csv"))
         if not self.csv_path.exists():
             with self.csv_path.open("w", newline="", encoding="utf-8") as f:
                 csv.writer(f).writerow(CSV_HEADERS)
@@ -90,6 +119,7 @@ class OccurrenceStore:
     def insert(self, data: dict) -> dict:
         criado_em = datetime.now(timezone.utc).isoformat()
         payload = {**data, "criado_em": criado_em}
+        payload["medido_em"] = data.get("medido_em") or criado_em
         digest = compute_record_hash(payload)
         payload["hash_integridade"] = digest
 
@@ -97,10 +127,10 @@ class OccurrenceStore:
             cur = conn.execute(
                 """
                 INSERT INTO ocorrencias (
-                    dispositivo_id, tipo, latitude, longitude, metrica, valor,
+                    dispositivo_id, tipo, latitude, longitude, metrica, valor, gas_co,
                     temperatura_c, umidade_pct, relato, ia_sentimento, ia_confianca,
-                    ia_fonte, nivel_risco, alerta, hash_integridade, criado_em
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ia_fonte, nivel_risco, alerta, ia_risco, ia_risco_prob, hash_integridade, criado_em, medido_em
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     payload["dispositivo_id"],
@@ -109,6 +139,7 @@ class OccurrenceStore:
                     payload.get("longitude"),
                     payload["metrica"],
                     float(payload["valor"]),
+                    payload.get("gas_co"),
                     payload.get("temperatura_c"),
                     payload.get("umidade_pct"),
                     payload["relato"],
@@ -117,8 +148,11 @@ class OccurrenceStore:
                     payload["ia_fonte"],
                     payload["nivel_risco"],
                     1 if payload["alerta"] else 0,
+                    payload.get("ia_risco"),
+                    payload.get("ia_risco_prob"),
                     digest,
                     criado_em,
+                    payload.get("medido_em"),
                 ),
             )
             record_id = int(cur.lastrowid)
@@ -145,6 +179,44 @@ class OccurrenceStore:
             rows = conn.execute(query, params).fetchall()
         return [self._row_to_dict(r) for r in rows]
 
+    def history(self, dispositivo_id: str, limit: int = 24) -> List[dict]:
+        """Últimas leituras de um sensor, da medida mais nova para a mais antiga (uma leitura atrasada não passa à frente).
+
+        Leituras de demonstração só aparecem quando o sensor ainda não mandou nenhuma leitura real,
+        para a demonstração nunca esconder o estado verdadeiro de um lugar.
+        """
+        with self._connect() as conn:
+            rows = conn.execute(
+                "SELECT * FROM ocorrencias WHERE dispositivo_id = ? AND tipo != 'demo' "
+                "ORDER BY COALESCE(medido_em, criado_em) DESC, id DESC LIMIT ?",
+                (dispositivo_id, limit),
+            ).fetchall()
+        if rows:
+            return [self._row_to_dict(r) for r in rows]
+        return self.list_all(dispositivo_id=dispositivo_id, limit=limit)
+
+    def add_relato(self, local_id: str, texto: str, urgente: bool, ia_fonte: str) -> dict:
+        criado_em = datetime.now(timezone.utc).isoformat()
+        with self._connect() as conn:
+            cur = conn.execute(
+                "INSERT INTO relatos (local_id, texto, urgente, ia_fonte, criado_em) VALUES (?, ?, ?, ?, ?)",
+                (local_id, texto, 1 if urgente else 0, ia_fonte, criado_em),
+            )
+            conn.commit()
+            rid = int(cur.lastrowid)
+        return {"id": rid, "local_id": local_id, "texto": texto, "urgente": urgente, "ia_fonte": ia_fonte, "criado_em": criado_em}
+
+    def list_relatos(self, local_id: Optional[str] = None, limit: int = 20) -> List[dict]:
+        query, params = "SELECT * FROM relatos", []
+        if local_id:
+            query += " WHERE local_id = ?"
+            params.append(local_id)
+        query += " ORDER BY id DESC LIMIT ?"
+        params.append(limit)
+        with self._connect() as conn:
+            rows = conn.execute(query, params).fetchall()
+        return [{**dict(r), "urgente": bool(r["urgente"])} for r in rows]
+
     def get_by_id(self, record_id: int) -> Optional[dict]:
         with self._connect() as conn:
             row = conn.execute("SELECT * FROM ocorrencias WHERE id = ?", (record_id,)).fetchone()
@@ -154,15 +226,15 @@ class OccurrenceStore:
         """Aggregates over the whole table (not just the latest N rows)."""
         with self._connect() as conn:
             total, alertas, media, vmax, vmin = conn.execute(
-                "SELECT COUNT(*), COALESCE(SUM(alerta), 0), AVG(valor), MAX(valor), MIN(valor) FROM ocorrencias"
+                "SELECT COUNT(*), COALESCE(SUM(alerta), 0), AVG(valor), MAX(valor), MIN(valor) FROM ocorrencias WHERE tipo != 'demo'"
             ).fetchone()
             por_risco = {"normal": 0, "atencao": 0, "critico": 0}
-            for risco, qtd in conn.execute("SELECT nivel_risco, COUNT(*) FROM ocorrencias GROUP BY nivel_risco"):
+            for risco, qtd in conn.execute("SELECT nivel_risco, COUNT(*) FROM ocorrencias WHERE tipo != 'demo' GROUP BY nivel_risco"):
                 por_risco[risco] = qtd
             por_disp = {
                 d: qtd
                 for d, qtd in conn.execute(
-                    "SELECT dispositivo_id, COUNT(*) FROM ocorrencias GROUP BY dispositivo_id ORDER BY dispositivo_id"
+                    "SELECT dispositivo_id, COUNT(*) FROM ocorrencias WHERE tipo != 'demo' GROUP BY dispositivo_id ORDER BY dispositivo_id"
                 )
             }
 
@@ -191,6 +263,7 @@ class OccurrenceStore:
     def clear_all(self) -> None:
         with self._connect() as conn:
             conn.execute("DELETE FROM ocorrencias")
+            conn.execute("DELETE FROM relatos")
             conn.commit()
         with self._csv_lock, self.csv_path.open("w", newline="", encoding="utf-8") as f:
             csv.writer(f).writerow(CSV_HEADERS)

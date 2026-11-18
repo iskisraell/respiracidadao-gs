@@ -1,0 +1,147 @@
+{
+  "title": "RESPIRACIDADÃO: A CENTRAL NA NUVEM",
+  "subtitle": [
+    "Função serverless, banco gerenciado e IA de texto",
+    "AWS Lambda, CloudWatch, Hugging Face e RDS PostgreSQL"
+  ],
+  "meta": [
+    {
+      "label": "Sala:",
+      "value": "1TIAPZ1"
+    },
+    {
+      "label": "Matéria:",
+      "value": "Plataformas, Serviços Cognitivos & Cloud Computing"
+    },
+    {
+      "label": "Grupo:",
+      "value": "Perceptron"
+    },
+    {
+      "label": "Integrantes:",
+      "value": "Giovanni Henrique Pereira Hessel (RM 570574)\nSuellen Pereira da Silva (RM 573862)\nIsrael Carneiro de Toledo (RM 573854)"
+    }
+  ],
+  "output_dir": "/home/agent/projects/respiracidadao-gs/docs/07-plataformas-servicos-cognitivos-cloud",
+  "filename": "07_RespiraCidadao_Cloud_Serverless",
+  "sections": [
+    {
+      "title": "1. CENÁRIO E LIMIARES",
+      "body": [
+        "Uma prefeitura não quer manter um servidor ligado em cada bairro. A função Lambda só roda quando chega uma leitura pela URL pública. Ela valida o JSON, classifica o nível pelos limiares, manda o relato (quando houver) para a IA de texto da Hugging Face e grava tudo no PostgreSQL. Tudo que dá errado vira aviso no CloudWatch.",
+        "Para o bairro, família e escola consultam o mesmo dado. Para a prefeitura, a função só cobra nos segundos em que chega leitura. ODS 3 (aviso antes da crise respiratória), ODS 10 (sensor barato onde não há estação oficial) e ODS 11 (dado aberto por bairro).",
+        "Limiares: gas_voc atenção 830 e crítico 1140; gas_co atenção 1010 e crítico 1280. Tipos aceitos: esp32 e app.",
+        "A função roda fora da rede privada da AWS (VPC). Dentro dela, para chegar à Hugging Face, precisaríamos de um NAT Gateway, um tradutor de rede que cobra por hora mesmo parado. Como a função fica fora da VPC, o banco precisa aceitar conexão externa na porta 5432 (regra 0.0.0.0/0 no grupo de segurança), sempre com usuário, senha e SSL obrigatório. Essa regra vale só para a demonstração: apagamos o banco depois da apresentação. Para uso contínuo, banco e função entram juntos na VPC, com um VPC endpoint ou NAT para a função ainda chegar à Hugging Face; mover só o banco cortaria a função. Toda consulta usa parâmetros (%s) no pg8000, sem montar SQL por concatenação, contra injeção de SQL."
+      ],
+      "tables": [
+        {
+          "headers": [
+            "Rota da Function URL",
+            "Comportamento"
+          ],
+          "rows": [
+            [
+              "GET /health",
+              "Estado da função e se a IA de texto está ligada"
+            ],
+            [
+              "POST /ocorrencias",
+              "Valida campos e tipos (400 e WARNING no CloudWatch se inválido), classifica, chama a IA, grava no RDS e devolve 201"
+            ],
+            [
+              "GET /ocorrencias",
+              "As 20 leituras mais recentes. Filtro por sensor e por nível ficou só na API local da 05"
+            ]
+          ],
+          "col_widths": [
+            50,
+            130
+          ]
+        }
+      ]
+    },
+    {
+      "title": "2. IA DE TEXTO SEM DERRUBAR A GRAVAÇÃO",
+      "body": [
+        "A função chama https://router.huggingface.co/hf-inference/models/cardiffnlp/twitter-xlm-roberta-base-sentiment com o token em HF_TOKEN, usando só urllib. Sem token, com timeout ou resposta estranha, ela registra WARNING e grava a leitura do mesmo jeito. Uma queimada não pode esperar a IA de texto voltar.",
+        "Por que Hugging Face e não o Amazon Comprehend: o token é gratuito, não exige permissão extra de IAM (o Learner Lab bloqueia várias) e o modelo entende português, inclusive gíria de relato como \"tá fedendo a queimado\"."
+      ]
+    },
+    {
+      "title": "3. TESTADO SEM AWS",
+      "bullets": [
+        {
+          "text": "teste_local.py: 8 de 8 verificações passam: saúde da função, leitura bom e ruim gravadas, listagem, recusa com 400 para JSON quebrado, valor não numérico, tipo de aparelho inválido, campo faltando e relato acima de 500 caracteres, sem gravar nada, e a IA de texto fora do ar sem derrubar a gravação.",
+          "level": 0
+        },
+        {
+          "text": "Banco: rodamos tabela_ocorrencias.sql num PostgreSQL local, gravamos 3 leituras pelo próprio handler da Lambda e o GET devolveu as 3.",
+          "level": 0
+        },
+        {
+          "text": "simulador_dispositivo.py cobre os dois cenários do teste ponta a ponta: --cenario normal manda leituras abaixo de 830, e --cenario queimada --lugar escola manda leituras que sobem até o vermelho.",
+          "level": 0
+        }
+      ],
+      "images": [
+        {
+          "path": "/home/agent/projects/respiracidadao-gs/docs/evidencias/07_teste_local.png",
+          "caption": "Figura 1: teste_local.py chamando o handler da Lambda sem AWS. Cada linha LEITURA DESCARTADA é um WARNING que vai para o CloudWatch.",
+          "width": 160
+        }
+      ]
+    },
+    {
+      "title": "4. O QUE FALTA E COMO FAZER",
+      "body": [
+        "A publicação na AWS ainda está pendente. Escrevemos deploy_aws.sh para que publicar seja um comando: ele cria o banco (db.t3.micro), roda a tabela, empacota e publica a função com a Function URL e imprime os comandos de teste. Funciona no AWS Academy Learner Lab (usa a LabRole) ou numa conta própria no nível gratuito."
+      ],
+      "tables": [
+        {
+          "headers": [
+            "Item exigido",
+            "Situação",
+            "Como concluir"
+          ],
+          "rows": [
+            [
+              "Código da função, SQL, simulador, README",
+              "Pronto e testado",
+              "No pacote"
+            ],
+            [
+              "URL da função e endpoint do RDS (sem senha)",
+              "Sai no fim do deploy_aws.sh",
+              "Copiar para o README"
+            ],
+            [
+              "Print das variáveis de ambiente",
+              "Depois do deploy",
+              "Console Lambda, Configuração"
+            ],
+            [
+              "Print do simulador enviando",
+              "Depois do deploy",
+              "Terminal com simulador_dispositivo.py"
+            ],
+            [
+              "Print do CloudWatch",
+              "Depois do deploy",
+              "Grupo de logs da função"
+            ],
+            [
+              "Print do SELECT no RDS",
+              "Depois do deploy",
+              "python run_sql.py --consultas"
+            ]
+          ],
+          "col_widths": [
+            68,
+            50,
+            62
+          ]
+        }
+      ]
+    }
+  ]
+}

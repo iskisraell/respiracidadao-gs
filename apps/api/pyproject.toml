@@ -1,7 +1,7 @@
 [project]
 name = "respiracidadao-api"
 version = "0.1.0"
-description = "Unified CitizenTech API for FIAP GS 2026.2 (Grupo Perceptron)"
+description = "RespiraCidadão central: sensor readings, air level and the app API"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.115.0",
