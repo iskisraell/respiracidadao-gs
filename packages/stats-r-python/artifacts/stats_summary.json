@@ -30,25 +30,15 @@
         "75%": 1254.0,
         "max": 2040.0
       },
-      "C6H6(GT)": {
+      "PT08.S2(NMHC)": {
         "count": 6941.0,
-        "mean": 10.5545,
-        "std": 7.4652,
-        "min": 0.2,
-        "25%": 4.9,
-        "50%": 8.8,
-        "75%": 14.6,
-        "max": 63.7
-      },
-      "NO2(GT)": {
-        "count": 6941.0,
-        "mean": 113.8741,
-        "std": 47.475,
-        "min": 2.0,
-        "25%": 79.0,
-        "50%": 110.0,
-        "75%": 142.0,
-        "max": 333.0
+        "mean": 958.543,
+        "std": 264.055,
+        "min": 390.0,
+        "25%": 760.0,
+        "50%": 931.0,
+        "75%": 1135.0,
+        "max": 2214.0
       },
       "T": {
         "count": 6941.0,
@@ -59,6 +49,16 @@
         "50%": 16.8,
         "75%": 23.7,
         "max": 44.6
+      },
+      "RH": {
+        "count": 6941.0,
+        "mean": 48.8819,
+        "std": 17.4332,
+        "min": 9.2,
+        "25%": 35.3,
+        "50%": 49.2,
+        "75%": 62.2,
+        "max": 88.7
       }
     }
   },
@@ -117,171 +117,171 @@
   "item_05_regressao_multipla": {
     "variaveis_explicativas": [
       "PT08.S1(CO)",
-      "C6H6(GT)",
-      "NO2(GT)",
-      "T"
+      "PT08.S2(NMHC)",
+      "T",
+      "RH"
     ],
     "alvo": "CO(GT)",
     "matriz_covariancia": {
       "CO(GT)": {
         "CO(GT)": 2.0769,
         "PT08.S1(CO)": 276.4609,
-        "C6H6(GT)": 10.0056,
-        "NO2(GT)": 46.1034,
-        "T": 0.2337
+        "PT08.S2(NMHC)": 347.9361,
+        "T": 0.2337,
+        "RH": 1.6269
       },
       "PT08.S1(CO)": {
         "CO(GT)": 276.4609,
         "PT08.S1(CO)": 47844.455,
-        "C6H6(GT)": 1432.7531,
-        "NO2(GT)": 6524.1247,
-        "T": 54.7065
+        "PT08.S2(NMHC)": 51177.3045,
+        "T": 54.7065,
+        "RH": 645.3281
       },
-      "C6H6(GT)": {
-        "CO(GT)": 10.0056,
-        "PT08.S1(CO)": 1432.7531,
-        "C6H6(GT)": 55.7296,
-        "NO2(GT)": 213.7957,
-        "T": 12.4797
-      },
-      "NO2(GT)": {
-        "CO(GT)": 46.1034,
-        "PT08.S1(CO)": 6524.1247,
-        "C6H6(GT)": 213.7957,
-        "NO2(GT)": 2253.8772,
-        "T": -89.9976
+      "PT08.S2(NMHC)": {
+        "CO(GT)": 347.9361,
+        "PT08.S1(CO)": 51177.3045,
+        "PT08.S2(NMHC)": 69725.0439,
+        "T": 533.2816,
+        "RH": -212.1383
       },
       "T": {
         "CO(GT)": 0.2337,
         "PT08.S1(CO)": 54.7065,
-        "C6H6(GT)": 12.4797,
-        "NO2(GT)": -89.9976,
-        "T": 78.2324
+        "PT08.S2(NMHC)": 533.2816,
+        "T": 78.2324,
+        "RH": -86.9519
+      },
+      "RH": {
+        "CO(GT)": 1.6269,
+        "PT08.S1(CO)": 645.3281,
+        "PT08.S2(NMHC)": -212.1383,
+        "T": -86.9519,
+        "RH": 303.9162
       }
     },
     "matriz_correlacao": {
       "CO(GT)": {
         "CO(GT)": 1.0,
         "PT08.S1(CO)": 0.877,
-        "C6H6(GT)": 0.93,
-        "NO2(GT)": 0.6738,
-        "T": 0.0183
+        "PT08.S2(NMHC)": 0.9143,
+        "T": 0.0183,
+        "RH": 0.0648
       },
       "PT08.S1(CO)": {
         "CO(GT)": 0.877,
         "PT08.S1(CO)": 1.0,
-        "C6H6(GT)": 0.8774,
-        "NO2(GT)": 0.6283,
-        "T": 0.0283
+        "PT08.S2(NMHC)": 0.8861,
+        "T": 0.0283,
+        "RH": 0.1692
       },
-      "C6H6(GT)": {
-        "CO(GT)": 0.93,
-        "PT08.S1(CO)": 0.8774,
-        "C6H6(GT)": 1.0,
-        "NO2(GT)": 0.6032,
-        "T": 0.189
-      },
-      "NO2(GT)": {
-        "CO(GT)": 0.6738,
-        "PT08.S1(CO)": 0.6283,
-        "C6H6(GT)": 0.6032,
-        "NO2(GT)": 1.0,
-        "T": -0.2143
+      "PT08.S2(NMHC)": {
+        "CO(GT)": 0.9143,
+        "PT08.S1(CO)": 0.8861,
+        "PT08.S2(NMHC)": 1.0,
+        "T": 0.2283,
+        "RH": -0.0461
       },
       "T": {
         "CO(GT)": 0.0183,
         "PT08.S1(CO)": 0.0283,
-        "C6H6(GT)": 0.189,
-        "NO2(GT)": -0.2143,
-        "T": 1.0
+        "PT08.S2(NMHC)": 0.2283,
+        "T": 1.0,
+        "RH": -0.5639
+      },
+      "RH": {
+        "CO(GT)": 0.0648,
+        "PT08.S1(CO)": 0.1692,
+        "PT08.S2(NMHC)": -0.0461,
+        "T": -0.5639,
+        "RH": 1.0
       }
     },
     "coeficientes": {
-      "const": -0.5483,
-      "PT08.S1(CO)": 0.00105,
-      "C6H6(GT)": 0.14521,
-      "NO2(GT)": 0.00295,
-      "T": -0.01752
+      "const": -2.66079,
+      "PT08.S1(CO)": 0.0013,
+      "PT08.S2(NMHC)": 0.00426,
+      "T": -0.03046,
+      "RH": -0.00314
     },
-    "equacao": "CO(GT) = -0.5483 + 0.00105*PT08.S1(CO) + 0.1452*C6H6(GT) + 0.00295*NO2(GT) + (-0.01752)*T",
-    "r2": 0.9025,
-    "r2_ajustado": 0.9024,
-    "teste_f": 16050.73,
+    "equacao": "CO(GT) = -2.6608 + (0.00130)*PT08.S1(CO) + (0.00426)*PT08.S2(NMHC) + (-0.03046)*T + (-0.00314)*RH",
+    "r2": 0.8807,
+    "r2_ajustado": 0.8806,
+    "teste_f": 12797.13,
     "f_p_valor": 0.0,
     "previsoes": [
       {
-        "cenario": "Atenção Urbana",
+        "cenario": "Ar carregado (Praça da Sé)",
         "entrada": {
-          "PT08.S1(CO)": 1180.0,
-          "C6H6(GT)": 11.5,
-          "NO2(GT)": 115.0,
-          "T": 27.0
+          "PT08.S1(CO)": 1120.0,
+          "PT08.S2(NMHC)": 980.0,
+          "T": 24.0,
+          "RH": 42.0
         },
-        "co_previsto": 2.2241
+        "co_previsto": 2.1054
       },
       {
-        "cenario": "Crítico Queimada",
+        "cenario": "Ar ruim (Escola)",
         "entrada": {
-          "PT08.S1(CO)": 1520.0,
-          "C6H6(GT)": 24.0,
-          "NO2(GT)": 185.0,
-          "T": 34.0
+          "PT08.S1(CO)": 1383.0,
+          "PT08.S2(NMHC)": 1280.0,
+          "T": 31.0,
+          "RH": 34.0
         },
-        "co_previsto": 4.4793
+        "co_previsto": 3.537
       }
     ]
   },
   "item_06_regressao_logistica": {
     "variaveis_explicativas": [
       "PT08.S1(CO)",
-      "C6H6(GT)",
-      "NO2(GT)",
-      "T"
+      "PT08.S2(NMHC)",
+      "T",
+      "RH"
     ],
     "alvo_binario": "alerta_critico (1 se CO(GT) >= 3.0 mg/m³)",
-    "intercepto_b0": -13.6002,
+    "intercepto_b0": -24.6774,
     "coeficientes": {
-      "PT08.S1(CO)": 0.00328,
-      "C6H6(GT)": 0.66764,
-      "NO2(GT)": 0.01391,
-      "T": -0.13029
+      "PT08.S1(CO)": 0.00313,
+      "PT08.S2(NMHC)": 0.02139,
+      "T": -0.16795,
+      "RH": -0.01122
     },
-    "equacao_logit": "logit(P) = -13.6002 + (0.00328)*PT08.S1(CO) + (0.66764)*C6H6(GT) + (0.01391)*NO2(GT) + (-0.13029)*T",
-    "acuracia_teste": 0.943,
+    "equacao_logit": "logit(P) = -24.6774 + (0.00313)*PT08.S1(CO) + (0.02139)*PT08.S2(NMHC) + (-0.16795)*T + (-0.01122)*RH",
+    "acuracia_teste": 0.9378,
     "matriz_confusao": [
       [
-        1269,
-        44
+        1263,
+        50
       ],
       [
-        55,
-        368
+        58,
+        365
       ]
     ],
-    "precision_critico": 0.8932,
-    "recall_critico": 0.87,
-    "f1_critico": 0.8814,
+    "precision_critico": 0.8795,
+    "recall_critico": 0.8629,
+    "f1_critico": 0.8711,
     "classificacoes_exemplo": [
       {
-        "cenario": "Atenção Urbana",
+        "cenario": "Ar carregado (Praça da Sé)",
         "entrada": {
-          "PT08.S1(CO)": 1180.0,
-          "C6H6(GT)": 11.5,
-          "NO2(GT)": 115.0,
-          "T": 27.0
+          "PT08.S1(CO)": 1120.0,
+          "PT08.S2(NMHC)": 980.0,
+          "T": 24.0,
+          "RH": 42.0
         },
-        "prob_critico": 0.0185,
+        "prob_critico": 0.0089,
         "classe_predita": 0
       },
       {
-        "cenario": "Crítico Queimada",
+        "cenario": "Ar ruim (Escola)",
         "entrada": {
-          "PT08.S1(CO)": 1520.0,
-          "C6H6(GT)": 24.0,
-          "NO2(GT)": 185.0,
-          "T": 34.0
+          "PT08.S1(CO)": 1383.0,
+          "PT08.S2(NMHC)": 1280.0,
+          "T": 31.0,
+          "RH": 34.0
         },
-        "prob_critico": 0.9961,
+        "prob_critico": 0.8092,
         "classe_predita": 1
       }
     ]

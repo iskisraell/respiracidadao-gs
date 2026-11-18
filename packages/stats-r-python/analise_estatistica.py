@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-RespiraCidadao - FIAP GS 2026.2 (09 Statistical Computing with R & Python)
-Analise estatistica completa sobre base real UCI Air Quality (sem dados sinteticos).
+RespiraCidadao: analise estatistica da base real UCI Air Quality (6.941 horas, sem dados sinteticos).
+Pergunta central: as 4 leituras que o nosso sensor faz explicam o monoxido de carbono medido pela estacao de referencia?
 Gera base limpa (.csv), graficos (.png) e resumo estruturado (artifacts/stats_summary.json).
 """
 
@@ -204,7 +204,8 @@ def main():
     plt.close(fig)
 
     # ------------------------------------------------------------------ 05 Multivariada & Reg Multipla
-    multi_features = ["PT08.S1(CO)", "C6H6(GT)", "NO2(GT)", "T"]
+    # As 4 leituras que o ESP32 faz: gas_co, gas_voc, temperatura e umidade.
+    multi_features = ["PT08.S1(CO)", "PT08.S2(NMHC)", "T", "RH"]
     multi_cols = ["CO(GT)"] + multi_features
     df_multi = df[multi_cols]
     cov_matrix = df_multi.cov().round(4)
@@ -244,8 +245,9 @@ def main():
     f_stat_multi = float(ols_multi.fvalue)
     f_pval_multi = float(ols_multi.f_pvalue)
 
-    cen_multi_atencao = {"PT08.S1(CO)": 1180.0, "C6H6(GT)": 11.5, "NO2(GT)": 115.0, "T": 27.0}
-    cen_multi_critico = {"PT08.S1(CO)": 1520.0, "C6H6(GT)": 24.0, "NO2(GT)": 185.0, "T": 34.0}
+    # Mesmas leituras tipicas que o sensor manda no modo demonstracao (Praca da Se e Escola).
+    cen_multi_atencao = {"PT08.S1(CO)": 1120.0, "PT08.S2(NMHC)": 980.0, "T": 24.0, "RH": 42.0}
+    cen_multi_critico = {"PT08.S1(CO)": 1383.0, "PT08.S2(NMHC)": 1280.0, "T": 31.0, "RH": 34.0}
     prev_multi_atencao = float(ols_multi.predict([1.0] + [cen_multi_atencao[f] for f in multi_features])[0])
     prev_multi_critico = float(ols_multi.predict([1.0] + [cen_multi_critico[f] for f in multi_features])[0])
 
@@ -350,20 +352,15 @@ def main():
             "matriz_covariancia": cov_matrix.to_dict(),
             "matriz_correlacao": corr_matrix.to_dict(),
             "coeficientes": {k: round(v, 5) for k, v in multi_params.items()},
-            "equacao": (
-                f"CO(GT) = {multi_params['const']:.4f}"
-                f" + {multi_params['PT08.S1(CO)']:.5f}*PT08.S1(CO)"
-                f" + {multi_params['C6H6(GT)']:.4f}*C6H6(GT)"
-                f" + {multi_params['NO2(GT)']:.5f}*NO2(GT)"
-                f" + ({multi_params['T']:.5f})*T"
-            ),
+            "equacao": f"CO(GT) = {multi_params['const']:.4f}"
+            + "".join(f" + ({multi_params[f]:.5f})*{f}" for f in multi_features),
             "r2": round(r2_multi, 4),
             "r2_ajustado": round(r2_adj_multi, 4),
             "teste_f": round(f_stat_multi, 2),
             "f_p_valor": f_pval_multi,
             "previsoes": [
-                {"cenario": "Atenção Urbana", "entrada": cen_multi_atencao, "co_previsto": round(prev_multi_atencao, 4)},
-                {"cenario": "Crítico Queimada", "entrada": cen_multi_critico, "co_previsto": round(prev_multi_critico, 4)},
+                {"cenario": "Ar carregado (Praça da Sé)", "entrada": cen_multi_atencao, "co_previsto": round(prev_multi_atencao, 4)},
+                {"cenario": "Ar ruim (Escola)", "entrada": cen_multi_critico, "co_previsto": round(prev_multi_critico, 4)},
             ],
         },
         "item_06_regressao_logistica": {
@@ -382,13 +379,13 @@ def main():
             "f1_critico": round(float(rep_log["1"]["f1-score"]), 4),
             "classificacoes_exemplo": [
                 {
-                    "cenario": "Atenção Urbana",
+                    "cenario": "Ar carregado (Praça da Sé)",
                     "entrada": cen_multi_atencao,
                     "prob_critico": round(float(probs_log[0]), 4),
                     "classe_predita": int(preds_log[0]),
                 },
                 {
-                    "cenario": "Crítico Queimada",
+                    "cenario": "Ar ruim (Escola)",
                     "entrada": cen_multi_critico,
                     "prob_critico": round(float(probs_log[1]), 4),
                     "classe_predita": int(preds_log[1]),
