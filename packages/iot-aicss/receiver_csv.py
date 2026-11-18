@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Servidor receptor Python para 02 - AICSS (standalone ou integracao).
-Recebe JSON do ESP32/simulador via POST /ocorrencias, exibe no console e grava em CSV.
+Receptor mínimo do sensor: recebe o JSON do ESP32 em POST /ocorrencias,
+mostra no console e grava em CSV. Serve para testar o sensor sem subir a API completa.
 """
 
 import csv
@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-CSV_PATH = Path(os.getenv("AICSS_CSV_PATH", str(Path(__file__).resolve().parent / "leituras_iot.csv")))
+CSV_PATH = Path(os.getenv("SENSOR_CSV_PATH", str(Path(__file__).resolve().parent / "leituras_iot.csv")))
 MAX_BODY_BYTES = 64 * 1024
 _CSV_LOCK = threading.Lock()
 _FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
@@ -23,6 +23,7 @@ HEADERS = [
     "tipo",
     "metrica",
     "valor",
+    "gas_co",
     "temperatura_c",
     "umidade_pct",
     "status_local",
@@ -30,13 +31,17 @@ HEADERS = [
 ]
 
 
+# Mesmos limiares do firmware e da API (índice de gases, escala da base real).
+LIMIARES = {"gas_voc": (830.0, 1140.0), "gas_co": (1010.0, 1280.0)}
+
+
 def classificar(metrica: str, valor: float) -> str:
-    if metrica == "fumaca_ppm":
-        if valor >= 250.0:
-            return "CRITICO"
-        if valor >= 120.0:
-            return "ATENCAO"
-    return "OK"
+    atencao, critico = LIMIARES.get(metrica, LIMIARES["gas_voc"])
+    if valor >= critico:
+        return "critico"
+    if valor >= atencao:
+        return "atencao"
+    return "normal"
 
 
 def csv_seguro(valor):
@@ -108,6 +113,7 @@ class Handler(BaseHTTPRequestHandler):
             "tipo": data.get("tipo") or data.get("tipo_dispositivo", "esp32"),
             "metrica": data["metrica"],
             "valor": valor,
+            "gas_co": data.get("gas_co", ""),
             "temperatura_c": data.get("temperatura_c", ""),
             "umidade_pct": data.get("umidade_pct", ""),
             "status_local": status,
@@ -120,17 +126,17 @@ class Handler(BaseHTTPRequestHandler):
                 csv.DictWriter(f, fieldnames=HEADERS).writerow(row)
 
         print(f"[{criado_em}] {row['dispositivo_id']} | {row['metrica']}={row['valor']} | STATUS={status}")
-        self._send(201, {"status_local": status, "criado_em": criado_em, "alerta": status != "OK"})
+        self._send(201, {"status_local": status, "criado_em": criado_em, "alerta": status != "normal"})
 
     def log_message(self, format, *args):
         return
 
 
 def main():
-    port = int(os.getenv("AICSS_PORT", "8085"))
+    port = int(os.getenv("SENSOR_PORT", "8085"))
     garantir_csv()
     server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
-    print(f"Receptor AICSS ativo em http://127.0.0.1:{port} -> CSV: {CSV_PATH}")
+    print(f"Receptor do sensor ativo em http://127.0.0.1:{port} -> CSV: {CSV_PATH}")
     server.serve_forever()
 
 

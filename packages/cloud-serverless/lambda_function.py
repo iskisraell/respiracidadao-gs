@@ -1,6 +1,7 @@
 """
-RespiraCidadão - FIAP GS 2026.2 (07 Plataformas, Serviços Cognitivos & Cloud Computing)
-AWS Lambda Serverless (Function URL fora da VPC -> CloudWatch Logs -> HF Router -> RDS PostgreSQL).
+Central do RespiraCidadão na nuvem: recebe a leitura do sensor por uma Function URL,
+classifica o nível, lê o relato com IA (quando houver) e grava no PostgreSQL (RDS).
+Os logs ficam no CloudWatch. Mesmo contrato e mesmos limites do firmware e da API.
 """
 
 import base64
@@ -22,17 +23,17 @@ HF_MODEL = os.environ.get("HF_MODEL", "cardiffnlp/twitter-xlm-roberta-base-senti
 HF_API_URL = os.environ.get("HF_API_URL", "https://router.huggingface.co/hf-inference/models")
 HF_TOKEN = os.environ.get("HF_TOKEN", "").strip()
 
+# Índices dos sensores de gás, na escala da base real de 6.941 horas.
 LIMIARES = {
-    "fumaca_ppm": {"atencao": 120.0, "critico": 250.0},
-    "co_mg_m3": {"atencao": 4.0, "critico": 9.0},
-    "no2_ug_m3": {"atencao": 100.0, "critico": 200.0},
-    "pm25_ug_m3": {"atencao": 25.0, "critico": 50.0},
-    "temperatura_c": {"atencao": 35.0, "critico": 40.0},
-    "umidade_solo_pct": {"atencao": 20.0, "critico": 10.0},
+    "gas_voc": {"atencao": 830.0, "critico": 1140.0},
+    "gas_co": {"atencao": 1010.0, "critico": 1280.0},
 }
-
-INVERTIDAS = {"umidade_solo_pct"}
-TIPOS_VALIDOS = {"esp32", "drone", "app"}
+TIPOS_VALIDOS = {"esp32", "app"}
+LEITURAS_EXTRAS = ("gas_co", "temperatura_c", "umidade_pct")
+COLUNAS = (
+    "dispositivo_id", "tipo_dispositivo", "latitude", "longitude", "metrica", "valor",
+    *LEITURAS_EXTRAS, "relato", "sentimento", "confianca", "nivel_risco", "medido_em",
+)
 LIMITE_LOG_PAYLOAD = 2000
 LIMITE_RELATO = 500
 
@@ -44,36 +45,20 @@ def conectar():
         database=os.environ["DB_NAME"],
         user=os.environ["DB_USER"],
         password=os.environ["DB_PASSWORD"],
+        # O RDS com PostgreSQL 15+ recusa conexão sem SSL (rds.force_ssl=1).
+        ssl_context=os.environ.get("DB_SSL", "1") != "0" or None,
     )
 
 
 def gravar_ocorrencia(dados):
-    sql = """
-        INSERT INTO ocorrencias
-            (dispositivo_id, tipo_dispositivo, latitude, longitude,
-             metrica, valor, relato, sentimento, confianca, nivel_risco, medido_em)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        RETURNING id, criado_em
-    """
+    sql = (
+        f"INSERT INTO ocorrencias ({', '.join(COLUNAS)}) "
+        f"VALUES ({', '.join(['%s'] * len(COLUNAS))}) RETURNING id, criado_em"
+    )
     conn = conectar()
     try:
         cur = conn.cursor()
-        cur.execute(
-            sql,
-            (
-                dados["dispositivo_id"],
-                dados["tipo_dispositivo"],
-                dados["latitude"],
-                dados["longitude"],
-                dados["metrica"],
-                dados["valor"],
-                dados["relato"],
-                dados["sentimento"],
-                dados["confianca"],
-                dados["nivel_risco"],
-                dados["medido_em"],
-            ),
-        )
+        cur.execute(sql, tuple(dados[c] for c in COLUNAS))
         novo_id, criado_em = cur.fetchone()
         conn.commit()
         return novo_id, criado_em
@@ -87,7 +72,7 @@ def listar_ocorrencias(limite=20):
         cur = conn.cursor()
         cur.execute(
             """
-            SELECT id, dispositivo_id, tipo_dispositivo, metrica, valor,
+            SELECT id, dispositivo_id, tipo_dispositivo, metrica, valor, gas_co,
                    nivel_risco, sentimento, confianca, relato, criado_em
               FROM ocorrencias
              ORDER BY id DESC
@@ -101,6 +86,7 @@ def listar_ocorrencias(limite=20):
             "tipo_dispositivo",
             "metrica",
             "valor",
+            "gas_co",
             "nivel_risco",
             "sentimento",
             "confianca",
@@ -116,12 +102,6 @@ def classificar_risco(metrica, valor):
     faixa = LIMIARES.get(metrica)
     if faixa is None or valor is None:
         return "desconhecido"
-    if metrica in INVERTIDAS:
-        if valor <= faixa["critico"]:
-            return "critico"
-        if valor <= faixa["atencao"]:
-            return "atencao"
-        return "normal"
     if valor >= faixa["critico"]:
         return "critico"
     if valor >= faixa["atencao"]:
@@ -220,8 +200,9 @@ def rota_ingestao(evento):
     valor, erro_valor = _numero(payload["valor"], "valor", obrigatorio=True)
     latitude, erro_lat = _numero(payload.get("latitude"), "latitude")
     longitude, erro_lon = _numero(payload.get("longitude"), "longitude")
+    extras = {c: _numero(payload.get(c), c) for c in LEITURAS_EXTRAS}
     tipo_disp = str(payload.get("tipo_dispositivo") or payload.get("tipo") or "esp32").strip().lower()
-    erros = [e for e in (erro_valor, erro_lat, erro_lon) if e]
+    erros = [e for e in (erro_valor, erro_lat, erro_lon, *(err for _, err in extras.values())) if e]
     if tipo_disp not in TIPOS_VALIDOS:
         erros.append(f"tipo_dispositivo deve ser um de {sorted(TIPOS_VALIDOS)}")
     if erros:
@@ -237,6 +218,7 @@ def rota_ingestao(evento):
         "longitude": longitude,
         "metrica": str(payload["metrica"]).strip(),
         "valor": valor,
+        **{c: v for c, (v, _) in extras.items()},
         "relato": relato,
         "medido_em": _data_medicao(payload.get("medido_em")),
     }
@@ -282,6 +264,7 @@ def rota_ingestao(evento):
             "longitude": dados["longitude"],
             "metrica": dados["metrica"],
             "valor": dados["valor"],
+            **{c: dados[c] for c in LEITURAS_EXTRAS},
             "nivel_risco": dados["nivel_risco"],
             "sentimento": dados["sentimento"],
             "confianca": dados["confianca"],

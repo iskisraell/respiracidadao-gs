@@ -1,34 +1,70 @@
-# RespiraCidadão: Módulo IoT (`02 - AI Computer Systems & Sensors`)
+# Sensor do RespiraCidadão (ESP32)
 
-## Fluxo Funcional
+O sensor fica na parede da escola, da UBS ou da praça. Ele mede gases, monóxido de carbono, temperatura e umidade a cada 3 segundos. Acende a luz da cor certa na hora, mesmo sem internet. Quando tem rede, manda a leitura para a central.
 
 ```text
-Fumaça / Temperatura / Umidade ─► ESP32 (MQ-2 ADC + DHT22) ─► LEDs + Buzzer ─► JSON HTTP POST ─► API Python ─► CSV + SQLite
+gases + monóxido + temperatura + umidade -> ESP32 -> luz e buzzer (na hora, sem rede)
+                                                  -> JSON por HTTP -> central (API) -> app
 ```
 
-## Sensores e Atuadores
+## Circuito
 
-| Componente | Pino ESP32 | Função no Problema CitizenTech |
+| Peça | Pino | Para que serve |
 |---|---|---|
-| Sensor de Gás/Fumaça (MQ-2 simulado por potenciômetro ADC) | `GPIO 34` | Mede concentração de fumaça/compostos combustíveis (`0` a `400 ppm`). |
-| Sensor Microclimático `DHT22` | `GPIO 15` | Mede temperatura (`°C`) e umidade relativa (`%`), fatores que agravam dispersão de fumaça e risco respiratório. |
-| LED Verde / Amarelo / Vermelho | `GPIO 26 / 27 / 14` | Sinalização visual imediata para cidadãos próximos ao ponto comunitário. |
-| Buzzer Piezoelétrico | `GPIO 12` | Alerta sonoro para acessibilidade de pessoas com deficiência visual. |
+| Potenciômetro no lugar do MQ-135 | GPIO 34 | Índice de gases e fumaça (380 a 2250) |
+| Potenciômetro no lugar do MQ-7 | GPIO 35 | Índice de monóxido de carbono (640 a 2100) |
+| DHT22 | GPIO 15 | Temperatura e umidade |
+| LED verde, amarelo, vermelho | GPIO 26, 27, 14 | Ar bom, carregado, ruim |
+| Buzzer | GPIO 25 | Bipe curto no amarelo, alarme no vermelho. Ajuda quem não enxerga a luz |
 
-## Como Simular no Wokwi
+Os índices estão na mesma escala dos sensores da base de 6.941 horas usada para treinar a central. Por isso a central lê o mesmo número que o ESP32 mede.
 
-1. Crie um projeto **ESP32** no Wokwi e cole `sketch.ino`, `diagram.json` e `libraries.txt` (`DHT sensor library` + `Adafruit Unified Sensor`).
-2. O `API_URL` padrão (`host.wokwi.internal:8000`) exige o **Wokwi Private Gateway**; sem ele, exponha a API com um túnel (ngrok / `tailscale serve`) e troque a URL no sketch.
-3. Sem rede, rode `python run_3_cenarios.py --url http://127.0.0.1:8000` (API FastAPI) ou `--url http://127.0.0.1:8085` (`receiver_csv.py`) para demonstrar os 3 comportamentos e gerar o CSV.
-4. Os limiares `120 / 250 ppm` são os mesmos do sketch, de `receiver_csv.py`, da API e da Lambda.
+## A regra da luz
 
-## O que foi Implementado vs. Simulado
+| Índice de gases | Luz | Buzzer |
+|---|---|---|
+| abaixo de 830 | verde | quieto |
+| 830 a 1139 | amarela | bipe curto (950 Hz) |
+| 1140 ou mais | vermelha | alarme (1800 Hz) |
 
-- **Implementado:** firmware `sketch.ino` em C++/Arduino, circuito Wokwi `diagram.json`, regras determinísticas de limiar (`< 120` Normal, `120 a 249.9` Atenção, `>= 250` Crítico), envio JSON via `HTTPClient`, recepção em Python (`apps/api` e `receiver_csv.py`) com gravação em CSV.
-- **Simulado:** variação química de fumaça via potenciômetro no Wokwi e envio automatizado dos 3 cenários via `run_3_cenarios.py`.
-- **Limitações:** sensor MQ-2 exige calibração física por curva de resistência (`Rs/R0`) em hardware real e depende de conectividade Wi-Fi local; sem conectividade, apenas o alerta sonoro/visual local permanece ativo.
+Os limites vêm da base real e são os mesmos no firmware, no receptor, na API e na função de nuvem. Sozinha, essa regra acerta 84 de cada 100 horas. A central confere com o modelo e chega a 87.
 
-## ODS Relacionados
+## Rodando no Wokwi
 
-- **ODS 3 (Saúde e Bem-Estar):** prevenção de crises respiratórias em escolas e UBS por aviso precoce local e digital.
-- **ODS 11 (Cidades e Comunidades Sustentáveis):** monitoramento comunitário de baixo custo contra fumaça urbana e queimadas.
+1. Abra um projeto ESP32 novo em wokwi.com.
+2. Cole `sketch.ino` e `diagram.json`. Em Library Manager, adicione `DHT sensor library` e `Adafruit Unified Sensor` (lista em `libraries.txt`).
+3. Clique em play e gire o potenciômetro de gases. A luz muda e o Serial Monitor mostra o JSON.
+
+Os prints em `evidencias/` são dessa simulação, com os potenciômetros nas posições de cada nível:
+
+| Nível | Gases | Monóxido | Print |
+|---|---|---|---|
+| Ar bom | 706 | 926 | `evidencias/wokwi_1_ar_bom.png` |
+| Ar carregado | 980 | 1120 | `evidencias/wokwi_2_ar_carregado.png` |
+| Ar ruim | 1279 | 1384 | `evidencias/wokwi_3_ar_ruim.png` |
+
+No Wokwi gratuito o ESP32 não alcança a API no seu computador (`host.wokwi.internal` exige o gateway pago). O Serial Monitor mostra `SEM REDE: alerta local ativo`, e é exatamente o comportamento que queremos numa queda de internet: a luz continua funcionando.
+
+## Mandando as 3 leituras sem o hardware
+
+`run_3_cenarios.py` envia o mesmo JSON que o ESP32 manda, um para cada lugar:
+
+```bash
+python run_3_cenarios.py                              # para a API (127.0.0.1:8000)
+python receiver_csv.py                                # receptor mínimo, grava leituras_iot.csv
+python run_3_cenarios.py --url http://127.0.0.1:8085
+```
+
+Saída contra a API:
+
+```text
+Ar bom na UBS Vila Esperança         gravado nível normal  | central: normal (100%)
+Ar carregado na Praça da Sé          gravado nível atencao | central: atencao (95%)
+Ar ruim na Escola Jardim Primavera   gravado nível critico | central: critico (93%)
+```
+
+## O que é real e o que é simulado
+
+- Real: firmware, circuito, regra da luz, JSON, receptor em Python e gravação em CSV.
+- Simulado: os gases vêm de potenciômetros. Um MQ-135 ou MQ-7 de verdade precisa de 24 a 48 horas de aquecimento e calibração contra uma estação de referência antes de dar números confiáveis.
+- Sem rede, a leitura daquele momento não é guardada no ESP32. Um próximo passo seria uma fila em memória para mandar depois.

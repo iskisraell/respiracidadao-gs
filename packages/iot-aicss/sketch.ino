@@ -1,5 +1,5 @@
 /*
- * RespiraCidadao - estacao comunitaria ESP32 (GS 2026.2, 02 AICSS)
+ * RespiraCidadao - sensor comunitario ESP32
  *
  * Sensores:
  *   GPIO 34  potenciometro no lugar do MQ-135 (gases/fumaca, indice 380..2250)
@@ -69,17 +69,15 @@ String montarJson(float gasVoc, float gasCo, float temp, float umid) {
   j += "\"valor\":" + String(gasVoc, 1) + ",";
   j += "\"gas_co\":" + String(gasCo, 1) + ",";
   j += "\"temperatura_c\":" + String(temp, 1) + ",";
-  j += "\"umidade_pct\":" + String(umid, 1) + ",";
-  j += "\"relato\":\"leitura automatica do no comunitario\"";
+  j += "\"umidade_pct\":" + String(umid, 1);
   j += "}";
   return j;
 }
 
 void enviar(const String& json) {
   if (WiFi.status() != WL_CONNECTED) {
-    // Sem rede o alerta local continua; so tenta reconectar
-    Serial.println("WIFI desconectado, tentando de novo");
-    WiFi.reconnect();
+    // Sem rede a luz e o buzzer seguem funcionando; o ESP32 reconecta sozinho
+    Serial.println("SEM REDE: alerta local ativo, leitura nao enviada");
     return;
   }
   HTTPClient http;

@@ -50,10 +50,10 @@ Tudo no produto existe para essa frase ser verdadeira, rápida e confiável.
 - [x] Modo demonstração discreto para gerar leituras de exemplo.
 - [x] Validar no navegador em desktop e celular. `npm run build` limpo.
 
-### 4. Sensor e nuvem
-- [ ] ESP32 no Wokwi com print dos 3 estados.
-- [ ] `receiver_csv.py` e `run_3_cenarios.py` no contrato novo.
-- [ ] Kit de nuvem: Lambda no contrato novo, script de deploy, SQL, README dizendo o que o Israel precisa fazer.
+### 4. Sensor e nuvem [feito]
+- [x] ESP32 no Wokwi com print dos 3 estados (`packages/iot-aicss/evidencias/`).
+- [x] `receiver_csv.py` e `run_3_cenarios.py` no contrato novo, um sensor por lugar.
+- [x] Kit de nuvem: Lambda no contrato novo, `deploy_aws.sh`, `run_sql.py`, SSL no banco, caminho do banco testado num PostgreSQL local.
 
 ### 5. Entregas
 - [ ] Reescrever os textos de cada entrega na voz do produto, com prints reais e gráficos.
@@ -73,3 +73,5 @@ Tudo no produto existe para essa frase ser verdadeira, rápida e confiável.
 | A central confere com o modelo | Ganha 3 pontos de acerto sobre a regra e dá uma porcentagem de certeza. |
 | Dica de horário vem da base real | Entre 14h e 17h o ar ruim aparece em 19% das horas; às 8h, em 49%. |
 | Relatos ficam separados das leituras | Relato é opinião de pessoa; leitura é medida. O app mostra os dois lado a lado e não mistura. |
+| Leitura do sensor não leva relato | O firmware mandava um "relato" automático. Relato é de pessoa; o sensor manda só medida. |
+| Função na nuvem fora da VPC | Alcança a IA de texto sem NAT Gateway pago. O banco aceita conexão pública com senha e SSL; só para demonstração. |

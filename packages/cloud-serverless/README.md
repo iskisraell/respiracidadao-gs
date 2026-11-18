@@ -1,59 +1,67 @@
-# RespiraCidadão: Camada Serverless (`07 - Cloud Computing`)
+# Central do RespiraCidadão na nuvem (AWS)
 
-## Cenário CitizenTech e Cidadão Beneficiado
-
-O RespiraCidadão coleta telemetria de fumaça (`fumaca_ppm`), monóxido de carbono (`co_mg_m3`) e dióxido de nitrogênio (`no2_ug_m3`) com nós ESP32, drones e relatos textuais do cidadão, protegendo **crianças em escolas públicas, idosos e pacientes respiratórios crônicos** em periferias e áreas afetadas por queimadas urbanas e rurais.
-
-### Limiares Locais Determinísticos
-
-| Métrica | Normal | Atenção | Crítico (Alerta) |
-|---|---|---|---|
-| `fumaca_ppm` | `< 120` | `120 a 249.9` | `>= 250` |
-| `co_mg_m3` | `< 4.0` | `4.0 a 8.9` | `>= 9.0` |
-| `no2_ug_m3` | `< 100` | `100 a 199.9` | `>= 200` |
-
-## Arquitetura AWS (Sem VPC na Lambda)
+A central é quem recebe a leitura do sensor, decide o nível e guarda o histórico. No dia a dia ela roda como a API do repositório (`apps/api`). Esta pasta é a mesma central em formato de nuvem, para funcionar sem um servidor ligado o tempo todo:
 
 ```text
-ESP32 / Drone / Simulador
-   │ HTTPS POST /ocorrencias
-   ▼
-AWS Lambda + Function URL (fora da VPC, timeout 30s)
-   ├──► CloudWatch Logs (PAYLOAD RECEBIDO, DISPOSITIVO, CLASSIFICACAO, WARNING em critico/400)
-   ├──► Hugging Face Router (https://router.huggingface.co/hf-inference/models/cardiffnlp/twitter-xlm-roberta-base-sentiment)
-   ▼
-Amazon RDS PostgreSQL (tabela ocorrencias)
+sensor ESP32 --HTTPS--> Lambda (Function URL) --> PostgreSQL no RDS
+                              |--> CloudWatch: cada leitura, cada alerta, cada erro
+                              '--> IA de texto (Hugging Face): lê o relato, se vier um
 ```
 
-### Justificativa da Camada de IA e Resiliência
+## O que a função faz com cada leitura
 
-O modelo `cardiffnlp/twitter-xlm-roberta-base-sentiment` via `router.huggingface.co` (autenticado pela variável de ambiente `HF_TOKEN`) interpreta o relato em português do cidadão. Caso o endpoint externo falhe ou atinja timeout, a exceção gera apenas um log `WARNING` e a Lambda grava a leitura normalmente usando a classificação local por limiares.
+1. Confere o JSON. Campo faltando, número inválido ou tipo desconhecido vira resposta 400 e um aviso no log. Nunca 500.
+2. Classifica pelo índice de gases, com os mesmos limites do sensor: abaixo de 830 é ar bom, de 830 a 1139 é ar carregado, 1140 ou mais é ar ruim.
+3. Se a leitura trouxer um relato ("fumaça no portão, crianças tossindo"), manda o texto para um modelo de sentimento em português. Se a IA cair ou demorar, a leitura é gravada do mesmo jeito.
+4. Grava no PostgreSQL e devolve o nível. Ar ruim gera um `ALERTA CIDADAO` no CloudWatch.
 
-> **`alerta`:** a Lambda segue o starter oficial (`alerta = true` apenas em `critico`); a API FastAPI do monorepo também dispara `alerta` em `atencao` (aviso preventivo ao cidadão). Os **limiares são idênticos**.
+## Precisa de conta na AWS?
 
-### Validação e Resiliência (o que vira `400`, nunca `500`)
-
-JSON inválido, corpo que não é objeto, `dispositivo_id`/`metrica`/`valor` ausentes ou vazios, `valor`/`latitude`/`longitude` não numéricos (ou `NaN`/`inf`) e `tipo_dispositivo` fora de `esp32 | drone | app`. Cada descarte sai como `WARNING` no CloudWatch. `medido_em` inválido cai para o horário do servidor, e uma resposta malformada da IA (ex.: `{"error": ...}` com HTTP 200) apenas gera `WARNING`: a leitura é classificada por limiar e gravada normalmente. Erros internos retornam mensagem genérica; o detalhe fica só no CloudWatch.
-
-## Publicar na AWS (passo a passo)
-
-1. **RDS PostgreSQL:** crie a instância (Security Group liberando `5432` para a Lambda) e execute `psql -h <endpoint-rds> -U <usuario> -d <banco> -f tabela_ocorrencias.sql`.
-2. **Pacote:** `pip install -r requirements.txt -t pacote/ && cp lambda_function.py pacote/ && (cd pacote && zip -r ../funcao.zip .)`.
-3. **Lambda:** runtime Python 3.12, **fora de VPC**, timeout **30 s**, `aws lambda update-function-code --function-name <nome> --zip-file fileb://funcao.zip`, handler `lambda_function.lambda_handler`, Function URL com auth `NONE`.
-4. **Variáveis de ambiente (print 1):** `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `HF_TOKEN` (token *Read* do Hugging Face; nunca no código ou no repositório).
-5. **Simulador (print 2):** `FUNCTION_URL=https://<id>.lambda-url.<regiao>.on.aws python3 simulador_dispositivo.py --cenario normal` e depois `--cenario queimada` (cruza `250 ppm` na 5ª leitura).
-6. **CloudWatch (print 3) e RDS (print 4):** procure `PAYLOAD RECEBIDO`, `CLASSIFICACAO` e `GRAVADO NO RDS`; rode os `SELECT` ao final de `tabela_ocorrencias.sql`.
-
-## Reprodução Local
+Para mostrar funcionando, não. Tudo roda no seu computador:
 
 ```bash
-python3 teste_local.py   # 8 verificações: 400/201, IA com falha, entradas inválidas, base64
-# Em dois terminais:
-python3 servidor_local.py
-FUNCTION_URL=http://127.0.0.1:8099 python3 simulador_dispositivo.py --cenario queimada --leituras 5 --intervalo 0.5
+python3 teste_local.py                       # 8 verificações, sem banco e sem internet
+python3 servidor_local.py                    # a função com SQLite no lugar do RDS
+FUNCTION_URL=http://127.0.0.1:8099 python3 simulador_dispositivo.py --cenario queimada
 ```
 
-## ODS Relacionados
+Para publicar de verdade, sim. Duas opções gratuitas:
 
-- **ODS 3:** Saúde e Bem-Estar (prevenção de agravos respiratórios).
-- **ODS 10 e 11:** Redução das desigualdades e comunidades sustentáveis.
+| Opção | O que é | Custo |
+|---|---|---|
+| AWS Academy Learner Lab | Laboratório que a faculdade libera. Já vem com a role `LabRole`, que o script usa | Zero. Os créditos são do laboratório |
+| Conta própria | Conta nova na AWS, com cartão | Lambda e CloudWatch ficam no nível gratuito. O RDS `db.t3.micro` entra no plano gratuito de conta nova; apague no fim para não gastar |
+
+## Publicando (um comando)
+
+Requisitos: AWS CLI configurada (`aws configure`, ou as credenciais do Learner Lab em `~/.aws/credentials`), Python 3 e `zip`.
+
+```bash
+DB_PASSWORD='escolha-uma-senha' ./deploy_aws.sh
+# opcional, para a IA ler os relatos: HF_TOKEN=<token de leitura do Hugging Face>
+```
+
+O script cria o banco (5 a 10 minutos), a tabela, a função e o endereço público, e no fim imprime a URL e os comandos de teste. Rodar de novo só atualiza o código.
+
+Fora do Learner Lab, crie antes uma role com a política `AWSLambdaBasicExecutionRole` e passe `LAMBDA_ROLE_ARN=arn:aws:iam::<conta>:role/<nome>`.
+
+## As 4 telas que provam que funciona
+
+1. Lambda > Configuração > Variáveis de ambiente (com a senha e o token ocultos).
+2. Terminal com `simulador_dispositivo.py --cenario queimada` subindo até `critico << ALERTA`.
+3. CloudWatch com `PAYLOAD RECEBIDO`, `CLASSIFICACAO` e `ALERTA CIDADAO`.
+4. `python3 run_sql.py --consultas` mostrando as leituras gravadas no RDS.
+
+## Escolhas e limites
+
+- A função fica fora da VPC. Assim ela alcança a IA na internet sem NAT Gateway, que é pago. O preço é o banco aceitar conexão pública na porta 5432, protegido por senha e SSL. Serve para demonstração. Em produção, o banco ficaria numa sub-rede privada.
+- A conexão com o banco usa SSL, porque o RDS com PostgreSQL 15 ou mais novo recusa conexão sem ele.
+- O caminho do banco foi testado num PostgreSQL local: tabela criada, leituras gravadas e consultadas. O `deploy_aws.sh` não foi executado numa conta real, porque não temos credenciais aqui.
+- A IA de relatos é opcional. Sem `HF_TOKEN`, a função grava tudo e deixa o sentimento vazio.
+
+## Apagando tudo depois
+
+```bash
+aws lambda delete-function --function-name respiracidadao-central
+aws rds delete-db-instance --db-instance-identifier respiracidadao-db --skip-final-snapshot
+```

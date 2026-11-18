@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Executor local que emula AWS Lambda Function URL + RDS em SQLite para testes sem AWS.
+Roda a função da nuvem no seu computador, com SQLite no lugar do RDS. Serve para testar sem conta na AWS.
 """
 
 import logging
@@ -38,6 +38,9 @@ def _init_sqlite():
                 longitude REAL,
                 metrica TEXT NOT NULL,
                 valor REAL NOT NULL,
+                gas_co REAL,
+                temperatura_c REAL,
+                umidade_pct REAL,
                 relato TEXT,
                 sentimento TEXT,
                 confianca REAL,
@@ -53,26 +56,10 @@ def _init_sqlite():
 def _sqlite_gravar(dados):
     dados = {**dados, "medido_em": dados["medido_em"].isoformat()}
     with sqlite3.connect(DB_PATH) as conn:
+        cols = lambda_function.COLUNAS
         cur = conn.execute(
-            """
-            INSERT INTO ocorrencias
-                (dispositivo_id, tipo_dispositivo, latitude, longitude,
-                 metrica, valor, relato, sentimento, confianca, nivel_risco, medido_em)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                dados["dispositivo_id"],
-                dados["tipo_dispositivo"],
-                dados["latitude"],
-                dados["longitude"],
-                dados["metrica"],
-                dados["valor"],
-                dados["relato"],
-                dados["sentimento"],
-                dados["confianca"],
-                dados["nivel_risco"],
-                dados["medido_em"],
-            ),
+            f"INSERT INTO ocorrencias ({', '.join(cols)}) VALUES ({', '.join('?' * len(cols))})",
+            tuple(dados[c] for c in cols),
         )
         conn.commit()
         row = conn.execute("SELECT id, criado_em FROM ocorrencias WHERE id = ?", (cur.lastrowid,)).fetchone()
