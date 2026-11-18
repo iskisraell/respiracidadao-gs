@@ -251,3 +251,36 @@ def test_predict_returns_three_verdicts(client):
     c, _, _ = client
     body = c.post("/predict", json={"gas_co": 925, "gas_voc": 706, "temperatura_c": 18, "umidade_pct": 55}).json()
     assert body["ml"]["classe"] == body["nn"]["classe"] == body["regra_local"]["classe"] == "normal"
+
+
+def test_places_show_latest_reading_and_guidance(client):
+    c, _, _ = client
+    places = c.get("/locais").json()
+    assert len(places) == 3 and all(p["nivel"] is None for p in places)
+    c.post("/simulate", json={"cenario": "critico", "local_id": "escola-jardim-primavera"})
+    escola = next(p for p in c.get("/locais").json() if p["id"] == "escola-jardim-primavera")
+    assert escola["nivel"] == "critico"
+    assert escola["orientacao"]["titulo"] == "Ar ruim agora"
+    assert escola["ultima_leitura"]["ia_risco"] == "critico"
+    assert len(escola["historico"]) == 1
+    assert c.post("/simulate", json={"cenario": "normal", "local_id": "nao-existe"}).status_code == 404
+
+
+def test_relatos_are_sanitized_and_flag_urgency(client):
+    c, _, _ = client
+    r = c.post("/relatos", json={"local_id": "praca-da-se", "texto": "Fumaça forte <b>na praça</b>"})
+    assert r.status_code == 201
+    body = r.json()
+    assert body["urgente"] is True and "<b>" not in body["texto"]
+    assert c.post("/relatos", json={"local_id": "outro-lugar", "texto": "oi tudo bem"}).status_code == 404
+    praca = next(p for p in c.get("/locais").json() if p["id"] == "praca-da-se")
+    assert praca["relatos"][0]["id"] == body["id"]
+
+
+def test_hourly_pattern_points_to_afternoon_window(client):
+    c, _, _ = client
+    body = c.get("/padrao-horario").json()
+    assert len(body["horas"]) == 24
+    janela = body["melhor_janela"]
+    assert 11 <= janela["inicio"] <= 15
+    assert janela["pior_hora"] in (8, 9, 17)

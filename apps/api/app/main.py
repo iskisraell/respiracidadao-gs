@@ -16,7 +16,8 @@ from .classifier import (
     analyze_report_sentiment,
     classify_threshold,
 )
-from .schemas import OcorrenciaIn, OcorrenciaOut, PredictIn, SimulateRequest
+from .places import GUIDANCE, PLACE_BY_DEVICE, PLACE_BY_ID, PLACES, best_window, hourly_pattern
+from .schemas import OcorrenciaIn, OcorrenciaOut, PredictIn, RelatoIn, SimulateRequest
 from .security import (
     SecurityAuditor,
     SlidingWindowRateLimiter,
@@ -35,6 +36,7 @@ logging.basicConfig(
 logger = logging.getLogger("respiracidadao.api")
 
 ROOT_DIR = Path(__file__).resolve().parents[3]
+DATASET_PATH = ROOT_DIR / "data" / "processed" / "air_quality_clean.csv"
 RUNTIME_DIR = Path(os.getenv("RESPIRA_DATA_DIR", str(ROOT_DIR / "data" / "runtime")))
 
 store = OccurrenceStore(RUNTIME_DIR)
@@ -156,9 +158,7 @@ def health():
     }
 
 
-@app.post("/ocorrencias", response_model=OcorrenciaOut, status_code=201)
-def create_ocorrencia(payload: OcorrenciaIn, request: Request):
-    client_ip = get_client_ip(request)
+def _enforce_rate_limit(client_ip: str) -> int:
     allowed, remaining, retry_after = rate_limiter.check(client_ip)
     if not allowed:
         logger.warning("RATE LIMIT ATINGIDO para ip=%s retry_after=%ss", client_ip, retry_after)
@@ -174,7 +174,13 @@ def create_ocorrencia(payload: OcorrenciaIn, request: Request):
             detail=f"Limite de requisições excedido. Tente novamente em {retry_after}s.",
             headers={"Retry-After": str(retry_after), "X-RateLimit-Remaining": "0"},
         )
+    return remaining
 
+
+@app.post("/ocorrencias", response_model=OcorrenciaOut, status_code=201)
+def create_ocorrencia(payload: OcorrenciaIn, request: Request):
+    client_ip = get_client_ip(request)
+    remaining = _enforce_rate_limit(client_ip)
     record = _ingest_occurrence(payload, client_ip=client_ip, source_tag="http-post")
     return JSONResponse(
         status_code=201,
@@ -190,6 +196,62 @@ def list_ocorrencias(
     limit: int = Query(default=100, ge=1, le=500),
 ):
     return store.list_all(risco=risco, dispositivo_id=dispositivo_id, limit=limit)
+
+
+@app.get("/locais")
+def list_places():
+    """Cada lugar com a última leitura do sensor, o que ela significa e o que fazer."""
+    out = []
+    for place in PLACES:
+        historico = store.history(place["dispositivo_id"], limit=24)
+        ultima = historico[0] if historico else None
+        nivel = ultima["nivel_risco"] if ultima else None
+        out.append(
+            {
+                **place,
+                "nivel": nivel,
+                "orientacao": GUIDANCE.get(nivel) if nivel else None,
+                "ultima_leitura": ultima,
+                "historico": [
+                    {"valor": h["valor"], "nivel": h["nivel_risco"], "criado_em": h["criado_em"]}
+                    for h in reversed(historico)
+                ],
+                "relatos": store.list_relatos(local_id=place["id"], limit=5),
+            }
+        )
+    return out
+
+
+@app.post("/relatos", status_code=201)
+def create_relato(payload: RelatoIn, request: Request):
+    """Relato de quem está no lugar. Fica separado das leituras: é o que a pessoa viu, não uma medida."""
+    client_ip = get_client_ip(request)
+    _enforce_rate_limit(client_ip)
+    if payload.local_id not in PLACE_BY_ID:
+        raise HTTPException(status_code=404, detail="Lugar não encontrado.")
+    texto = sanitize_text(payload.texto)
+    sentimento, _, fonte = analyze_report_sentiment(texto)
+    relato = store.add_relato(payload.local_id, texto, urgente=sentimento == "negative", ia_fonte=fonte)
+    auditor.record(
+        event="relato_recebido",
+        severity="warning" if relato["urgente"] else "info",
+        client_ip=client_ip,
+        detail=f"Relato #{relato['id']} em {payload.local_id} ({'urgente' if relato['urgente'] else 'comum'}).",
+        status_code=201,
+    )
+    return relato
+
+
+@app.get("/relatos")
+def list_relatos(local_id: Optional[str] = Query(default=None), limit: int = Query(default=20, ge=1, le=100)):
+    return store.list_relatos(local_id=local_id, limit=limit)
+
+
+@app.get("/padrao-horario")
+def get_hourly_pattern():
+    """Risco por hora do dia na base real (6.941 horas) e a melhor janela para atividade ao ar livre."""
+    horas = hourly_pattern(DATASET_PATH)
+    return {"horas": horas, "melhor_janela": best_window(horas)}
 
 
 @app.get("/indicadores")
@@ -213,36 +275,31 @@ def predict_risk(payload: PredictIn, request: Request):
     return result
 
 
+# Leitura típica de cada nível: medianas da base real, na escala do sensor.
+TYPICAL_READING = {
+    "normal": {"valor": 706.0, "gas_co": 925.0, "temperatura_c": 18.0, "umidade_pct": 55.0},
+    "atencao": {"valor": 980.0, "gas_co": 1120.0, "temperatura_c": 24.0, "umidade_pct": 42.0},
+    "critico": {"valor": 1280.0, "gas_co": 1383.0, "temperatura_c": 31.0, "umidade_pct": 34.0},
+}
+DEMO_PLAN = {"normal": "ubs-vila-esperanca", "atencao": "praca-da-se", "critico": "escola-jardim-primavera"}
+
+
 @app.post("/simulate")
 def simulate_scenarios(body: SimulateRequest, request: Request):
+    """Modo demonstração: grava uma leitura típica de cada nível como se viesse do sensor do lugar."""
     client_ip = get_client_ip(request)
-    # Medianas de cada classe na base UCI: o que o ESP32 leria numa hora típica de cada nível.
-    base = {"tipo": body.tipo, "metrica": "gas_voc"}
-    scenarios = {
-        "normal": OcorrenciaIn(
-            **base, dispositivo_id="esp32-ubs-vila-maria", latitude=-23.5122, longitude=-46.5917,
-            valor=706.0, gas_co=925.0, temperatura_c=18.0, umidade_pct=55.0,
-            relato="Manhã limpa, sem cheiro de fumaça.",
-        ),
-        "atencao": OcorrenciaIn(
-            **base, dispositivo_id="esp32-centro-01", latitude=-23.5505, longitude=-46.6333,
-            valor=980.0, gas_co=1120.0, temperatura_c=24.0, umidade_pct=42.0,
-            relato="Trânsito parado na frente da escola, cheiro de escapamento.",
-        ),
-        "critico": OcorrenciaIn(
-            **base, dispositivo_id="esp32-escola-zona-norte", latitude=-23.4892, longitude=-46.6208,
-            valor=1280.0, gas_co=1383.0, temperatura_c=31.0, umidade_pct=34.0,
-            relato="Fumaça de queimada, crianças tossindo no pátio.",
-        ),
-    }
-
+    if body.local_id and body.local_id not in PLACE_BY_ID:
+        raise HTTPException(status_code=404, detail="Lugar não encontrado.")
     keys = ["normal", "atencao", "critico"] if body.cenario == "todos" else [body.cenario]
     resultados = []
     for k in keys:
-        item = scenarios[k]
-        rec = _ingest_occurrence(item, client_ip=client_ip, source_tag=f"sim-{k}")
-        resultados.append({"cenario": k, "enviado": item.model_dump(), "registro": rec})
-
+        place = PLACE_BY_ID[body.local_id or DEMO_PLAN[k]]
+        item = OcorrenciaIn(
+            dispositivo_id=place["dispositivo_id"], tipo=body.tipo, metrica="gas_voc",
+            latitude=place["latitude"], longitude=place["longitude"], **TYPICAL_READING[k],
+        )
+        rec = _ingest_occurrence(item, client_ip=client_ip, source_tag=f"demo-{k}")
+        resultados.append({"cenario": k, "local_id": place["id"], "registro": rec})
     return {"executados": len(resultados), "resultados": resultados}
 
 

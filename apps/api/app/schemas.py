@@ -64,3 +64,9 @@ class PredictIn(BaseModel):
 class SimulateRequest(BaseModel):
     cenario: Literal["todos", "normal", "atencao", "critico"] = "todos"
     tipo: Literal["esp32", "drone", "app"] = "esp32"
+    local_id: Optional[str] = Field(default=None, max_length=64)
+
+
+class RelatoIn(BaseModel):
+    local_id: str = Field(..., min_length=2, max_length=64, pattern=r"^[a-z0-9\-]+$")
+    texto: str = Field(..., min_length=3, max_length=300)
