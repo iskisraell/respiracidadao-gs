@@ -3,12 +3,17 @@
 Esta disciplina é independente do projeto RespiraCidadão e exige envio individual no formulário SurveyMonkey:
 `https://pt.surveymonkey.com/r/VQNNZZZ`
 
-## Passo a passo individual
+## Consultas prontas e conferidas
 
-Cada integrante do grupo, Giovanni RM 570574, Suellen RM 573862 e Israel RM 573854, precisa seguir estas cinco etapas:
+Os nomes exatos das tabelas e colunas foram conferidos com o Dicionário de Dados e o Modelo Entidade-Relacionamento oficial de `GS_2026_2SEM_1TIA(1).pdf`:
 
-1. Baixar o arquivo `CRIACAO_CARGA_ORACLE.sql` na área de Apostilas do Portal do Aluno FIAP.
-2. Rodar o script no Oracle Database e conferir os nomes exatos das chaves e colunas nas tabelas `AMBIENTES_ROVER`, `ROBOS_ROVER`, `OPERACOES_ROVER` e `DETECCOES_ROVER`.
-3. Abrir [`queries_inclusive_mobility_rover.sql`](./queries_inclusive_mobility_rover.sql), ajustar qualquer nome de coluna que difira do script oficial e executar as cinco consultas.
-4. Confirmar os apelidos de coluna pedidos em cada questão: `AMBIENTE`, `QTDE_ROBOS`, `MEDIA_DISTANCIA`, `ROBO`, `MODELO`, `QTDE_DETECCOES`, `MEDIA_CONFIANCA`, `TIPO_OBSTACULO`, `QTDE_AMBIENTES`, `MENOR_DISTANCIA`, `ID_OPERACAO` e `QTDE_OPERACOES`.
-5. Enviar as respostas individualmente no SurveyMonkey usando o RM só com números e o nome completo sem abreviações. Não suba nenhum arquivo no Portal dessa disciplina.
+- `AMBIENTES_ROVER`: `ID_AMBIENTE`, `NOME_AMBIENTE`, `TIPO_AMBIENTE`
+- `ROBOS_ROVER`: `ID_ROBO`, `NOME_ROBO`, `MODELO`
+- `OPERACOES_ROVER`: `ID_OPERACAO`, `ID_ROBO`, `ID_AMBIENTE`, `DATA_OPERACAO`
+- `DETECCOES_ROVER`: `ID_DETECCAO`, `ID_OPERACAO`, `TIPO_OBSTACULO`, `DISTANCIA_CM`, `CONFIANCA`
+
+Todas as cinco consultas de [`queries_inclusive_mobility_rover.sql`](./queries_inclusive_mobility_rover.sql) já usam essas colunas e os apelidos exatos exigidos pelo enunciado (`AMBIENTE`, `QTDE_ROBOS`, `MEDIA_DISTANCIA`, `ROBO`, `MODELO`, `QTDE_DETECCOES`, `MEDIA_CONFIANCA`, `TIPO_OBSTACULO`, `QTDE_AMBIENTES`, `MENOR_DISTANCIA`, `ID_OPERACAO`, `QTDE_OPERACOES`).
+
+## Envio individual
+
+Cada integrante do grupo, Giovanni RM 570574, Suellen RM 573862 e Israel RM 573854, deve copiar e colar as cinco consultas individualmente no SurveyMonkey usando o RM só com números e o nome completo sem abreviações. Não suba nenhum arquivo no Portal dessa disciplina.
