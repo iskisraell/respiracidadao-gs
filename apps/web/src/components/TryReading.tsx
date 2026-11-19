@@ -39,7 +39,7 @@ export function TryReading() {
   return (
     <section className="card try">
       <h3>Teste uma leitura</h3>
-      <p className="muted">Mexa nos valores e veja o que a luz e a central respondem. Os números de gás são o índice cru do sensor.</p>
+      <p className="muted">Mexa nos controles e veja como a luz do sensor e a central classificam o ar. Nos dois primeiros controles, quanto maior o número, mais fumaça ou gás o sensor detectou.</p>
       <div className="presets">
         {PRESETS.map((p) => (
           <button key={p.name} className="chip" onClick={() => setV(p.v)}>{p.name}</button>

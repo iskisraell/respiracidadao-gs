@@ -2,7 +2,7 @@
   "title": "RESPIRACIDADÃO: O MODELO DA CENTRAL",
   "subtitle": [
     "Como a central decide se o ar está bom, carregado ou ruim",
-    "Resumo técnico que acompanha os slides"
+    "Resumo técnico que acompanha a apresentação"
   ],
   "meta": [
     {
@@ -22,20 +22,20 @@
       "value": "Giovanni Henrique Pereira Hessel (RM 570574)\nSuellen Pereira da Silva (RM 573862)\nIsrael Carneiro de Toledo (RM 573854)"
     }
   ],
-  "output_dir": "/home/agent/projects/respiracidadao-gs/docs/06-machine-learning-and-modelling",
+  "output_dir": "/home/agent/.t3/worktrees/respiracidadao-gs/t3-8e5d4313-ba7e8d34c0a31b13/docs/06-machine-learning-and-modelling",
   "filename": "06_RespiraCidadao_ML_Resumo",
   "sections": [
     {
-      "title": "1. DADOS E ALVO",
+      "title": "1. DADOS E OBJETIVO",
       "body": [
-        "Base real UCI Air Quality: 9.357 horas medidas numa cidade italiana. Depois de tirar as horas com código de falha do sensor (-200), ficaram 6.941 completas.",
-        "O alvo é o nível do ar pelo monóxido medido em laboratório: abaixo de 1,5 mg/m³ bom, até 3,0 carregado, acima ruim. As entradas são só as 4 medidas que nosso ESP32 tem: dois sensores de gás, temperatura e umidade. O modelo serve ao ODS 3 (aviso antes da crise respiratória), ao ODS 10 (sensor barato onde a estação oficial não chega) e ao ODS 11 (dado local aberto). O valor de laboratório nunca entra como entrada, então não há vazamento.",
-        "Separamos 80% para treino e 20% para teste antes de qualquer ajuste, com proporção de classes igual nos dois. Usamos um Pipeline do scikit-learn, que junta a padronização e o modelo num bloco só. Assim a média e o desvio usados para padronizar saem só do treino, e o teste continua sendo dado que o modelo nunca viu. A padronização importa para KNN e regressão logística, que medem distância e somam pesos. Para as árvores ela não muda nada, mas o mesmo Pipeline em todos os modelos deixa a comparação justa."
+        "Usamos a base pública real UCI Air Quality, com 9.357 horas medidas numa cidade italiana. Depois de retirar as horas em que o sensor falhou, marcadas com -200, ficaram 6.941 horas completas.",
+        "Queremos prever o nível do ar definido pelo monóxido de carbono medido em laboratório: abaixo de 1,5 mg/m³ é bom, até 3,0 é carregado e acima disso é ruim. Para não criar uma solução impossível na prática, o modelo só recebe as quatro medidas que nosso sensor barato consegue ler: dois sensores de gás, temperatura e umidade. O valor de laboratório nunca entra como entrada, evitando vazamento de resposta.",
+        "Separamos 80% das horas para treino e 20% para teste antes de qualquer ajuste, mantendo a mesma proporção de níveis nos dois grupos. Juntamos a padronização de escala e o modelo num mesmo fluxo de processamento para garantir que o conjunto de teste nunca influencie o preparo dos dados. O trabalho apoia os ODS 3, 10 e 11."
       ],
       "images": [
         {
-          "path": "/home/agent/projects/respiracidadao-gs/packages/ml-modelling/charts/01_eda_classes_box.png",
-          "caption": "Figura 1: Quantas horas em cada nível e como a medida de gases se separa entre eles.",
+          "path": "/home/agent/.t3/worktrees/respiracidadao-gs/t3-8e5d4313-ba7e8d34c0a31b13/packages/ml-modelling/charts/01_eda_classes_box.png",
+          "caption": "Figura 1: Quantidade de horas em cada nível e como a leitura de gases se separa entre eles.",
           "width": 150
         }
       ]
@@ -46,14 +46,14 @@
         {
           "headers": [
             "Modelo",
-            "Acurácia (treino)",
-            "Acurácia (teste)",
-            "F1-macro (teste)",
+            "Acerto no treino",
+            "Acerto no teste",
+            "F1-macro no teste",
             "Diferença"
           ],
           "rows": [
             [
-              "LogisticRegression (baseline)",
+              "LogisticRegression, referência linear",
               "86,5%",
               "87,3%",
               "87,5%",
@@ -67,28 +67,28 @@
               "+2,3 pp"
             ],
             [
-              "RandomForest (default)",
+              "RandomForest, padrão sem ajuste",
               "100,0%",
               "87,0%",
               "87,3%",
               "+13,0 pp"
             ],
             [
-              "KNN (k=15)",
+              "KNN, 15 vizinhos",
               "87,8%",
               "86,9%",
               "87,2%",
               "+0,9 pp"
             ],
             [
-              "DecisionTree (depth=8)",
+              "DecisionTree, profundidade 8",
               "88,8%",
               "86,1%",
               "86,3%",
               "+2,8 pp"
             ],
             [
-              "RandomForest (tuned, CV=5)",
+              "RandomForest, ajustada com validação cruzada",
               "88,6%",
               "87,1%",
               "87,4%",
@@ -105,31 +105,31 @@
         }
       ],
       "body": [
-        "A Random Forest sem ajuste decorou o treino (100%) e caiu no teste. Com busca aleatória de hiperparâmetros (RandomizedSearchCV) e validação cruzada em 5 partes do treino (F1-macro médio de 0,870 nas 5 partes), ela ficou com 87,1% no teste e só 1,5 ponto de diferença para o treino. Os valores escolhidos: 250 árvores, profundidade máxima 8, pelo menos 16 horas em cada folha, 10 para dividir um nó e as 4 medidas consideradas em cada divisão. Árvores mais rasas e folhas maiores impedem que ela decore casos isolados.",
-        "A regressão logística ficou 2 horas à frente em 1.389. Na prática é empate. Ficamos com a floresta porque o sensor de gás responde de forma não linear: a mesma fumaça dá leitura diferente com calor ou umidade alta. A floresta aprende essas combinações sem que a gente precise inventá-las, e mostra o peso de cada medida na decisão: fumaça e gases 83,7%, temperatura 10,0%, monóxido 4,4%, umidade 1,9%."
+        "A Random Forest sem ajuste decorou os dados de treino, chegando a 100%, mas caiu no teste. Fizemos uma busca aleatória de ajustes com validação cruzada em cinco partes do treino, atingindo F1-macro médio de 0,870. O modelo final ficou com 87,1% de acerto no teste e apenas 1,5 ponto percentual de diferença para o treino, usando 250 árvores de profundidade máxima 8 e pelo menos 16 horas por folha para impedir que ele decore casos isolados.",
+        "A regressão logística acertou duas horas a mais em 1.389, um empate técnico. Escolhemos a Random Forest porque sensores de gás reagem de forma não linear quando o calor e a umidade mudam, e a floresta aprende essas combinações naturalmente. O peso de cada medida na decisão ficou assim: fumaça e gases com 83,7%, temperatura com 10,0%, monóxido de carbono com 4,4%, umidade com 1,9%."
       ],
       "images": [
         {
-          "path": "/home/agent/projects/respiracidadao-gs/packages/ml-modelling/charts/02_confusao_feature_importance.png",
-          "caption": "Figura 2: Onde o modelo erra e quanto cada medida pesa.",
+          "path": "/home/agent/.t3/worktrees/respiracidadao-gs/t3-8e5d4313-ba7e8d34c0a31b13/packages/ml-modelling/charts/02_confusao_feature_importance.png",
+          "caption": "Figura 2: Onde o modelo erra no teste e quanto cada medida pesa na decisão.",
           "width": 150
         }
       ]
     },
     {
-      "title": "3. POR QUE SÓ AS MEDIDAS DO SENSOR",
+      "title": "3. POR QUE USAR SÓ AS MEDIDAS DO SENSOR",
       "tables": [
         {
           "headers": [
-            "Opção",
-            "Acerta de cada 100 horas",
-            "Funciona num bairro?"
+            "Abordagem",
+            "Acertos em 100 horas",
+            "Funciona num bairro comum?"
           ],
           "rows": [
             [
-              "Regra simples do sensor (sem internet)",
+              "Regra simples direto no sensor",
               "84",
-              "Sim, até sem rede"
+              "Sim, inclusive sem internet"
             ],
             [
               "Modelo com as 4 medidas do sensor",
@@ -139,12 +139,12 @@
             [
               "Modelo com 11 medidas de laboratório",
               "88",
-              "Não. Exige equipamento de estação oficial"
+              "Não, exige estação oficial cara"
             ],
             [
-              "4 medidas, testado em meses mais recentes",
+              "4 medidas testadas em meses inéditos",
               "85",
-              "É o número mais honesto para quem instala hoje"
+              "É o número mais honesto para o uso real"
             ]
           ],
           "col_widths": [
@@ -155,16 +155,16 @@
         }
       ],
       "body": [
-        "Entre as 1.389 horas de teste, nenhuma hora de ar bom virou ar ruim e nenhuma de ar ruim virou bom. Os erros ficam entre níveis vizinhos.",
-        "A última linha é o teste mais duro. O teste normal sorteia horas, e uma hora de teste pode ter a vizinha no treino. No teste temporal o modelo treinou nos primeiros 80% do calendário e foi avaliado nos 20% finais, meses que nunca viu. Caiu de 87 para 85, e é esse número que prometemos a quem instala."
+        "Nas 1.389 horas de teste, nenhuma hora de ar bom foi confundida com ar ruim, nem o contrário. Todos os erros ficaram entre níveis vizinhos.",
+        "A última linha da tabela é o teste mais exigente. No sorteio comum, o modelo pode ver horas muito próximas no tempo durante o treino. No teste temporal, ele treinou nos primeiros 80% do calendário e foi avaliado nos 20% finais, meses completamente inéditos. O acerto foi de 87% para 85%, e é essa transparência que levamos para quem instala o aparelho."
       ]
     },
     {
-      "title": "4. APLICAÇÃO NO PRODUTO E LIMITES",
+      "title": "4. USO NO APLICATIVO E LIMITES",
       "tables": [
         {
           "headers": [
-            "Leitura nunca vista",
+            "Leitura nunca vista pelo modelo",
             "Veredito",
             "Confiança"
           ],
@@ -193,8 +193,8 @@
         }
       ],
       "body": [
-        "A central roda o modelo a cada leitura e o app mostra \"A central conferiu e concorda: Ruim, com 93% de confiança.\" Quando discorda da luz do sensor, o app mostra os dois níveis e diz para seguir o mais cuidadoso.",
-        "Limite: dados de outro país e clima. Em cada bairro novo o sensor fica algumas semanas ao lado de uma estação oficial (CETESB) para recalibrar. Sensores de gás também envelhecem e precisam de troca."
+        "A central roda esse modelo a cada leitura recebida e o aplicativo traduz o resultado numa frase direta: \"A central conferiu e concorda: Ruim, com 93% de confiança.\" Se houver discordância com a luz local do sensor, o app recomenda seguir o nível mais cuidadoso.",
+        "Limite principal: os dados vieram de outro país e outro clima. Antes de operar num bairro novo, o sensor precisa passar algumas semanas ao lado de uma estação oficial da CETESB para recalibrar. Sensores de gás também envelhecem e exigem troca periódica."
       ]
     }
   ]

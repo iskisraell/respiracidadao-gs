@@ -20,55 +20,56 @@
     },
     {
       "label": "Integrantes:",
-      "value": "Giovanni Henrique Pereira Hessel (RM 570574)\nSuellen Pereira da Silva (RM 573862)\nIsrael Carneiro de Toledo (RM 573854)"
+      "value": "Giovanni Henrique Pereira Hessel, RM 570574\nSuellen Pereira da Silva, RM 573862\nIsrael Carneiro de Toledo, RM 573854"
     }
   ],
-  "output_dir": "/home/agent/.t3/worktrees/respiracidadao-gs/t3-741ae426-31aa4b13bad9b8e1/docs/01-ai-challenges",
+  "output_dir": "/home/agent/.t3/worktrees/respiracidadao-gs/t3-8e5d4313-ba7e8d34c0a31b13/docs/01-ai-challenges",
   "filename": "01_RespiraCidadao_Roteiro_Narracao_AIC",
   "sections": [
     {
-      "title": "1. A CENA DAS 7H40 E O PROBLEMA (0:00 A 0:50)",
+      "title": "1. A CENA DAS 7H40 E O PROBLEMA, 0:00 A 0:50",
       "body": [
-        "Olá! Eu sou a Suellen, do grupo Perceptron, com o Giovanni e o Israel. Esse é o RespiraCidadão. Imagine uma diretora de escola na periferia abrindo o celular às sete e quarenta e lendo: Ar ruim perto da escola agora. Feche as janelas e deixe a educação física para depois do almoço.",
-        "A OMS estima sete milhões de mortes por ano ligadas à poluição do ar. Queimadas e trânsito pioram crises de asma e bronquite primeiro em crianças, idosos e pacientes longe das estações oficiais, onde o boletim da cidade chega tarde.",
-        "Atendemos escolas, postos de saúde, famílias e vizinhos, ligados aos ODS 3, 10 e 11. Da live sobre tecnologia cidadã, trouxemos uma regra simples: funcionar sem treinamento. Por isso o app fala de ar, lugar, horário e ação."
+        "Olá! Eu sou a Suellen, do grupo Perceptron, com o Giovanni e o Israel. Esse é o RespiraCidadão. Imagine uma diretora de escola na periferia abrindo o celular às sete e quarenta da manhã e lendo: Ar ruim perto da escola agora. Feche as janelas e deixe a educação física para depois do almoço.",
+        "A Organização Mundial da Saúde estima sete milhões de mortes por ano ligadas à poluição do ar. Queimadas e trânsito pesado pioram crises de asma e bronquite primeiro em crianças, idosos e pacientes que vivem longe das estações oficiais, onde o boletim da cidade chega tarde demais para mudar a rotina.",
+        "Nosso sistema foi pensado para escolas, postos de saúde, famílias e vizinhos. Ele atua diretamente em saúde, redução das desigualdades e cidades sustentáveis, os ODS 3, 10 e 11. Da aula de abertura sobre tecnologia cidadã, trouxemos uma regra simples: ninguém deveria precisar de treinamento para usar o app. Por isso a tela mostra só o lugar, a situação do ar, o melhor horário e o que fazer agora."
       ]
     },
     {
-      "title": "2. A JORNADA DO DADO, MATÉRIA POR MATÉRIA (0:50 A 2:10)",
+      "title": "2. O CAMINHO DE UMA LEITURA, MATÉRIA POR MATÉRIA, 0:50 A 2:10",
       "body": [
-        "Para entregar um sistema completo de ponta a ponta, começamos pela arquitetura e pelo caminho de uma leitura, fechando um formato único de mensagem antes de programar. A jornada nasce na parede da escola: em Sensores e Sistemas, um sensor simples mede fumaça e gases, monóxido de carbono, temperatura e umidade, mudando a luz e tocando o alarme na hora, mesmo sem internet.",
-        "Em Estatística, quase sete mil horas reais provaram que essas quatro medidas baratas explicam 88% do monóxido de laboratório, definindo limites e horários. A leitura segue para a central em Python, que valida, salva o histórico e calcula os indicadores. Em Computação em Nuvem, essa engrenagem roda sob demanda, gravando em banco de dados e analisando a urgência dos relatos.",
-        "Sobre essas quatro medidas entram duas inteligências artificiais: em Aprendizado de Máquina, o modelo principal acerta 87 de cada 100 horas; em Redes Neurais, uma segunda rede independente confirma com 86%. E Cibersegurança fecha todo o percurso com trava de envios, senha para apagar, limpeza de texto e selo digital."
+        "Antes de escrever código, desenhamos juntos o caminho completo de uma leitura e fechamos um formato único de mensagem entre todas as frentes. Tudo começa na parede da escola. Em Sensores e Sistemas, uma placa simples mede fumaça, gases, temperatura e umidade. Se o ar piora, ela acende a luz de alerta e toca o alarme sonoro na hora, mesmo sem internet.",
+        "Em Estatística, analisamos quase sete mil horas de medições reais de uma estação de referência. Comprovamos que essas quatro medidas baratas explicam 88% do nível de monóxido de carbono medido em laboratório. Foi daí que saíram os limites de risco e o padrão por horário do dia.",
+        "A leitura segue para a nossa central em Python, que valida os números, grava o histórico e calcula os indicadores do app. Em Computação em Nuvem, publicamos essa mesma central na AWS usando função sob demanda, banco de dados PostgreSQL e painel de logs no CloudWatch, para o município pagar só quando chega leitura.",
+        "Sobre as quatro medidas do sensor entram duas inteligências artificiais. Em Aprendizado de Máquina, o modelo principal acerta 87 de cada 100 horas de teste. Em Redes Neurais, uma segunda rede independente revisa a decisão com 86% de acerto. Para fechar o ciclo, Cibersegurança protege todo o sistema com limite de envios por minuto, senha para apagar registros, limpeza de texto malicioso e selo digital contra adulteração."
       ]
     },
     {
-      "title": "3. O PRODUTO RODANDO DE PONTA A PONTA (2:10 A 3:25)",
+      "title": "3. O SISTEMA FUNCIONANDO AO VIVO, 2:10 A 3:25",
       "body": [
-        "Veja tudo trabalhando junto. No simulador, disparamos uma queimada perto da escola: fumaça alta, 31 graus e ar seco. A luz vermelha acende, o alarme toca e a leitura atravessa a central.",
-        "Na tela Agora do app, aparecem UBS Vila Esperança em verde, Praça da Sé em amarelo e Escola Jardim Primavera em vermelho. Ao tocar na escola, o cartão diz: Ar ruim agora. Mostra o que fazer, como cancelar atividades ao ar livre, fechar janelas e avisar quem tem asma, e a central confirma: Ruim, com 93% de confiança.",
-        "Logo abaixo, o melhor horário usa as quase sete mil horas reais e indica o turno das 14 às 17 horas, quando o ar ruim cai para 19%, contra 49% às oito da manhã. Ao lado, um vizinho avisa sobre cheiro de queimada no portão: sem pedir nome nem localização, a central limpa o texto e marca como urgente, separado do sensor."
+        "Agora vamos ver tudo rodando junto. No simulador do sensor, disparamos uma queimada perto da escola: fumaça alta, 31 graus e ar seco. A luz vermelha acende, o alarme toca e a leitura segue para a central.",
+        "Na tela principal do aplicativo, vemos a UBS Vila Esperança em verde, a Praça da Sé em amarelo e a Escola Jardim Primavera em vermelho. Ao tocar na escola, o cartão avisa: Ar ruim agora. Ele lista ações diretas, como suspender atividades ao ar livre, fechar janelas e avisar quem tem asma. Logo abaixo, a central confirma o alerta vermelho com 93% de confiança.",
+        "Descendo a tela, o bloco de melhor horário usa as quase sete mil horas reais e sugere o período das 14 às 17 horas, quando a chance de ar ruim cai para 19%, contra 49% às oito da manhã. Ao lado, um vizinho envia um relato avisando sobre cheiro de queimada no portão. O app não pede nome nem localização, limpa o texto recebido e marca o aviso como urgente, sempre separado da medição do sensor."
       ]
     },
     {
-      "title": "4. CONFIANÇA, TESTE AO VIVO E SEGURANÇA (3:25 A 4:20)",
+      "title": "4. TRANSPARÊNCIA, TESTE AO VIVO E SEGURANÇA, 3:25 A 4:20",
       "body": [
-        "Na tela Como funciona, abrimos os números reais de teste em português simples. A luz do sensor acerta 84 de cada 100 horas sozinha. A central sobe para 87 e mantém 85 em meses inéditos. Em mais de mil e trezentas horas de teste, nunca confundiu ar bom com ar ruim.",
-        "Ali dá para testar uma leitura ao vivo: mudando de Manhã limpa para Queimada perto, sensor, modelo principal e rede neural concordam no vermelho na hora. E a segurança está provada em 24 testes automáticos: acima de 30 envios por minuto bloqueia, apagar sem senha é recusado e qualquer edição no banco quebra o selo digital."
+        "Na aba Como funciona, mostramos os números reais de teste em português simples. A luz do sensor acerta 84 de cada 100 horas sozinha. A central sobe esse acerto para 87 e mantém 85 quando avaliamos em meses futuros que o modelo nunca tinha visto. Em mais de mil e trezentas horas de teste, o sistema nunca confundiu ar bom com ar ruim.",
+        "Nessa mesma tela, qualquer pessoa pode simular uma leitura ao vivo. Mudando o cenário de Manhã limpa para Queimada perto, o sensor, o modelo principal e a rede neural concordam no alerta vermelho na hora. Já a parte de segurança foi validada em 24 testes automáticos: mais de 30 envios por minuto são bloqueados, tentativas de apagar dados sem senha são recusadas e qualquer alteração manual no banco quebra o selo digital."
       ]
     },
     {
-      "title": "5. GESTÃO DO TIME E DECISÕES DIFÍCEIS (4:20 A 5:05)",
+      "title": "5. DIVISÃO DO TIME E DECISÕES DIFÍCEIS, 4:20 A 5:05",
       "body": [
-        "Dividimos o grupo em três frentes: sensor e nuvem; estatística e inteligência artificial; central em Python, app e segurança. Todas presas ao mesmo formato de mensagem e a um plano único, fechando cada fase só com os 24 testes passando.",
-        "Duas escolhas deixaram o sistema mais real. Primeiro: onze medidas de laboratório acertavam um ponto a mais, mas nenhuma escola tem esse equipamento; cortamos para as quatro medidas do sensor barato. Segundo: no simulador sem acesso externo, a falta de internet virou rotina com luz e alarme locais ativos, provando o envio num receptor em Python."
+        "Dividimos o trabalho em três frentes: sensor e nuvem; estatística e modelos de IA; central em Python, aplicativo e segurança. Todas seguiram o mesmo formato de mensagem e o mesmo repositório, avançando de etapa apenas com os 24 testes passando.",
+        "Três decisões técnicas deixaram o projeto mais pé no chão. Primeiro: usar onze medidas de laboratório dava um ponto a mais de acerto, mas nenhuma escola tem esse equipamento. Mantivemos apenas as quatro medidas do sensor barato. Segundo: como o simulador gratuito não libera conexão externa, fizemos o alerta local funcionar sem internet e validamos o envio com um receptor em Python. Terceiro: quando o laboratório da AWS bloqueou o serviço pago de análise de texto, trocamos para um modelo gratuito da Hugging Face com plano de contingência que nunca interrompe a gravação do sensor."
       ]
     },
     {
-      "title": "6. PRÓXIMOS PASSOS E FECHAMENTO (5:05 A 5:50)",
+      "title": "6. PRÓXIMOS PASSOS E ENCERRAMENTO, 5:05 A 5:50",
       "body": [
-        "Com a solução completa de ponta a ponta pronta em software e simulação, nossos próximos passos levam o RespiraCidadão para a rua: montar a placa física com bateria solar e rádio para áreas sem Wi-Fi, calibrar ao lado de uma estação oficial da CETESB e enviar avisos no WhatsApp.",
-        "Fechamos cuidando do uso real: acessibilidade com cor, palavra e alarme sonoro; privacidade e LGPD com relato anônimo sem nome nem localização; e sustentabilidade com modelos leves e nuvem cobrada só quando chega leitura. Esse é o RespiraCidadão: ciência, dados e inteligência artificial virando uma frase simples, na hora certa, para proteger quem mais precisa. Muito obrigada!"
+        "Com o sensor simulado, a central local, o aplicativo, os modelos de IA e a nuvem na AWS rodando e validados, o próximo passo é levar o RespiraCidadão para a rua. Isso significa montar a placa física com bateria solar e rádio para áreas sem Wi-Fi, calibrar o sensor por algumas semanas ao lado de uma estação oficial da CETESB e enviar os alertas também pelo WhatsApp.",
+        "Fechamos pensando em quem vai usar no dia a dia: cor sempre acompanhada de texto e alarme sonoro para acessibilidade, relatos anônimos seguindo a LGPD e cobrança sob demanda na nuvem para caber no orçamento de uma escola ou prefeitura. Esse é o RespiraCidadão, feito para avisar a tempo antes da crise começar. Muito obrigada!"
       ]
     }
   ]

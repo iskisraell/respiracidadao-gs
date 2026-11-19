@@ -2,7 +2,7 @@
   "title": "RESPIRACIDADÃO: A CENTRAL EM PYTHON",
   "subtitle": [
     "API que recebe o sensor, decide o nível e guarda o histórico",
-    "FastAPI com persistência em CSV"
+    "Servidor FastAPI com gravação em CSV e indicadores"
   ],
   "meta": [
     {
@@ -22,68 +22,67 @@
       "value": "Giovanni Henrique Pereira Hessel (RM 570574)\nSuellen Pereira da Silva (RM 573862)\nIsrael Carneiro de Toledo (RM 573854)"
     }
   ],
-  "output_dir": "/home/agent/projects/respiracidadao-gs/docs/05-computational-thinking-with-python",
+  "output_dir": "/home/agent/.t3/worktrees/respiracidadao-gs/t3-8e5d4313-ba7e8d34c0a31b13/docs/05-computational-thinking-with-python",
   "filename": "05_RespiraCidadao_API_Python",
   "sections": [
     {
       "title": "1. O QUE A CENTRAL FAZ",
       "body": [
-        "Problema: escolas e UBS da periferia não sabem quando o ar perto delas piora. Público: coordenação de escola e UBS e famílias com criança, idoso ou alguém com asma. O sensor na escola só sabe acender uma luz. Quem guarda o histórico, confere com o modelo e responde ao app é a central. Ela recebe o JSON do ESP32 e recusa leitura incompleta com erro 400. Uma função condicional decide o nível. A leitura vai com data e hora para o CSV (data/runtime/leituras.csv) e para o SQLite, e os indicadores são recalculados a cada consulta.",
-        "As medidas: gas_voc é o sensor de fumaça e gases, e gas_co o de monóxido de carbono. Os dois devolvem um número bruto, sem unidade, que sobe quando o ar piora. Limiares em um dicionário: gas_voc atenção 830 e crítico 1140; gas_co atenção 1010 e crítico 1280. São os mesmos números do firmware e da função na nuvem.",
-        "Contrato JSON que o sensor envia: {\"dispositivo_id\": \"esp32-escola-zona-norte\", \"tipo\": \"esp32\", \"latitude\": -23.49, \"longitude\": -46.62, \"metrica\": \"gas_voc\", \"valor\": 1280, \"gas_co\": 1383, \"temperatura_c\": 31, \"umidade_pct\": 34}."
+        "O sensor na parede da escola só sabe acender uma luz e tocar um alarme. Quem guarda o histórico, confere a leitura com o modelo de inteligência artificial e responde ao aplicativo é a central em Python. Ela recebe os dados do ESP32, recusa leituras incompletas ou absurdas, decide o nível do ar com uma função condicional, grava a linha com data e hora no arquivo CSV e no banco local e recalcula os indicadores a cada consulta.",
+        "Os dois sensores de gás devolvem índices numéricos que sobem conforme o ar piora. Os limiares ficam guardados em um dicionário Python: para fumaça e gases, atenção em 830 e crítico em 1140; para monóxido de carbono, atenção em 1010 e crítico em 1280. São exatamente os mesmos cortes do sensor e da versão na nuvem."
       ],
       "images": [
         {
-          "path": "/home/agent/projects/respiracidadao-gs/docs/assets/uml_sequencia_leitura.png",
-          "caption": "Figura 1: Diagrama de sequência UML de uma leitura, do sensor ao app.",
+          "path": "/home/agent/.t3/worktrees/respiracidadao-gs/t3-8e5d4313-ba7e8d34c0a31b13/docs/assets/uml_sequencia_leitura.png",
+          "caption": "Figura 1: Fluxo de uma leitura, do sensor até o aplicativo.",
           "width": 165
         }
       ]
     },
     {
-      "title": "2. ROTAS",
+      "title": "2. ROTAS DA API",
       "tables": [
         {
           "headers": [
             "Rota",
             "Método",
-            "O que faz"
+            "Função"
           ],
           "rows": [
             [
               "/ocorrencias",
               "POST",
-              "Confere tipo e faixa de cada campo (campo ausente ou valor absurdo volta 400), classifica, grava CSV e SQLite, devolve 201"
+              "Valida cada campo, recusa leitura inválida com erro 400, classifica o risco, grava em CSV e banco local e devolve 201"
             ],
             [
               "/ocorrencias",
               "GET",
-              "Lista leituras, com filtro por nível ou por sensor"
+              "Lista as leituras salvas, permitindo filtrar por nível de risco ou por sensor"
             ],
             [
               "/indicadores",
               "GET",
-              "Total, alertas, percentual de alerta, média, mínimo e máximo"
+              "Calcula total de leituras, quantidade e percentual de alertas, média, mínimo e máximo"
             ],
             [
               "/locais",
               "GET",
-              "Cada lugar com a última leitura, o nível, a frase e o que fazer"
+              "Devolve cada local monitorado com a última leitura, a frase de orientação e o que fazer"
             ],
             [
               "/relatos",
               "POST e GET",
-              "Relato de vizinho, limpo, com urgência detectada"
+              "Recebe e lista relatos de vizinhos, limpando o texto e detectando urgência"
             ],
             [
               "/padrao-horario",
               "GET",
-              "Risco por hora do dia e a melhor janela para atividade ao ar livre"
+              "Mostra o risco médio por hora do dia e destaca a melhor faixa para atividades ao ar livre"
             ],
             [
               "/health",
               "GET",
-              "Estado da central e dos modelos"
+              "Informa se a central e os modelos estão funcionando"
             ]
           ],
           "col_widths": [
@@ -95,71 +94,69 @@
       ]
     },
     {
-      "title": "3. TRÊS CENÁRIOS DE TESTE",
+      "title": "3. CENÁRIOS DE TESTE E LIMITES",
       "tables": [
         {
           "headers": [
             "Cenário",
-            "Entrada",
-            "Resposta"
+            "Entrada enviada",
+            "Resposta da central"
           ],
           "rows": [
             [
-              "1. Ar bom na UBS",
-              "gas_voc=706, gas_co=925, 18 °C, 55%",
-              "201, nivel_risco=normal, gravado no CSV"
+              "Ar bom na UBS",
+              "Gases 706, CO 925, 18 °C, 55% umidade",
+              "Aceito com 201, nível normal, gravado no CSV"
             ],
             [
-              "2. Ar carregado na praça",
-              "gas_voc=980, gas_co=1120, 24 °C, 42%",
-              "201, nivel_risco=atencao, alerta=true"
+              "Ar carregado na praça",
+              "Gases 980, CO 1120, 24 °C, 42% umidade",
+              "Aceito com 201, nível atenção e alerta ativo"
             ],
             [
-              "3. Ar ruim na escola",
-              "gas_voc=1280, gas_co=1383, 31 °C, 34%",
-              "201, nivel_risco=critico, alerta=true"
+              "Ar ruim na escola",
+              "Gases 1280, CO 1383, 31 °C, 34% umidade",
+              "Aceito com 201, nível crítico e alerta ativo"
             ],
             [
-              "Extra: JSON incompleto",
-              "sem o campo valor",
-              "400, nada gravado"
+              "Leitura incompleta",
+              "Mensagem sem o campo de valor",
+              "Recusado com erro 400 e nada gravado"
             ]
           ],
           "col_widths": [
-            44,
-            66,
+            42,
+            68,
             70
           ]
         }
       ],
       "body": [
-        "As saídas abaixo são da central rodando de verdade: os 3 cenários do sensor, um POST manual com resposta 201, um JSON incompleto recusado com 400, as linhas do CSV, a consulta GET e os indicadores. A Figura 5 traz os trechos do código que fazem cada passo.",
-        "Para rodar, instale com pip install -e apps/api e suba a central da raiz do repositório com uvicorn app.main:app --app-dir apps/api --port 8000. No JSON, dispositivo_id e valor são obrigatórios; metrica assume gas_voc e os demais campos (gas_co, temperatura_c, umidade_pct, medido_em) são opcionais. Os cenários do sensor rodam com python packages/iot-aicss/run_3_cenarios.py, e os 24 testes automáticos com pytest apps/api/tests.",
-        "Limitações: sem os arquivos dos modelos, a central continua gravando com a regra de limiar e devolve ia_risco nulo. CSV é ótimo para abrir numa planilha e ruim para muitas escritas ao mesmo tempo. Para vários bairros, a central vai para a nuvem com PostgreSQL. Nem a regra por limiar nem o modelo da central olham a sequência no tempo: os dois avaliam uma leitura por vez. O histórico aparece no padrão por hora (GET /padrao-horario) e nas últimas leituras de cada lugar (GET /locais).",
-        "ODS 3 e ODS 11."
+        "Todas as capturas abaixo foram tiradas com a central ligada de verdade: os três cenários do sensor, um envio manual aceito, envios inválidos recusados, as linhas gravadas no CSV e os indicadores calculados. O projeto também conta com 24 testes automáticos cobrindo rotas, validação e segurança.",
+        "Limites conhecidos: se os arquivos de modelo de IA não estiverem presentes, a central continua funcionando normalmente pela regra de limiar. Além disso, gravar em CSV é ótimo para abrir numa planilha, mas não aguenta muitos sensores escrevendo ao mesmo tempo. Para atender vários bairros simultaneamente, a central sobe para a nuvem com banco PostgreSQL. O sistema apoia os ODS 3 e 11."
       ]
     },
     {
       "title": "4. A CENTRAL RODANDO",
       "images": [
         {
-          "path": "/home/agent/projects/respiracidadao-gs/docs/evidencias/05_cenarios.png",
-          "caption": "Figura 2: Os 3 cenários enviados pelo script do sensor.",
+          "path": "/home/agent/.t3/worktrees/respiracidadao-gs/t3-8e5d4313-ba7e8d34c0a31b13/docs/evidencias/05_cenarios.png",
+          "caption": "Figura 2: Os três cenários enviados pelo script do sensor para a central.",
           "width": 160
         },
         {
-          "path": "/home/agent/projects/respiracidadao-gs/docs/evidencias/05_post.png",
-          "caption": "Figura 3: POST aceito com 201; JSON sem valor e medida com data no futuro recusados com 400.",
+          "path": "/home/agent/.t3/worktrees/respiracidadao-gs/t3-8e5d4313-ba7e8d34c0a31b13/docs/evidencias/05_post.png",
+          "caption": "Figura 3: Envio válido aceito com 201; leituras sem valor ou com data no futuro recusadas com 400.",
           "width": 160
         },
         {
-          "path": "/home/agent/projects/respiracidadao-gs/docs/evidencias/05_csv_indicadores.png",
-          "caption": "Figura 4: Linhas do CSV com data e hora, GET /ocorrencias filtrando ar ruim e GET /indicadores.",
+          "path": "/home/agent/.t3/worktrees/respiracidadao-gs/t3-8e5d4313-ba7e8d34c0a31b13/docs/evidencias/05_csv_indicadores.png",
+          "caption": "Figura 4: Linhas salvas no CSV com data e hora, consulta filtrando ar ruim e indicadores calculados.",
           "width": 160
         },
         {
-          "path": "/home/agent/projects/respiracidadao-gs/docs/evidencias/05_codigo.png",
-          "caption": "Figura 5: O código por trás: limiares num dicionário, decisão com if, gravação no CSV e indicadores calculados com laço.",
+          "path": "/home/agent/.t3/worktrees/respiracidadao-gs/t3-8e5d4313-ba7e8d34c0a31b13/docs/evidencias/05_codigo.png",
+          "caption": "Figura 5: Trechos principais do código: dicionário de limiares, decisão condicional, gravação no CSV e cálculo de indicadores.",
           "width": 160
         }
       ]

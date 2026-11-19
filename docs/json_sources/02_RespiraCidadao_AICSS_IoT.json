@@ -22,135 +22,136 @@
       "value": "Giovanni Henrique Pereira Hessel (RM 570574)\nSuellen Pereira da Silva (RM 573862)\nIsrael Carneiro de Toledo (RM 573854)"
     }
   ],
-  "output_dir": "/home/agent/projects/respiracidadao-gs/docs/02-ai-computer-systems-and-sensors",
+  "output_dir": "/home/agent/.t3/worktrees/respiracidadao-gs/t3-8e5d4313-ba7e8d34c0a31b13/docs/02-ai-computer-systems-and-sensors",
   "filename": "02_RespiraCidadao_AICSS_IoT",
   "sections": [
     {
-      "title": "1. O PROBLEMA E POR QUE UM SENSOR NO LUGAR",
+      "title": "1. O PROBLEMA E POR QUE UM SENSOR NO LOCAL",
       "body": [
-        "Escolas e UBS da periferia ficam longe das estações oficiais de qualidade do ar. Quando a fumaça chega, ninguém no prédio sabe até alguém começar a tossir. Um sensor pequeno na parede resolve a parte mais urgente: avisa quem está ali, na hora, com luz e som, e manda a leitura para a central do bairro.",
-        "A OMS estima cerca de 7 milhões de mortes por ano ligadas à poluição do ar, e crianças respiram mais ar por quilo de corpo que adultos. ODS 3 (saúde e bem-estar) e ODS 11 (cidades sustentáveis)."
+        "Escolas e postos de saúde da periferia ficam longe das estações oficiais de qualidade do ar. Quando a fumaça chega, ninguém no prédio percebe até alguém começar a tossir. Um sensor pequeno na parede resolve a parte mais urgente: avisa quem está ali na hora, com luz e som, e envia a medição para a central do bairro.",
+        "A Organização Mundial da Saúde estima cerca de 7 milhões de mortes por ano ligadas à poluição do ar, e crianças respiram mais ar por quilo de corpo que adultos. O projeto se conecta diretamente ao ODS 3, de saúde e bem-estar, e ao ODS 11, de cidades sustentáveis."
       ]
     },
     {
-      "title": "2. O CIRCUITO",
+      "title": "2. O CIRCUITO E COMO ELE DECIDE",
       "tables": [
         {
           "headers": [
-            "Peça",
-            "Pino",
-            "Por que está ali"
+            "Componente",
+            "Pino no ESP32",
+            "Função no circuito"
           ],
           "rows": [
             [
-              "Sensor de fumaça e gases (potenciômetro no Wokwi)",
+              "Sensor de fumaça e gases",
               "GPIO 34",
-              "Medida principal. Decide a cor da luz."
+              "Medida principal que define a cor da luz. Simulado por potenciômetro no Wokwi."
             ],
             [
-              "Sensor de monóxido (potenciômetro no Wokwi)",
+              "Sensor de monóxido de carbono",
               "GPIO 35",
-              "Segunda medida de gás, usada pela central."
+              "Segunda medida de gás, enviada para a central conferir. Também simulado por potenciômetro."
             ],
             [
-              "DHT22",
+              "Sensor DHT22",
               "GPIO 15",
-              "Temperatura e umidade. Ar quente e seco segura a fumaça perto do chão."
+              "Mede temperatura e umidade. Ar quente e seco prende a fumaça perto do chão."
             ],
             [
-              "LEDs verde, amarelo e vermelho (220 Ω)",
-              "GPIO 26, 27, 14",
-              "Mostram o nível para quem passa."
+              "LEDs verde, amarelo e vermelho",
+              "GPIO 26, 27 e 14",
+              "Mostram o estado do ar para quem passa, ligados com resistores de 220 ohms."
             ],
             [
               "Buzzer",
               "GPIO 25",
-              "Bip curto em ar carregado, alarme longo em ar ruim. Serve a quem não está olhando."
+              "Emite bip curto em ar carregado e alarme longo em ar ruim para quem não está olhando."
             ]
           ],
           "col_widths": [
-            62,
-            30,
-            88
+            56,
+            32,
+            92
           ]
         }
       ],
       "body": [
-        "O firmware classifica cada sensor separado. Fumaça e gases: abaixo de 830 bom, de 830 a 1139 carregado, 1140 ou mais ruim. Monóxido: cortes em 1010 e 1280. Umidade abaixo de 30% aparece como umidade=atencao na linha SENSORES do monitor serial e segue no JSON para a central, mas não muda a luz. A luz e o buzzer seguem só a medida de fumaça e gases, e funcionam sem rede. Avaliamos essa regra nas 1.389 horas separadas para teste da base real: ela acerta 84 de cada 100, sem depender de internet. Os índices 830 e 1140 estão na mesma escala dos sensores de óxido metálico da base UCI (de 380 a 2250), que os potenciômetros do Wokwi reproduzem.",
-        "A cada 3 segundos o ESP32 monta um JSON e envia por HTTP POST para a central: {dispositivo_id, tipo, latitude, longitude, metrica: \"gas_voc\", valor, gas_co, temperatura_c, umidade_pct}. É o mesmo contrato da API em Python e da função na nuvem. O sensor não manda relato; relato é coisa de pessoa."
+        "O código embarcado no ESP32 classifica cada gás com regras simples que funcionam sem internet. Para fumaça e gases, valores abaixo de 830 indicam ar bom, de 830 a 1139 indicam ar carregado e 1140 ou mais indicam ar ruim. Para monóxido de carbono, os cortes ficam em 1010 e 1280. Esses números seguem a mesma escala dos sensores de óxido metálico da base real usada pelo grupo, que vai de 380 a 2250.",
+        "Quando a umidade cai abaixo de 30%, o monitor serial sinaliza ar seco e envia o dado para a central, sem alterar a cor da luz. Testamos essa regra local em 1.389 horas reais separadas para avaliação: sozinha, sem depender de internet, ela acerta 84 de cada 100 horas.",
+        "A cada 3 segundos o ESP32 monta uma mensagem em formato JSON com o identificador do sensor, localização do prédio e as quatro medições, e tenta enviá-la por HTTP para a central. É exatamente o mesmo formato aceito pela API em Python e pela função na nuvem."
       ]
     },
     {
-      "title": "3. OS TRÊS COMPORTAMENTOS",
+      "title": "3. OS TRÊS COMPORTAMENTOS DEMONSTRADOS",
       "tables": [
         {
           "headers": [
             "Situação",
-            "Leitura",
-            "No sensor",
-            "Na central"
+            "Leitura do sensor",
+            "Resposta no aparelho",
+            "Resposta da central"
           ],
           "rows": [
             [
-              "Ar bom (UBS de manhã)",
-              "706 / 925 / 18 / 55%",
-              "LED verde, buzzer mudo",
-              "201, Bom, 100% de confiança"
+              "Ar bom na UBS de manhã",
+              "Gases 706, CO 925, 18 °C, 55% umidade",
+              "LED verde e buzzer mudo",
+              "Aceito, Bom, 100% de confiança"
             ],
             [
-              "Ar carregado (praça, fim de tarde)",
-              "980 / 1120 / 24 / 42%",
-              "LED amarelo, bip de 150 ms",
-              "201, Carregado, 95%"
+              "Ar carregado na praça",
+              "Gases 980, CO 1120, 24 °C, 42% umidade",
+              "LED amarelo e bip curto",
+              "Aceito, Carregado, 95% de confiança"
             ],
             [
-              "Ar ruim (queimada perto da escola)",
-              "1280 / 1383 / 31 / 34%",
-              "LED vermelho, alarme de 1800 Hz",
-              "201, Ruim, 93%"
+              "Ar ruim perto da escola",
+              "Gases 1280, CO 1383, 31 °C, 34% umidade",
+              "LED vermelho e alarme contínuo",
+              "Aceito, Ruim, 93% de confiança"
             ]
           ],
           "col_widths": [
+            40,
+            56,
             42,
-            52,
-            44,
             42
           ]
         }
       ],
       "body": [
-        "Leitura na ordem: fumaça e gases / monóxido / temperatura / umidade. A tabela vem de run_3_cenarios.py enviando os três estados para a central; a coluna Na central é a resposta dela. Nos prints do Wokwi, os potenciômetros girados à mão pararam a uma unidade desses valores (706/926 e 1279/1384) e acenderam as mesmas luzes."
+        "Esses três cenários foram reproduzidos tanto no simulador Wokwi, girando os potenciômetros à mão, quanto pelo script run_3_cenarios.py enviando os mesmos dados para a central. Nos prints do simulador, o ajuste manual parou a uma unidade desses valores e acionou exatamente as mesmas luzes e alarmes."
       ]
     },
     {
       "title": "4. PRINTS DO SIMULADOR",
       "images": [
         {
-          "path": "/home/agent/projects/respiracidadao-gs/packages/iot-aicss/evidencias/wokwi_1_ar_bom.png",
-          "caption": "Figura 1: Ar bom. LED verde aceso e JSON no monitor serial.",
+          "path": "/home/agent/.t3/worktrees/respiracidadao-gs/t3-8e5d4313-ba7e8d34c0a31b13/packages/iot-aicss/evidencias/wokwi_1_ar_bom.png",
+          "caption": "Figura 1: Ar bom. LED verde aceso e mensagem JSON exibida no monitor serial.",
           "width": 150
         },
         {
-          "path": "/home/agent/projects/respiracidadao-gs/packages/iot-aicss/evidencias/wokwi_2_ar_carregado.png",
-          "caption": "Figura 2: Ar carregado. LED amarelo.",
+          "path": "/home/agent/.t3/worktrees/respiracidadao-gs/t3-8e5d4313-ba7e8d34c0a31b13/packages/iot-aicss/evidencias/wokwi_2_ar_carregado.png",
+          "caption": "Figura 2: Ar carregado. LED amarelo aceso.",
           "width": 150
         },
         {
-          "path": "/home/agent/projects/respiracidadao-gs/packages/iot-aicss/evidencias/wokwi_3_ar_ruim.png",
-          "caption": "Figura 3: Ar ruim. LED vermelho e alarme.",
+          "path": "/home/agent/.t3/worktrees/respiracidadao-gs/t3-8e5d4313-ba7e8d34c0a31b13/packages/iot-aicss/evidencias/wokwi_3_ar_ruim.png",
+          "caption": "Figura 3: Ar ruim. LED vermelho aceso e alarme disparado.",
           "width": 150
         }
       ]
     },
     {
-      "title": "5. O JSON CHEGANDO E VIRANDO CSV",
+      "title": "5. A LEITURA CHEGANDO E VIRANDO PLANILHA CSV",
       "body": [
-        "O Wokwi gratuito não alcança um servidor fora do navegador, então provamos o envio com o receptor Python (receiver_csv.py) recebendo o mesmo JSON dos três cenários. O print mostra o receptor confirmando cada leitura e as linhas gravadas no CSV. A saída serial do firmware está nas Figuras 1 a 3."
+        "A versão gratuita do simulador Wokwi não alcança servidores fora do navegador. Para comprovar a recepção e a gravação dos dados, usamos o receptor Python receiver_csv.py recebendo o mesmo JSON dos três cenários e salvando cada leitura com data e hora no arquivo CSV."
       ],
       "images": [
         {
-          "path": "/home/agent/projects/respiracidadao-gs/docs/evidencias/02_json_csv.png",
-          "caption": "Figura 4: Receptor confirmando as três leituras e as linhas gravadas no CSV.",
+          "path": "/home/agent/.t3/worktrees/respiracidadao-gs/t3-8e5d4313-ba7e8d34c0a31b13/docs/evidencias/02_json_csv.png",
+          "caption": "Figura 4: Receptor Python confirmando as três leituras e gravando as linhas no CSV.",
           "width": 165
         }
       ]
@@ -159,15 +160,15 @@
       "title": "6. O QUE É REAL E O QUE É SIMULADO",
       "bullets": [
         {
-          "text": "Real: firmware em C++, circuito do Wokwi (diagram.json), receptor Python que grava CSV (receiver_csv.py) e o script que reproduz os 3 cenários (run_3_cenarios.py), testado contra a API e contra o receptor.",
+          "text": "Real: código do ESP32 em C++, esquema do circuito em diagram.json, receptor Python que grava CSV e o script que reproduz os três cenários contra a central.",
           "level": 0
         },
         {
-          "text": "Simulado: os dois sensores de gás são potenciômetros. Um sensor de verdade precisa de aquecimento e calibração ao lado de uma estação oficial antes de valer o número.",
+          "text": "Simulado: os dois sensores de gás são representados por potenciômetros no simulador. Num aparelho físico, sensores de gás precisam de aquecimento e calibração ao lado de uma estação oficial antes de valerem como medida.",
           "level": 0
         },
         {
-          "text": "Limite do Wokwi gratuito: a simulação não alcança um servidor fora do navegador. Nesse caso o sensor imprime \"SEM REDE: alerta local ativo\" e continua acendendo a luz certa. É o comportamento que queremos numa queda de Wi-Fi.",
+          "text": "Comportamento sem internet: quando a rede falha ou o simulador bloqueia o acesso externo, o sensor registra que está sem rede e mantém a luz e o alarme local funcionando. Esse é justamente o comportamento esperado numa escola durante uma queda de Wi-Fi.",
           "level": 0
         }
       ]

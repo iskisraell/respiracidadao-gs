@@ -60,18 +60,18 @@ export function HowItWorks() {
         <h3>Seus dados</h3>
         <ul className="plain">
           <li>O relato não pede nome, telefone nem localização. Guardamos só o texto e o lugar escolhido.</li>
-          <li>Cada medida recebe um selo digital na hora em que chega. Se alguém mudar a medida no banco sem a chave do selo, o selo deixa de bater.</li>
-          <li>Ninguém consegue inundar a central: cada endereço pode mandar até 30 envios por minuto.</li>
+          <li>Cada medida ganha uma assinatura digital na hora em que chega. Se alguém alterar um valor salvo no banco depois, o sistema identifica a adulteração na hora.</li>
+          <li>Para evitar enxurrada de envios falsos, cada endereço pode mandar até 30 registros por minuto.</li>
         </ul>
       </section>
 
       <section className="card">
-        <h3>O que ainda não resolvemos</h3>
+        <h3>O que ainda falta para ir para a rua</h3>
         <ul className="plain">
-          <li>Por enquanto o sensor roda num simulador. A placa física ainda precisa ser montada e comparada com um medidor oficial antes de valer como medida.</li>
-          <li>A central aprendeu com dados de outra cidade. Em cada bairro novo, o sensor precisa ficar algumas semanas ao lado de uma estação oficial para calibrar.</li>
-          <li>Sensores de gás perdem precisão com o tempo e precisam de troca ou recalibração.</li>
-          <li>A dica de horário é uma média. Num dia de queimada, vale o que o sensor está medindo agora.</li>
+          <li>O sensor físico ainda está em simulação no computador. Antes de instalar numa escola, precisamos montar a placa e comparar a leitura dela com a de uma estação oficial.</li>
+          <li>A central aprendeu com medições de outra cidade. Em cada bairro novo, o sensor precisa passar algumas semanas ao lado de uma estação oficial para ajustar a calibração ao clima local.</li>
+          <li>Sensores de gás perdem precisão com o uso contínuo e precisam de troca periódica.</li>
+          <li>A dica de melhor horário é uma média histórica. Em dia de queimada, vale sempre o que o sensor está medindo no momento.</li>
         </ul>
       </section>
     </main>

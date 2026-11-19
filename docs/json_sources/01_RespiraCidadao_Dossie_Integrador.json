@@ -2,9 +2,9 @@
   "title": "RESPIRACIDADÃO",
   "subtitle": [
     "O ar perto de você, em uma frase",
-    "Visão geral do produto"
+    "Visão geral do projeto integrador"
   ],
-  "subtitle_note": "Problema, arquitetura, demonstração e o que vem depois",
+  "subtitle_note": "Problema, arquitetura, demonstração e próximos passos",
   "meta": [
     {
       "label": "Sala:",
@@ -29,25 +29,25 @@
     {
       "title": "1. O PROBLEMA E PARA QUEM",
       "body": [
-        "Uma diretora abre o celular às 7h40 e lê: \"Ar ruim perto da escola agora. Mantenha as janelas fechadas e deixe a educação física para depois do almoço.\" O RespiraCidadão existe para essa frase chegar a tempo e ser verdadeira.",
-        "A Organização Mundial da Saúde estima cerca de 7 milhões de mortes por ano ligadas à poluição do ar. Fumaça de queimada e trânsito pesado pioram crises de asma e de bronquite crônica (DPOC). Quem sente primeiro são crianças, idosos e pacientes de UBS na periferia, onde quase não há estação oficial de medição. O boletim público, quando sai, é da cidade inteira e chega horas depois.",
-        "Nosso público são três pessoas: a coordenação de escola ou UBS, que decide se a atividade é ao ar livre; a família com criança, idoso ou alguém com asma, que quer saber se é hora de sair; e o vizinho que viu fumaça e quer avisar alguém."
+        "Uma diretora abre o celular às 7h40 e lê: \"Ar ruim perto da escola agora. Mantenha as janelas fechadas e deixe a educação física para depois do almoço.\" O RespiraCidadão existe para que essa frase chegue a tempo e seja confiável.",
+        "A Organização Mundial da Saúde estima cerca de 7 milhões de mortes por ano ligadas à poluição do ar. Fumaça de queimada e trânsito pesado disparam crises de asma e bronquite crônica. Quem sente primeiro são crianças, idosos e pacientes de postos de saúde na periferia, onde quase não há estação oficial de medição. Quando o boletim da cidade sai, ele fala da região inteira e chega tarde.",
+        "O produto atende três perfis: a coordenação de escola ou posto de saúde, que decide se a atividade fica ao ar livre; a família com criança, idoso ou alguém com asma, que precisa saber se é seguro sair; e o vizinho que viu fumaça e quer avisar o bairro."
       ],
       "bullets": [
         {
-          "text": "ODS 3, saúde e bem-estar: aviso antes da crise respiratória.",
+          "text": "ODS 3, saúde e bem-estar: avisar antes da crise respiratória.",
           "level": 0
         },
         {
-          "text": "ODS 10, redução das desigualdades: um sensor barato onde a estação oficial não chega.",
+          "text": "ODS 10, redução das desigualdades: levar medição de baixo custo a bairros sem estação oficial.",
           "level": 0
         },
         {
-          "text": "ODS 11, cidades sustentáveis: dado aberto e conferível por bairro.",
+          "text": "ODS 11, cidades sustentáveis: gerar dados ambientais abertos e verificáveis por bairro.",
           "level": 0
         },
         {
-          "text": "Do tema CitizenTech da live de lançamento, levamos a ideia de tecnologia que o cidadão comum entende e usa sem treinamento. Por isso o app fala de ar, lugar, horário e ação, e deixa modelo e métrica para a tela Como funciona.",
+          "text": "Da discussão sobre tecnologia cidadã na live de lançamento, adotamos uma regra clara: o morador não precisa aprender termos técnicos para usar o sistema. A tela principal fala só de ar, lugar, horário e ação.",
           "level": 0
         }
       ]
@@ -55,68 +55,69 @@
     {
       "title": "2. COMO A INFORMAÇÃO CHEGA ATÉ A PESSOA",
       "body": [
-        "Um sensor na parede mede fumaça, monóxido, temperatura e umidade. Se o ar piora, a luz muda de cor e o alarme toca na hora, mesmo sem internet. A leitura vai para a central, que confere com um modelo treinado a partir de uma base real de 6.941 horas de medição e devolve o nível com uma porcentagem de confiança. O app mostra a cor, uma frase e o que fazer."
+        "Um sensor pequeno na parede da escola mede quatro coisas: fumaça e gases, monóxido de carbono, temperatura e umidade. Quando o ar piora, a luz muda de cor e o alarme toca na hora, mesmo se a internet cair.",
+        "Em paralelo, a leitura vai para a central, que confere o resultado usando um modelo treinado em 6.941 horas de medições reais e devolve o nível de risco com a porcentagem de confiança. O aplicativo traduz isso em cor, uma frase simples e o que fazer agora."
       ],
       "images": [
         {
           "path": "/home/agent/.t3/worktrees/respiracidadao-gs/t3-8e5d4313-ba7e8d34c0a31b13/docs/assets/arquitetura_uml_respiracidadao.png",
-          "caption": "Figura 1: Componentes do produto e por onde a leitura passa.",
+          "caption": "Figura 1: Componentes do RespiraCidadão e o caminho de cada leitura.",
           "width": 165
         },
         {
           "path": "/home/agent/.t3/worktrees/respiracidadao-gs/t3-8e5d4313-ba7e8d34c0a31b13/docs/assets/uml_sequencia_leitura.png",
-          "caption": "Figura 2: Diagrama de sequência UML de uma leitura de ar ruim. Foi com ele que fechamos o contrato JSON entre sensor, central e app antes de escrever código.",
+          "caption": "Figura 2: Diagrama de sequência de uma leitura de ar ruim, usado pelo grupo para padronizar a mensagem entre sensor, central e aplicativo.",
           "width": 165
         }
       ],
       "tables": [
         {
           "headers": [
-            "Parte do produto",
-            "O que faz",
-            "Disciplina e evidência"
+            "Parte do sistema",
+            "Papel no produto",
+            "Disciplina responsável"
           ],
           "rows": [
             [
-              "Sensor",
-              "Mede 4 coisas, acende a luz certa e envia a leitura em JSON",
-              "02 AICSS: firmware, circuito Wokwi, 3 prints dos estados"
+              "Sensor no local",
+              "Mede gases, temperatura e umidade, acende a luz certa e envia a leitura",
+              "AI Computer Systems & Sensors"
             ],
             [
-              "Central (API)",
-              "Recebe, valida, classifica, guarda em CSV e banco, responde ao app",
-              "05 Python: FastAPI, 24 testes automáticos"
+              "Base e validação estatística",
+              "Prova que as 4 medidas do sensor explicam 88% do monóxido de laboratório e define os limiares",
+              "Statistical Computing"
+            ],
+            [
+              "Central local",
+              "Recebe e valida cada leitura, guarda o histórico em planilha e banco e alimenta o aplicativo",
+              "Computational Thinking with Python"
             ],
             [
               "Central na nuvem",
-              "A mesma central sem servidor ligado: AWS Lambda (Function URL) + RDS PostgreSQL 18.3 + CloudWatch Logs, publicada e validada ponta a ponta na us-east-1",
-              "07 Cloud: Lambda, RDS SSL+KMS, simulador, 4+ prints reais AWS"
+              "Roda a mesma ingestão sob demanda na AWS, gravando em banco PostgreSQL gerenciado e registrando eventos",
+              "Cloud Computing & Serverless"
             ],
             [
-              "Proteções",
-              "Limite de envios, chave para apagar, texto limpo, selo HMAC, HTTPS + SSL + disco cifrado na AWS",
-              "03 Cybersecurity: 24 testes + evidências locais e AWS"
-            ],
-            [
-              "Modelo da central",
-              "Acerta 87 de cada 100 horas com as 4 medidas do sensor",
-              "06 ML: 6 modelos comparados, Random Forest ajustada"
+              "Modelo principal",
+              "Acerta 87 de cada 100 horas usando apenas as 4 medidas do sensor",
+              "Machine Learning & Modelling"
             ],
             [
               "Segunda opinião",
-              "Rede neural que confirma o veredito (86% no teste)",
-              "08 Redes Neurais: 8 etapas em PyTorch"
+              "Rede neural independente que confere o veredito, acertando 86% no teste",
+              "Redes Neurais e Deep Learning"
             ],
             [
-              "Base e limiares",
-              "Mostra que as medidas do sensor explicam o monóxido real",
-              "09 Estatística: R² de 88,1%"
+              "Segurança e privacidade",
+              "Trava enxurradas de envios, exige chave para apagar dados, limpa relatos e assina cada leitura",
+              "Cognitive Cybersecurity"
             ]
           ],
           "col_widths": [
-            36,
-            76,
-            68
+            38,
+            86,
+            56
           ]
         }
       ]
@@ -124,7 +125,7 @@
     {
       "title": "3. DEMONSTRAÇÃO",
       "body": [
-        "O app tem duas telas. \"Agora\" mostra cada lugar com sua cor, o que fazer, o melhor horário para atividade ao ar livre e o que os vizinhos estão contando. \"Como funciona\" explica o caminho da informação, deixa testar uma leitura e diz o que ainda não resolvemos."
+        "O aplicativo tem duas telas. A tela Agora mostra cada lugar com sua cor, o que fazer, o melhor horário para atividade ao ar livre e os relatos dos vizinhos. A tela Como funciona explica o caminho da informação, deixa testar uma leitura ao vivo e deixa claro o que ainda falta para ir para a rua."
       ],
       "images": [
         {
@@ -139,13 +140,13 @@
         },
         {
           "path": "/home/agent/.t3/worktrees/respiracidadao-gs/t3-8e5d4313-ba7e8d34c0a31b13/packages/iot-aicss/evidencias/wokwi_3_ar_ruim.png",
-          "caption": "Figura 5: O sensor no simulador Wokwi com o LED vermelho aceso.",
+          "caption": "Figura 5: Sensor simulado no Wokwi com o LED vermelho aceso.",
           "width": 160
         }
       ]
     },
     {
-      "title": "4. O QUE FUNCIONA HOJE E O QUE VEM DEPOIS",
+      "title": "4. O QUE FUNCIONA HOJE, DECISÕES E PRÓXIMOS PASSOS",
       "tables": [
         {
           "headers": [
@@ -156,127 +157,60 @@
           "rows": [
             [
               "Sensor",
-              "Circuito completo no Wokwi, regra de luz e alarme, envio JSON",
-              "Placa física com bateria solar e rádio LoRa onde não há Wi-Fi"
+              "Circuito completo no simulador Wokwi, alerta local por luz e som e envio estruturado",
+              "Montar a placa física com bateria solar e rádio para áreas sem Wi-Fi"
             ],
             [
               "Central local",
-              "API FastAPI com modelo, histórico CSV/SQLite, relatos, padrão por hora e 24 testes",
-              "Integrar painel web diretamente ao endpoint gerenciado na nuvem"
+              "API em Python com modelos integrados, histórico, relatos, padrão por hora e 24 testes automáticos",
+              "Conectar o aplicativo diretamente ao endereço público na nuvem"
             ],
             [
               "Central na nuvem",
-              "AWS Lambda com Function URL pública, CloudWatch Logs e Amazon RDS PostgreSQL 18.3 (SSL + disco cifrado) validados ponta a ponta",
-              "Colocar banco e Lambda em sub-rede privada com NAT/VPC Endpoint e ativar token HF_TOKEN em produção"
+              "Publicada e validada na AWS com função sob demanda, monitoramento e banco PostgreSQL cifrado",
+              "Colocar banco e função em rede privada corporativa e ativar cota paga de IA externa"
             ],
             [
-              "Modelo",
-              "Treinado em base real italiana, testado em horas que nunca viu",
-              "Recalibrar com algumas semanas ao lado de uma estação CETESB"
+              "Modelos de IA",
+              "Treinados em base real e avaliados em meses que nunca viram",
+              "Recalibrar por algumas semanas ao lado de uma estação oficial da CETESB"
             ],
             [
-              "Aviso",
-              "App web no celular e no computador",
-              "Notificação no WhatsApp quando o lugar favorito ficar vermelho"
+              "Aviso ao morador",
+              "Aplicativo web para celular e computador",
+              "Enviar alerta no WhatsApp quando o local favorito entrar em nível ruim"
             ]
           ],
           "col_widths": [
-            28,
-            82,
+            30,
+            80,
             70
           ]
         }
       ],
       "body": [
-        "Gestão: dividimos o trabalho em três frentes que se encontram no mesmo contrato de dados. Uma cuidou do sensor e da nuvem, outra da estatística e dos modelos, e a terceira da central, do app e das proteções. Registramos cada decisão, com o motivo, num plano único no repositório (docs/PLANO-PRODUTO.md) e só fechávamos uma fase com os testes automáticos da central passando.",
-        "Duas dificuldades mudaram o projeto. A primeira: o modelo com 11 medidas de laboratório acertava mais, mas nenhuma escola teria aquele equipamento. Cortamos para as 4 medidas que o ESP32 tem e aceitamos perder alguns pontos. A segunda: o Wokwi gratuito não alcança um servidor fora do navegador. Em vez de esconder isso, fizemos o sensor tratar a falta de rede como caso normal, com a luz local funcionando, e provamos o envio com um receptor em Python e com o simulador batendo na AWS Lambda real."
+        "Organizamos o time em três frentes presas ao mesmo formato de mensagem: uma cuidou do sensor e da nuvem, outra da estatística e dos modelos de inteligência artificial, e a terceira da central em Python, do aplicativo e das proteções de segurança. Cada etapa só fechava quando os testes automáticos passavam.",
+        "Duas dificuldades mudaram o projeto para melhor. Primeiro, o modelo com 11 medidas de laboratório acertava um pouco mais, mas nenhuma escola teria aquele equipamento. Cortamos para as 4 medidas do sensor barato e aceitamos perder um ponto de acerto. Segundo, a versão gratuita do simulador de circuito não acessa servidores externos. Em vez de contornar isso com um atalho artificial, fizemos o sensor tratar a falta de rede como cenário real, mantendo a luz e o alarme locais ativos, e validamos o envio em rede tanto no servidor Python local quanto na AWS real."
       ]
     },
     {
-      "title": "5. ACESSIBILIDADE, SEGURANÇA, DADOS PESSOAIS E SUSTENTABILIDADE",
+      "title": "5. ACESSIBILIDADE, SEGURANÇA, PRIVACIDADE E SUSTENTABILIDADE",
       "bullets": [
         {
-          "text": "Acessibilidade: cada alerta junta cor, palavra (Bom, Carregado ou Ruim) e, no sensor, um alarme de 1800 Hz para quem não está olhando a tela ou não distingue cores.",
+          "text": "Acessibilidade: todo alerta combina cor, palavra clara como Bom, Carregado ou Ruim e alarme sonoro no sensor para quem não olha a tela ou tem daltonismo.",
           "level": 0
         },
         {
-          "text": "Segurança: limite de 30 envios por minuto por endereço, chave obrigatória para apagar dados, texto de relato limpo antes de gravar, selo HMAC em cada leitura e criptografia em trânsito (HTTPS/SSL) e em repouso (KMS) na AWS.",
+          "text": "Segurança: limite de 30 envios por minuto por endereço, chave obrigatória para apagar dados, limpeza de código malicioso nos relatos, assinatura digital em cada leitura e criptografia na nuvem.",
           "level": 0
         },
         {
-          "text": "Dados pessoais (LGPD): o relato não pede nome, telefone nem localização. Guardamos só o texto e o lugar escolhido.",
+          "text": "Privacidade e LGPD: o relato de vizinho não pede nome, telefone nem localização da pessoa. Guardamos apenas o texto e o local escolhido.",
           "level": 0
         },
         {
-          "text": "Sustentabilidade: modelos pequenos que rodam numa máquina comum, sensor de baixo consumo e nuvem serverless que só cobra quando recebe leitura.",
+          "text": "Sustentabilidade: modelos leves que rodam em computador comum, sensor de baixo consumo e nuvem sob demanda que só executa quando chega uma leitura.",
           "level": 0
-        }
-      ]
-    },
-    {
-      "title": "6. PONTE DIRETA COM OS ENUNCIADOS DA GS 2026.2",
-      "body": [
-        "Cada requisito dos enunciados oficiais da Global Solution 2026.2 está conectado diretamente a um artefato verificável no repositório e na pasta do grupo no Google Drive:"
-      ],
-      "tables": [
-        {
-          "headers": [
-            "Disciplina",
-            "Exigência central do enunciado",
-            "Evidência entregue"
-          ],
-          "rows": [
-            [
-              "01 AI Challenges",
-              "Vídeo integrador (até 7 min), UML, problema/ODS, live, gestão e demo",
-              "Dossiê PDF, roteiro de narração, UML arquitetura e sequência, app rodando"
-            ],
-            [
-              "02 AICSS (IoT)",
-              "ESP32 + 2 sensores + atuador + JSON para Python + CSV + 3 estados",
-              "sketch.ino, diagram.json, 3 prints Wokwi, receiver_csv.py, print JSON/CSV"
-            ],
-            [
-              "03 Cybersecurity",
-              "5 camadas, >=5 riscos, controles, LGPD, engenharia social, >=1 controle vivo",
-              "PDF consultoria, 5 controles vivos, 24 testes pytest, provas terminal + AWS"
-            ],
-            [
-              "04 Data Science",
-              "Standalone Oracle SQL (Inclusive Mobility Rover), envio individual SurveyMonkey",
-              "queries_inclusive_mobility_rover.sql com as 5 consultas e aliases exatos"
-            ],
-            [
-              "05 Python API",
-              "API REST POST/GET + CSV + >=1 indicador + 3 cenários integrados ao IoT",
-              "FastAPI apps/api, CSV com timestamp, GET /indicadores, 24 testes e prints"
-            ],
-            [
-              "06 Machine Learning",
-              "Comparar >=2 modelos + baseline + tuning + feature importance + slides + pitch",
-              "Notebook 6 modelos, RandomizedSearchCV, slides .pptx, resumo PDF, gráficos"
-            ],
-            [
-              "07 Cloud Serverless",
-              "Lambda Function URL (fora VPC) + RDS PostgreSQL + CloudWatch + IA + 4 prints",
-              "Lambda e RDS ativos na AWS (us-east-1), simulador, 5 prints reais AWS/SQL"
-            ],
-            [
-              "08 Redes Neurais",
-              "MLP/CNN/RNN nas 8 etapas + regularização comparada + demo em vídeo",
-              "Notebook PyTorch 8 etapas, rede A vs B (Dropout/BN/EarlyStop), card no app"
-            ],
-            [
-              "09 Estatística",
-              "Base real + Normal + 2 testes Z (6%/9%) + Reg. Simples/Múltipla/Logística (upload direto)",
-              "air_quality_clean.csv, analise_estatistica.py e relatório PDF (3 arquivos soltos)"
-            ]
-          ],
-          "col_widths": [
-            34,
-            76,
-            70
-          ]
         }
       ]
     }

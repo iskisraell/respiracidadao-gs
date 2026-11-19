@@ -1,13 +1,14 @@
-# 04: Cognitive Data Science (`Inclusive Mobility Rover`)
+# 04: Cognitive Data Science, Inclusive Mobility Rover
 
-Esta disciplina é **standalone** (não usa o tema RespiraCidadão) e exige **submissão individual** no SurveyMonkey:
+Esta disciplina é independente do projeto RespiraCidadão e exige envio individual no formulário SurveyMonkey:
 `https://pt.surveymonkey.com/r/VQNNZZZ`
 
-## Checklist Individual por Integrante
+## Passo a passo individual
 
-Cada integrante (`Giovanni RM 570574`, `Suellen RM 573862`, `Israel RM 573854`) deve:
-1. Baixar `CRIACAO_CARGA_ORACLE.sql` na área de **Apostilas** do Portal do Aluno FIAP.
-2. Executar o script no Oracle Database e verificar os nomes reais das chaves primárias/estrangeiras e colunas em `AMBIENTES_ROVER`, `ROBOS_ROVER`, `OPERACOES_ROVER` e `DETECCOES_ROVER`.
-3. Ajustar (se algum identificador de coluna divergir no script oficial) e executar as 5 consultas de [`queries_inclusive_mobility_rover.sql`](./queries_inclusive_mobility_rover.sql).
-4. Conferir os aliases exatos exigidos em cada questão (`AMBIENTE`, `QTDE_ROBOS`, `MEDIA_DISTANCIA`, `ROBO`, `MODELO`, `QTDE_DETECCOES`, `MEDIA_CONFIANCA`, `TIPO_OBSTACULO`, `QTDE_AMBIENTES`, `MENOR_DISTANCIA`, `ID_OPERACAO`, `QTDE_OPERACOES`).
-5. Submeter individualmente no SurveyMonkey com RM (somente números) e nome completo sem abreviar. **Não postar nada no Portal da disciplina.**
+Cada integrante do grupo, Giovanni RM 570574, Suellen RM 573862 e Israel RM 573854, precisa seguir estas cinco etapas:
+
+1. Baixar o arquivo `CRIACAO_CARGA_ORACLE.sql` na área de Apostilas do Portal do Aluno FIAP.
+2. Rodar o script no Oracle Database e conferir os nomes exatos das chaves e colunas nas tabelas `AMBIENTES_ROVER`, `ROBOS_ROVER`, `OPERACOES_ROVER` e `DETECCOES_ROVER`.
+3. Abrir [`queries_inclusive_mobility_rover.sql`](./queries_inclusive_mobility_rover.sql), ajustar qualquer nome de coluna que difira do script oficial e executar as cinco consultas.
+4. Confirmar os apelidos de coluna pedidos em cada questão: `AMBIENTE`, `QTDE_ROBOS`, `MEDIA_DISTANCIA`, `ROBO`, `MODELO`, `QTDE_DETECCOES`, `MEDIA_CONFIANCA`, `TIPO_OBSTACULO`, `QTDE_AMBIENTES`, `MENOR_DISTANCIA`, `ID_OPERACAO` e `QTDE_OPERACOES`.
+5. Enviar as respostas individualmente no SurveyMonkey usando o RM só com números e o nome completo sem abreviações. Não suba nenhum arquivo no Portal dessa disciplina.

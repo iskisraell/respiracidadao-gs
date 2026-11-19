@@ -1,8 +1,8 @@
 {
-  "title": "RESPIRACIDADÃO: SEGURANÇA E DADOS PESSOAIS",
+  "title": "RESPIRACIDADÃO: SEGURANÇA E PRIVACIDADE",
   "subtitle": [
-    "Onde o produto pode ser atacado e como se defende",
-    "Consultoria de cibersegurança e LGPD"
+    "Onde o sistema pode ser atacado e como se defende",
+    "Consultoria de cibersegurança e adequação à LGPD"
   ],
   "meta": [
     {
@@ -26,51 +26,52 @@
   "filename": "03_RespiraCidadao_Cybersecurity",
   "sections": [
     {
-      "title": "1. A SOLUÇÃO EM UMA PÁGINA",
+      "title": "1. A SOLUÇÃO E POR QUE A SEGURANÇA IMPORTA",
       "body": [
-        "O RespiraCidadão avisa escolas, UBS e famílias quando o ar perto delas piora. Público: crianças, idosos e pessoas com asma na periferia. Problema: exposição à fumaça sem aviso a tempo.",
-        "Arquitetura simplificada: Usuário (pessoa no app) e sensor ESP32 | Aplicação (app web e central FastAPI) | Banco (SQLite e CSV no local, PostgreSQL na nuvem) | IA (Random Forest, rede neural e leitura de relatos). O ESP32 entra pela mesma porta da central que o app: passa pelas mesmas faixas de valor e pelo mesmo limite de envios. Um alarme falso faz a escola cancelar aula à toa. Um alarme perdido deixa criança respirando fumaça. As proteções impedem que alguém dispare alertas falsos em massa, apague leituras ou altere o histórico no banco."
+        "O RespiraCidadão avisa escolas, postos de saúde e famílias quando a qualidade do ar piora no bairro. O público principal reúne crianças, idosos e pessoas com asma na periferia.",
+        "A arquitetura passa por quatro pontos: o usuário no aplicativo e o sensor ESP32 na ponta, a aplicação web com a central em Python no meio, o banco de dados guardando o histórico e os modelos de inteligência artificial classificando o risco. O sensor entra pela mesma porta da central que o aplicativo, passando pelas mesmas validações e pelo mesmo limite de envios.",
+        "Nesse produto, segurança afeta decisões reais. Um alarme falso faz uma escola cancelar aulas sem motivo. Um alarme bloqueado ou adulterado deixa crianças respirando fumaça. As proteções impedem enxurradas de alertas falsos, apagamento sem permissão e alteração silenciosa do histórico."
       ]
     },
     {
-      "title": "2. ONDE O PRODUTO PODE SER ATACADO (5 CAMADAS)",
+      "title": "2. SUPERFÍCIE DE ATAQUE EM CINCO CAMADAS",
       "tables": [
         {
           "headers": [
             "Camada",
-            "Ameaça",
-            "O que acontece se der certo"
+            "Ameaça provável",
+            "Consequência se acontecer"
           ],
           "rows": [
             [
               "Usuários",
-              "Mensagem falsa pedindo a chave de administração; relato falso em massa",
-              "Alguém apaga o histórico ou cria pânico num bairro"
+              "Mensagem falsa pedindo a chave de administração ou envio em massa de relatos falsos",
+              "Alguém apaga o histórico ou provoca pânico sem haver queimada"
             ],
             [
               "Aplicação",
-              "Script escondido no texto do relato; fórmula no CSV",
-              "Código roda no navegador de quem lê ou na planilha de quem abre o CSV"
+              "Código malicioso escondido no texto de um relato ou fórmula inserida para atacar quem abrir o CSV",
+              "Execução de código no navegador de quem lê ou na planilha da secretaria"
             ],
             [
               "API",
-              "Enxurrada de envios; IP falso no cabeçalho para driblar o limite",
-              "Central fora do ar justamente durante uma queimada"
+              "Enxurrada de requisições automáticas e tentativa de falsificar o endereço IP para burlar o limite",
+              "Central fora do ar justamente durante uma queimada real"
             ],
             [
-              "Banco",
-              "Edição direta no arquivo; injeção de SQL",
-              "Histórico adulterado sem ninguém perceber"
+              "Banco de dados",
+              "Alteração direta no arquivo salvo ou ataque de injeção de comandos SQL",
+              "Histórico ambiental adulterado sem deixar rastros"
             ],
             [
               "Modelo de IA",
-              "Leituras fora de faixa para enganar o modelo",
-              "Modelo diz ar bom com fumaça de verdade"
+              "Envio de leituras absurdas fora da realidade para confundir a classificação",
+              "Sistema indica ar bom enquanto há fumaça no bairro"
             ]
           ],
           "col_widths": [
-            26,
-            80,
+            28,
+            78,
             74
           ]
         }
@@ -82,253 +83,192 @@
         {
           "headers": [
             "Risco",
-            "Prob. / Impacto",
-            "Controle"
+            "Probabilidade e impacto",
+            "Controle adotado"
           ],
           "rows": [
             [
-              "R1. Enxurrada de envios",
-              "Alta / Alto",
-              "Limite de 30 envios por minuto por endereço, resposta 429"
+              "Enxurrada de envios na API",
+              "Alta probabilidade, impacto alto",
+              "Limite de 30 envios por minuto por endereço, bloqueando excessos com resposta de limite excedido"
             ],
             [
-              "R2. Apagar dados sem permissão",
-              "Média / Crítico",
-              "Chave X-API-Key, comparada de um jeito que não deixa adivinhar pelo tempo de resposta; sem chave configurada, a rota fica fechada"
+              "Apagar histórico sem permissão",
+              "Média probabilidade, impacto crítico",
+              "Exigência de chave administrativa comparada de forma segura; se nenhuma chave estiver configurada no servidor, a rota fica fechada"
             ],
             [
-              "R3. Script ou fórmula em relato",
-              "Alta / Médio",
-              "Marcações HTML como <script> são removidas antes de gravar; textos que começam com = + - ou @ ganham um apóstrofo no CSV para não virarem fórmula no Excel"
+              "Código malicioso ou fórmula em relato",
+              "Alta probabilidade, impacto médio",
+              "Qualquer marcação HTML é removida antes de gravar, e textos que começam com sinais de fórmula ganham proteção antes de ir para o CSV"
             ],
             [
-              "R4. Histórico adulterado",
-              "Baixa / Alto",
-              "Selo HMAC-SHA256 (chave em RESPIRA_SEAL_KEY ou gerada no primeiro uso em data/runtime/seal.key, fora do banco; se não conseguir ler nem criar a chave, a central não sobe) cobrindo todos os campos da leitura, inclusive a hora da medida, conferido em GET /security/verify/{id}"
+              "Adulteração do histórico no banco",
+              "Baixa probabilidade, impacto alto",
+              "Assinatura digital HMAC gerada com chave guardada fora do banco, cobrindo todos os campos da leitura e verificável a qualquer momento"
             ],
             [
-              "R5. Leitura absurda para enganar o modelo",
-              "Média / Alto",
-              "Cada campo tem faixa válida (validada com Pydantic); fora da faixa vira 400 e não chega ao modelo"
+              "Leitura falsa para enganar a IA",
+              "Média probabilidade, impacto alto",
+              "Cada medida passa por faixas numéricas válidas antes de chegar ao modelo; valores impossíveis são recusados na entrada"
             ],
             [
-              "R6. Engenharia social",
-              "Alta / Alto",
-              "Canal oficial único, treino da equipe e MFA para quem administra"
+              "Engenharia social com a equipe",
+              "Alta probabilidade, impacto alto",
+              "Uso de um único endereço oficial em HTTPS, orientação da equipe para nunca passar chaves por mensagem e autenticação em duas etapas para gestores"
             ]
           ],
           "col_widths": [
-            50,
-            28,
-            102
+            48,
+            36,
+            96
           ]
         }
       ]
     },
     {
-      "title": "4. CONTROLES POR CATEGORIA",
+      "title": "4. CONTROLES APLICADOS E JUSTIFICATIVA",
       "body": [
-        "Priorizamos o que dá para provar em código e na infraestrutura real da AWS. O dado ambiental do produto é público e o morador não faz login, então não faz sentido proteger leitura com senha. O foco de proteção é escrita, apagamento, integridade do histórico e tráfego até o banco na nuvem: limite de envios contra enxurrada, chave para administração, selo HMAC, HTTPS na Function URL, SSL obrigatório e disco cifrado no RDS PostgreSQL."
+        "Priorizamos controles simples de manter, baratos e provados em código e na nuvem. Como os dados ambientais são públicos e o morador não precisa criar conta, não faz sentido colocar senha para consultar o ar do bairro. A proteção se concentra em quem escreve, em quem apaga, na integridade do histórico e no tráfego até o banco na nuvem."
       ],
       "tables": [
         {
           "headers": [
             "Categoria",
-            "Controle",
-            "Situação"
+            "O que fizemos",
+            "Situação atual"
           ],
           "rows": [
             [
               "Autenticação",
-              "Chave X-API-Key em rotas de administração (comparação em tempo constante); credenciais do banco em variáveis de ambiente da Lambda (zero segredos no código); MFA para gestores de escola e UBS",
-              "Chave e env vars feitos na AWS; MFA proposto"
+              "Chave secreta para rotas administrativas na central local e credenciais do banco isoladas em variáveis de ambiente na AWS, sem nenhuma senha no código. Autenticação em duas etapas planejada para gestores.",
+              "Implementado; duas etapas planejado"
             ],
             [
-              "Firewall / WAF",
-              "Limite de envios por IP na central (429); Security Group na AWS (sg-015dfe810b95f42cf) liberando somente a porta TCP 5432 no RDS; AWS WAF na URL pública em produção. CORS impede chamadas indevidas de outro site no navegador, mas não conta como barreira contra curl",
-              "Limite e Security Group feitos; WAF proposto"
+              "Firewall e limite de tráfego",
+              "Limite de envios por endereço IP na central e regra de firewall na AWS liberando apenas a porta do banco PostgreSQL. O recurso CORS do navegador ajuda contra outros sites, mas não bloqueia robôs diretos, por isso o limite fica no servidor.",
+              "Implementado; filtro web dedicado planejado"
             ],
             [
               "Backup",
-              "Retenção automática de backups gerenciada pelo Amazon RDS PostgreSQL e cópia do CSV com selo de integridade por linha",
-              "Habilitado no RDS; rotina externa proposta"
+              "Retenção automática de cópias gerenciada pelo banco PostgreSQL na AWS e histórico paralelo em planilha com assinatura digital em cada linha.",
+              "Ativo na AWS; rotina externa planejada"
             ],
             [
               "Criptografia",
-              "Em trânsito: HTTPS na Function URL da AWS Lambda e SSL obrigatório na conexão pg8000 com o RDS (rds.force_ssl=1). Em repouso: volume do Amazon RDS cifrado (StorageEncrypted=True via AWS KMS). No protótipo local, SQLite e CSV ficam sem cifra em disco",
-              "HTTPS, SSL e RDS cifrado validados na AWS"
+              "Conexão protegida por HTTPS na URL pública da AWS, criptografia obrigatória no caminho até o banco e disco do banco cifrado em repouso na nuvem. No protótipo local em computador pessoal, os arquivos ficam sem cifra.",
+              "Validado na AWS"
             ],
             [
               "Monitoramento",
-              "Registro de eventos de segurança (security_audit.jsonl), lido só com chave, e trilha estruturada no Amazon CloudWatch (/aws/lambda/respiracidadao-central) com WARNING para leitura descartada e alerta crítico",
-              "Feito local e na AWS; alarmes SNS propostos"
+              "Trilha de eventos de segurança protegida por chave na central local e registros automáticos de alerta no CloudWatch da AWS para leituras inválidas ou críticas.",
+              "Implementado; alertas por mensagem planejados"
             ],
             [
-              "Integridade do modelo",
-              "Faixas de entrada validadas com Pydantic antes do modelo; pesos da rede neural carregados com weights_only=True. Próximo passo: conferir hash SHA-256 dos arquivos .joblib e .pt na inicialização",
-              "Parcial (validação e weights_only feitos)"
+              "Proteção dos modelos de IA",
+              "Validação de faixas antes de chamar os modelos e carregamento seguro dos pesos da rede neural, impedindo execução de código escondido no arquivo. Próximo passo: conferir a assinatura dos arquivos de modelo ao iniciar.",
+              "Parcialmente implementado"
             ]
           ],
           "col_widths": [
             30,
-            102,
-            48
+            106,
+            44
           ]
         }
       ]
     },
     {
-      "title": "5. PROTEÇÕES FUNCIONANDO (LOCAL E AWS)",
+      "title": "5. PROTEÇÕES FUNCIONANDO NA PRÁTICA",
       "body": [
-        "Cada proteção na API local tem um teste automático em apps/api/tests/test_api.py (24 testes passando) e execução manual documentada no terminal. Na camada serverless da AWS (disciplina 07), validamos os controles de nuvem diretamente no console da AWS com a função respiracidadao-central e o banco respiracidadao-db ativos em us-east-1."
+        "Não ficamos apenas na proposta. Cada proteção da central em Python tem teste automatizado rodando e passando, num total de 24 testes, além de testes manuais simulando ataques reais no terminal. Na AWS, validamos diretamente a criptografia em trânsito, o disco cifrado do banco, o isolamento de credenciais em variáveis de ambiente e o descarte de leituras inválidas nos logs."
       ],
       "bullets": [
         {
-          "text": "Limite de envios (Rate Limiting): com limite de teste em 10, os envios 11 e 12 voltam 429 e o evento rate_limit_blocked vai para o registro.",
+          "text": "Bloqueio de enxurrada: ao ultrapassar o limite configurado, a central passa a recusar os envios seguintes e registra o bloqueio na auditoria.",
           "level": 0
         },
         {
-          "text": "Proteção contra IP falso: trocar o cabeçalho X-Forwarded-For não dribla o limite, porque a central só confia nele atrás de um proxy declarado.",
+          "text": "Resistência a IP falsificado: tentar enganar o limite mudando o cabeçalho de origem não funciona, porque a central ignora esse cabeçalho fora de um proxy confiável.",
           "level": 0
         },
         {
-          "text": "Chave de administração: DELETE /ocorrencias sem chave ou com chave errada volta 401. Sem chave configurada no servidor, volta 503.",
+          "text": "Proteção contra apagamento: tentar limpar o histórico sem chave ou com chave errada é recusado na hora.",
           "level": 0
         },
         {
-          "text": "Sanitização de entrada: relato com <script> perde a marcação antes de gravar, e texto iniciado com = + - ou @ ganha apóstrofo no CSV contra injeção de fórmula.",
+          "text": "Limpeza de texto e planilhas: código escondido em um relato é removido antes de gravar, e comandos de planilha deixam de ser executáveis no CSV.",
           "level": 0
         },
         {
-          "text": "Hash de integridade (HMAC-SHA256): editamos uma leitura direto no SQLite e GET /security/verify/{id} passou a responder integro=false.",
-          "level": 0
-        },
-        {
-          "text": "Controles reais na AWS: HTTPS nativo na Function URL, credenciais isoladas em variáveis de ambiente da Lambda (sem segredo no código), RDS PostgreSQL 18.3 com disco cifrado e SSL obrigatório, consultas parametrizadas (%s no pg8000) contra SQL Injection e WARNING automático no CloudWatch para payload inválido.",
+          "text": "Detecção de adulteração: alteramos manualmente uma leitura direto no banco de dados e a rota de verificação acusou imediatamente que a assinatura digital não batia mais.",
           "level": 0
         }
       ]
     },
     {
-      "title": "6. PROVAS NO TERMINAL E NA AWS",
+      "title": "6. EVIDÊNCIAS NO TERMINAL E NA AWS",
       "images": [
         {
           "path": "/home/agent/.t3/worktrees/respiracidadao-gs/t3-8e5d4313-ba7e8d34c0a31b13/docs/evidencias/03_limite_chave.png",
-          "caption": "Figura 1: Envios além do limite voltam 429. Apagar sem chave ou com chave errada volta 401.",
+          "caption": "Figura 1: Bloqueio automático após excesso de envios e recusa de apagamento sem chave válida.",
           "width": 158
         },
         {
           "path": "/home/agent/.t3/worktrees/respiracidadao-gs/t3-8e5d4313-ba7e8d34c0a31b13/docs/evidencias/03_selo.png",
-          "caption": "Figura 2: Selo íntegro, edição direta no banco, selo quebrado. Desfeita a edição, o selo volta a bater.",
+          "caption": "Figura 2: Assinatura válida antes da edição, alerta de adulteração após mexer direto no banco e recuperação após desfazer a alteração.",
           "width": 158
         },
         {
           "path": "/home/agent/.t3/worktrees/respiracidadao-gs/t3-8e5d4313-ba7e8d34c0a31b13/docs/evidencias/03_pytest.png",
-          "caption": "Figura 3: Os 24 testes automáticos passando em apps/api/tests/test_api.py.",
+          "caption": "Figura 3: Os 24 testes automáticos de segurança e funcionamento passando.",
           "width": 158
         },
         {
           "path": "/home/agent/.t3/worktrees/respiracidadao-gs/t3-8e5d4313-ba7e8d34c0a31b13/docs/evidencias/07_aws_rds_console.png",
-          "caption": "Figura 4: Console AWS RDS (respiracidadao-db) com banco cifrado, Security Group dedicado e porta 5432 controlada.",
+          "caption": "Figura 4: Banco PostgreSQL ativo na AWS com disco cifrado e acesso restrito por firewall.",
           "width": 158
         }
       ]
     },
     {
-      "title": "7. LGPD E ENGENHARIA SOCIAL",
+      "title": "7. PRIVACIDADE, LGPD E ENGENHARIA SOCIAL",
       "tables": [
         {
           "headers": [
             "Pergunta",
-            "Resposta"
+            "Resposta do projeto"
           ],
           "rows": [
             [
-              "Que dados pessoais tratamos?",
-              "O endereço IP é dado pessoal (LGPD, art. 5º, I). Ele fica só no registro de segurança, para aplicar o limite e investigar ataque, com base no legítimo interesse de prevenir abuso (art. 7º, IX). Fora isso, não há cadastro: leitura de sensor tem ID do aparelho e coordenada pública do prédio, e relato tem só texto e lugar."
+              "Quais dados pessoais são tratados?",
+              "Apenas o endereço IP de quem envia dados, que a LGPD considera dado pessoal. Ele fica restrito ao registro de segurança para impedir abusos e investigar ataques, apoiado na base legal de legítimo interesse. Fora isso, não existe cadastro: o sensor envia só o código do aparelho e a coordenada pública do prédio, e o relato leva só o texto e o bairro."
             ],
             [
-              "Quem vê o registro de segurança?",
-              "Só quem tem a chave de administração (GET /security/audit exige X-API-Key). Proposta para produção: apagar o registro depois de 30 dias."
+              "Quem pode ver o registro de segurança?",
+              "Somente quem possui a chave administrativa. Para operação contínua, planejamos apagar esses registros automaticamente após 30 dias."
             ],
             [
               "Pode haver dado sensível?",
-              "Sim. Um relato como \"meu filho está com falta de ar\" fala de saúde. Por isso não pedimos nome nem localização da pessoa."
+              "Sim. Um morador pode escrever algo sobre saúde, como falta de ar de uma criança. Justamente por isso não pedimos nome, telefone nem endereço pessoal."
             ],
             [
-              "Como protegemos?",
-              "Coleta mínima, texto limpo, chave para apagar, HTTPS, SSL obrigatório e disco cifrado no RDS, além do selo HMAC de integridade."
+              "Como protegemos esses dados?",
+              "Coleta mínima, limpeza do texto, chave para apagar, criptografia em trânsito e no banco da nuvem e assinatura digital em cada registro."
             ],
             [
-              "Como a pessoa sabe?",
-              "O formulário diz \"Sem nome, sem localização sua. Só o texto.\" e a tela Como funciona explica o resto."
+              "Como o usuário é informado?",
+              "O próprio formulário de relato avisa de forma direta: \"Sem nome, sem localização sua. Só o texto.\" A tela Como funciona detalha essas regras."
             ]
           ],
           "col_widths": [
-            50,
-            130
+            48,
+            132
           ]
         }
       ],
       "body": [
-        "Cenário de engenharia social: chega no WhatsApp da diretora uma mensagem \"da Defesa Civil\" pedindo para instalar um aplicativo novo de alerta ou mandar a chave do painel. Contramedidas: o produto só existe num endereço HTTPS divulgado pela secretaria, a equipe aprende a desconfiar de pedido de chave por mensagem e contas de administração usam MFA."
-      ]
-    },
-    {
-      "title": "8. PONTE COM O ENUNCIADO E CRITÉRIOS DE AVALIAÇÃO",
-      "body": [
-        "A tabela abaixo conecta diretamente os requisitos do enunciado oficial de Cognitive Cybersecurity (docs/enunciados/03-cognitive-cybersecurity/) às seções e evidências deste documento."
-      ],
-      "tables": [
-        {
-          "headers": [
-            "Critério do enunciado (peso)",
-            "Onde está atendido",
-            "Evidência concreta"
-          ],
-          "rows": [
-            [
-              "Solução CitizenTech e arquitetura (Seção 1)",
-              "Seção 1 deste documento",
-              "Problema, público, 4 camadas (Usuário, Aplicação, Banco, IA) e integração com ESP32"
-            ],
-            [
-              "Ameaças e vulnerabilidades (2,0 pts)",
-              "Seção 2 (5 camadas)",
-              "Usuários, Aplicação, API, Banco de Dados e Modelo de IA mapeados"
-            ],
-            [
-              "Qualidade da análise de riscos (2,0 pts)",
-              "Seção 3 (6 riscos)",
-              "Matriz com probabilidade, impacto e controle para R1 a R6 (mínimo exigido: 5)"
-            ],
-            [
-              "Implementação de proteção funcional (3,0 pts)",
-              "Seções 4, 5 e 6",
-              "5 controles reais na API (Rate Limit 429, X-API-Key 401, XSS/CSV, HMAC, audit log) + 24 testes + HTTPS/SSL/KMS na AWS"
-            ],
-            [
-              "Privacidade e LGPD (1,0 pt)",
-              "Seção 7 (tabela LGPD)",
-              "As 4 perguntas obrigatórias respondidas com base legal (art. 5º e art. 7º, IX)"
-            ],
-            [
-              "Justificativa técnica e Engenharia Social (1,0 pt)",
-              "Seções 4 e 7",
-              "Trade-offs (leitura pública x escrita protegida, CORS, VPC) + cenário WhatsApp falso e contramedidas"
-            ],
-            [
-              "Apresentação / Pitch (1,0 pt)",
-              "Vídeo pitch (até 5 min)",
-              "Roteiro em docs/ENTREGAS.md com demo ao vivo dos comandos 429, 401 e selo HMAC"
-            ]
-          ],
-          "col_widths": [
-            56,
-            46,
-            78
-          ]
-        }
+        "Cenário de engenharia social: a diretora de uma escola recebe no WhatsApp uma mensagem fingindo ser da Defesa Civil, pedindo para instalar um aplicativo falso de alerta ou enviar a chave de acesso do painel. Contramedidas: o RespiraCidadão só funciona num único endereço oficial em HTTPS divulgado pela secretaria, a equipe recebe orientação clara de que ninguém pede chave por mensagem e as contas administrativas usam autenticação em duas etapas."
       ]
     }
   ]

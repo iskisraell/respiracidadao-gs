@@ -28,8 +28,8 @@ export function StatusCard({ place }: { place: Place }) {
         <p>
           <CloudOff size={16} aria-hidden="true" /> A última medida é de {ago(medido)} e marcava {LEVEL_NAME[place.nivel].toLowerCase()}.
           {place.sensor_simulado
-            ? "Este sensor ainda roda em simulador (Wokwi), não numa placa instalada aqui: não há luz no local para conferir."
-            : "O sensor pode estar sem internet. A luz dele continua funcionando no local: confira por lá antes de decidir."}
+            ? " Este sensor ainda roda em simulação no computador, não numa placa instalada no local."
+            : " O sensor pode estar sem internet. A luz dele continua funcionando na parede: confira por lá antes de decidir."}
         </p>
       </section>
     );
@@ -49,13 +49,13 @@ export function StatusCard({ place }: { place: Place }) {
 
       {place.sensor_simulado && !demo && (
         <p className="note warn">
-          <FlaskConical size={16} aria-hidden="true" /> Teste: este sensor ainda roda em simulador (Wokwi), não numa placa instalada aqui. Não use este nível para decidir.
+          <FlaskConical size={16} aria-hidden="true" /> Leitura de teste. Este sensor ainda roda em simulação no computador e não substitui uma medição no local.
         </p>
       )}
 
       {demo && (
         <p className="note warn">
-          <FlaskConical size={16} aria-hidden="true" /> Leitura de demonstração, gerada pelo modo demonstração. Não é uma medida real deste lugar.
+          <FlaskConical size={16} aria-hidden="true" /> Leitura de demonstração. Não é uma medida real deste lugar.
         </p>
       )}
 
@@ -112,7 +112,7 @@ function SecondOpinion({ r }: { r: Reading }) {
       <ShieldCheck size={16} aria-hidden="true" />
       {agrees
         ? `A central conferiu e concorda: ${LEVEL_NAME[r.ia_risco]}, com ${pct(r.ia_risco_prob)} de confiança.`
-        : `A central acha que está ${LEVEL_NAME[r.ia_risco]} (${pct(r.ia_risco_prob)} de confiança). Na dúvida, siga o nível mais cuidadoso.`}
+        : `A central avalia como ${LEVEL_NAME[r.ia_risco]}, com ${pct(r.ia_risco_prob)} de confiança. Na dúvida, siga o nível mais cuidadoso.`}
     </p>
   );
 }

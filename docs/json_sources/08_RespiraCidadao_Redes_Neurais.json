@@ -2,7 +2,7 @@
   "title": "RESPIRACIDADÃO: A SEGUNDA OPINIÃO",
   "subtitle": [
     "Rede neural em PyTorch que confere o veredito da central",
-    "As 8 etapas do projeto"
+    "Desenvolvimento completo nas 8 etapas do projeto"
   ],
   "meta": [
     {
@@ -22,26 +22,26 @@
       "value": "Giovanni Henrique Pereira Hessel (RM 570574)\nSuellen Pereira da Silva (RM 573862)\nIsrael Carneiro de Toledo (RM 573854)"
     }
   ],
-  "output_dir": "/home/agent/projects/respiracidadao-gs/docs/08-redes-neurais-deep-learning-ag",
+  "output_dir": "/home/agent/.t3/worktrees/respiracidadao-gs/t3-8e5d4313-ba7e8d34c0a31b13/docs/08-redes-neurais-deep-learning-ag",
   "filename": "08_RespiraCidadao_Redes_Neurais",
   "sections": [
     {
       "title": "1. ETAPAS 1 A 4: PROBLEMA, DADOS, PREPARO E ARQUITETURA",
       "bullets": [
         {
-          "text": "Etapa 1, problema: dizer se o ar está bom, carregado ou ruim a partir das 4 medidas do sensor, para avisar escola e UBS antes da crise. Apoia o ODS 3 (saúde) e o ODS 11 (cidades sustentáveis).",
+          "text": "Etapa 1, problema: classificar o ar como bom, carregado ou ruim a partir das 4 medidas do sensor para avisar escolas e postos de saúde antes de crises respiratórias, apoiando os ODS 3 e 11.",
           "level": 0
         },
         {
-          "text": "Etapa 2, dados: UCI Air Quality real, 6941 horas completas. Nada sintético.",
+          "text": "Etapa 2, dados: base pública real UCI Air Quality com 6.941 horas completas, sem nenhum dado sintético.",
           "level": 0
         },
         {
-          "text": "Etapa 3, preparo: 70% treino (4.858), 15% validação (1.041) e 15% teste (1.042), com a mesma proporção de níveis. A padronização aprende só com o treino.",
+          "text": "Etapa 3, preparo: divisão estratificada em 70% para treino, 15% para validação e 15% para teste, padronizando as medidas usando apenas a estatística do treino.",
           "level": 0
         },
         {
-          "text": "Etapa 4, arquitetura: AirQualityMLP (4 -> 64 -> 32 -> 3, BatchNorm1d + ReLU + Dropout 0.25). Os dados são 4 números por hora, sem imagem nem sequência longa, então uma rede densa (MLP) basta. CNN e RNN resolveriam problemas que não temos.",
+          "text": "Etapa 4, arquitetura: rede densa simples do tipo MLP com 4 entradas, camadas ocultas de 64 e 32 neurônios com normalização e desligamento aleatório de 25%, e 3 saídas. Como cada leitura traz apenas 4 números por hora, sem imagem nem sequência longa, redes convolucionais ou recorrentes seriam exagero para este formato.",
           "level": 0
         }
       ]
@@ -53,14 +53,14 @@
           "headers": [
             "Experimento",
             "Épocas",
-            "Acurácia (treino)",
-            "Acurácia (teste)",
+            "Acerto no treino",
+            "Acerto no teste",
             "F1-macro",
             "Diferença"
           ],
           "rows": [
             [
-              "Regra do ESP32 (gas_voc)",
+              "Regra do ESP32, direto no sensor",
               "0",
               "sem treino",
               "82,4%",
@@ -68,7 +68,7 @@
               "não se aplica"
             ],
             [
-              "A baseline (128-64, sem regularização)",
+              "A baseline, 128 e 64 neurônios sem freios",
               "150",
               "90,9%",
               "85,7%",
@@ -76,7 +76,7 @@
               "5,2 pp"
             ],
             [
-              "B regularizado (64-32, BN + Dropout + ES)",
+              "B regularizado, 64 e 32 neurônios regularizada",
               "34",
               "87,2%",
               "86,1%",
@@ -96,29 +96,30 @@
       ],
       "images": [
         {
-          "path": "/home/agent/projects/respiracidadao-gs/packages/neural-networks/charts/01_curvas_treinamento.png",
-          "caption": "Figura 1: Perda e acerto por época, rede sem e com regularização.",
+          "path": "/home/agent/.t3/worktrees/respiracidadao-gs/t3-8e5d4313-ba7e8d34c0a31b13/packages/neural-networks/charts/01_curvas_treinamento.png",
+          "caption": "Figura 1: Evolução da perda e do acerto por época, comparando a rede sem freios com a rede regularizada.",
           "width": 150
         },
         {
-          "path": "/home/agent/projects/respiracidadao-gs/packages/neural-networks/charts/02_matriz_confusao_nn.png",
-          "caption": "Figura 2: Onde a rede regularizada erra no teste.",
+          "path": "/home/agent/.t3/worktrees/respiracidadao-gs/t3-8e5d4313-ba7e8d34c0a31b13/packages/neural-networks/charts/02_matriz_confusao_nn.png",
+          "caption": "Figura 2: Matriz de confusão da rede regularizada no conjunto de teste.",
           "width": 150
         }
       ],
       "body": [
-        "A rede A (128 e 64 neurônios, taxa de aprendizado 0,003, sem regularização, 150 épocas) teve a menor perda de validação na época 41 (0,289); depois disso a perda de validação subiu até 0,327 enquanto a de treino seguia caindo. Ela chegou a 90,9% no treino e 85,7% no teste: 5,2 pontos de diferença, sinal de que decorava. A rede B (64 e 32 neurônios, taxa 0,001) tem quatro freios. BatchNorm reajusta a escala dos números entre camadas para o treino não oscilar. Dropout de 0,25 desliga um quarto dos neurônios ao acaso em cada passo, para nenhum deles virar muleta. Weight decay pune pesos grandes. A parada antecipada encerra o treino quando a validação passa 15 épocas sem melhorar. Parou na época 34, voltou ao melhor estado (época 19) e ficou com 86,1% no teste e 1,1 ponto de diferença.",
-        "Nas 1.042 horas de teste, nenhuma hora de ar bom virou ruim e nenhuma ruim virou bom. A regra simples do sensor acerta 82% nessas horas; a rede B acerta 3,6 pontos a mais (86,1% contra 82,4%). No documento do modelo da central a mesma regra aparece com 84%: lá o teste tem 1.389 horas (20% da base) e aqui 1.042 (15%), então são horas diferentes."
+        "Na primeira tentativa, treinamos uma rede maior de 128 e 64 neurônios sem nenhuma regularização durante 150 épocas. A perda de validação atingiu o melhor ponto na época 41 e depois começou a piorar enquanto o treino continuava melhorando, deixando 5,2 pontos de diferença entre treino e teste. Era sinal claro de que a rede estava decorando os dados.",
+        "Na rede B, reduzimos para 64 e 32 neurônios e aplicamos quatro freios contra memorização: normalização entre camadas para estabilizar o treino, desligamento aleatório de 25% dos neurônios a cada passo para evitar dependência de poucos caminhos, penalização de pesos altos e parada antecipada quando a validação passa 15 épocas sem melhorar. O treino parou na época 34, recuperou o melhor estado da época 19 e chegou a 86,1% no teste com apenas 1,1 ponto de diferença para o treino.",
+        "Nas 1.042 horas de teste, nenhuma hora de ar bom foi classificada como ruim, nem o inverso. Comparada à regra simples do sensor, a rede neural ganha 3,6 pontos percentuais de acerto."
       ]
     },
     {
-      "title": "3. ETAPA 8: DEMONSTRAÇÃO, LIMITES E DADOS PESSOAIS",
+      "title": "3. ETAPA 8: DEMONSTRAÇÃO, LIMITES E RESPONSABILIDADE",
       "tables": [
         {
           "headers": [
             "Leitura nunca vista",
             "Veredito",
-            "Bom / Carregado / Ruim"
+            "Probabilidade: Bom / Carregado / Ruim"
           ],
           "rows": [
             [
@@ -138,31 +139,31 @@
             ]
           ],
           "col_widths": [
-            70,
+            66,
             30,
-            80
+            84
           ]
         }
       ],
       "body": [
-        "No produto, a Random Forest confere cada leitura que chega em POST /ocorrencias. A rede (air_quality_mlp.pt) responde em POST /predict: na tela Como funciona, o card \"Segunda opinião\" mostra o veredito dela ao lado da regra do sensor e da Random Forest, para a leitura que a pessoa montar.",
-        "Limites: base de outra cidade; precisa de recalibração em cada bairro. A rede acerta um pouco menos que a floresta, por isso é segunda opinião e não a voz principal. Próximo passo: uma rede recorrente (LSTM ou GRU) olhando janelas das últimas horas, para prever a piora nas próximas horas, antes de o ar chegar ao nível ruim."
+        "No produto final, a Random Forest confere cada leitura que chega do sensor e a rede neural atua como segunda opinião na tela Como funciona, permitindo comparar ao vivo a luz do sensor, o modelo principal e a rede neural para qualquer combinação de valores.",
+        "Limites: a base vem de outra cidade e exige recalibração local antes de uso real em um bairro novo. Como próximo passo, pretendemos testar redes recorrentes lendo janelas de várias horas seguidas para prever a piora do ar antes mesmo de ela atingir o nível crítico."
       ],
       "bullets": [
         {
-          "text": "Acessibilidade: o resultado chega como cor e palavra (Bom, Carregado, Ruim), não como probabilidade crua.",
+          "text": "Acessibilidade: o usuário vê cor e palavra simples, nunca probabilidades cruas.",
           "level": 0
         },
         {
-          "text": "Segurança: as 4 entradas passam por checagem de faixa antes de virar a matriz numérica (tensor) que a rede lê, e os pesos carregam com torch.load(weights_only=True), que não executa código escondido no arquivo.",
+          "text": "Segurança: as entradas são validadas antes de chegar à rede e os pesos são carregados em modo seguro que bloqueia execução de código malicioso.",
           "level": 0
         },
         {
-          "text": "LGPD: a rede só recebe 4 números ambientais, nunca dado de pessoa.",
+          "text": "Privacidade: a rede recebe apenas quatro números ambientais, sem qualquer dado pessoal.",
           "level": 0
         },
         {
-          "text": "Sustentabilidade: treina numa CPU comum em segundos e o arquivo de pesos tem 17 KB.",
+          "text": "Sustentabilidade: treina em segundos num computador comum e o arquivo salvo ocupa apenas 17 KB.",
           "level": 0
         }
       ]

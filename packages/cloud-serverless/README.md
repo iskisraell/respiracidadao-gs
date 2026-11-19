@@ -1,69 +1,70 @@
-# Central do RespiraCidadão na nuvem (AWS)
+# Central do RespiraCidadão na nuvem AWS
 
-A central é quem recebe a leitura do sensor, decide o nível, registra telemetria no CloudWatch, aciona a camada de IA para relatos e guarda o histórico no PostgreSQL gerenciado. No dia a dia ela roda como a API do repositório (`apps/api`). Esta pasta é a mesma central em formato serverless na AWS, operando sem servidor ligado o tempo todo:
+A central recebe cada leitura do sensor, decide o nível de risco do ar, grava logs de auditoria no CloudWatch, consulta uma IA para analisar relatos de moradores e salva o histórico no PostgreSQL. No ambiente local, esse trabalho roda na API de `apps/api`. Esta pasta entrega a mesma central em arquitetura serverless na AWS, rodando sob demanda sem manter servidor ligado o tempo todo.
 
 ```text
-sensor ESP32 / simulador --HTTPS--> AWS Lambda (Function URL, fora da VPC) --> Amazon RDS PostgreSQL 18.3 (SSL + KMS)
-                                         |--> CloudWatch Logs: payload bruto, validacao, classificacao, WARNING, id gravado
-                                         '--> IA de texto (Hugging Face router): le o relato sem derrubar a ingestao
+Sensor ou simulador --HTTPS--> AWS Lambda --> Amazon RDS PostgreSQL 18.3 com SSL e disco cifrado
+                                  |--> CloudWatch Logs: entrada, validação, classificação, alertas e gravação
+                                  '--> IA de texto na Hugging Face: lê o relato sem travar a gravação
 ```
 
-## Ambiente publicado e validado na AWS (us-east-1)
+## Ambiente publicado e validado na AWS, região us-east-1
 
-- **Function URL da Lambda (`respiracidadao-central`):** `https://6diultpyclfbww5yyqt2oki7bi0ipglh.lambda-url.us-east-1.on.aws/`
-- **Endpoint do Amazon RDS PostgreSQL 18.3 (`respiracidadao-db`, sem senha):** `respiracidadao-db.co6giv33mf2r.us-east-1.rds.amazonaws.com` (porta `5432`, banco `respiracidadao`, usuário `respira`, SSL obrigatório, `StorageEncrypted=True`)
-- **Log Group no CloudWatch:** `/aws/lambda/respiracidadao-central`
-- **Runtime e limites:** Python 3.12, 256 MB, timeout de 30s, **fora da VPC** (saída direta para internet sem custo de NAT Gateway), execução via `LabRole`.
+- **Endereço público da Lambda `respiracidadao-central`:** `https://6diultpyclfbww5yyqt2oki7bi0ipglh.lambda-url.us-east-1.on.aws/`
+- **Banco gerenciado Amazon RDS PostgreSQL 18.3:** `respiracidadao-db.co6giv33mf2r.us-east-1.rds.amazonaws.com`, porta `5432`, banco `respiracidadao`, usuário `respira`, conexão segura obrigatória e armazenamento cifrado. A senha fica apenas na variável de ambiente da Lambda, fora do código.
+- **Grupo de logs no CloudWatch:** `/aws/lambda/respiracidadao-central`
+- **Configuração da função:** Python 3.12, 256 MB de memória, limite de 30 segundos por execução, rodando fora de rede privada para acessar a API externa de IA sem o custo fixo de um NAT Gateway.
 
-## Cenário CitizenTech, público beneficiado e ODS
+## Problema cidadão, público atendido e ODS
 
-- **Problema real:** escolas, UBS e famílias na periferia ficam longe das estações oficiais de qualidade do ar e só descobrem a fumaça quando alguém passa mal. Uma prefeitura não quer pagar servidor ligado de madrugada em cada bairro.
-- **Cidadão beneficiado:** coordenação de escola e UBS, famílias com crianças, idosos e pessoas com asma, além de vizinhos que enviam relatos de queimada.
-- **Métrica medida e limiares de risco** (idênticos ao firmware ESP32 da disciplina 02 e à API da disciplina 05):
-  - `gas_voc` (sensor de fumaça e gases): `< 830` = `normal`, `830 a 1139` = `atencao`, `>= 1140` = `critico`
-  - `gas_co` (monóxido de carbono): `< 1010` = `normal`, `1010 a 1279` = `atencao`, `>= 1280` = `critico`
-- **Conexão com os ODS:** ODS 3 (aviso antes da crise respiratória), ODS 10 (sensor barato onde não há estação oficial) e ODS 11 (dado aberto por bairro com custo proporcional ao uso).
+Escolas públicas, postos de saúde e famílias da periferia ficam longe das estações oficiais de qualidade do ar e só percebem uma queimada quando alguém passa mal. Ao mesmo tempo, uma prefeitura ou escola não quer pagar por um servidor ligado de madrugada em cada bairro.
+
+O sistema atende coordenações de escolas e UBS, famílias com crianças, idosos, pessoas com asma e moradores que relatam fumaça perto de casa. Isso se conecta diretamente a três objetivos da ONU: ODS 3 de saúde, ao avisar antes da crise respiratória; ODS 10 de redução das desigualdades, ao levar monitoramento barato onde não há estação oficial; e ODS 11 de cidades sustentáveis, com dados abertos por bairro e custo proporcional ao uso.
+
+### Faixas de risco usadas na classificação
+
+Os limites seguem exatamente o firmware do sensor e a API local:
+
+- Sensor de fumaça e gases, `gas_voc`: abaixo de `830` indica ar normal; de `830` a `1139` indica atenção; a partir de `1140` indica situação crítica.
+- Sensor de monóxido de carbono, `gas_co`: abaixo de `1010` indica ar normal; de `1010` a `1279` indica atenção; a partir de `1280` indica situação crítica.
 
 ## O que a função faz com cada leitura
 
-1. **Validação estrita (`POST /ocorrencias`):** confere JSON, tipos numéricos finitos, faixas válidas, tamanho do relato (até 500 caracteres) e `medido_em` (ISO 8601). Qualquer erro devolve HTTP `400` e registra `WARNING LEITURA DESCARTADA` no CloudWatch, nunca `500`.
-2. **Classificação local de risco:** classifica `normal`, `atencao` ou `critico` pelos limiares acima, independente de rede ou serviço externo.
-3. **Camada de IA resiliente (sem segredo no código):**
-   - **Caminho escolhido: Hugging Face (`cardiffnlp/twitter-xlm-roberta-base-sentiment`)** via `https://router.huggingface.co/hf-inference/models/{modelo}`, usando apenas `urllib` da biblioteca padrão e token Read na variável de ambiente `HF_TOKEN`.
-   - **Por que Hugging Face e não Amazon Comprehend:** testamos `comprehend:DetectSentiment` pela `LabRole` do AWS Academy Learner Lab e o laboratório bloqueia a permissão com `AccessDeniedException`. O código ainda suporta `AI_PROVIDER=comprehend` para contas com a política `ComprehendReadOnly`, mas o padrão é Hugging Face por ser gratuito, entender português informal de relato e não exigir permissão extra de IAM.
-   - **Resiliência comprovada na AWS:** com `HF_TOKEN` cadastrado na Lambda (`GET /health` -> `"ia_ativa": true`), cada relato dispara a chamada HTTPS real para `router.huggingface.co`. Quando a cota gratuita mensal de Inference Providers retorna `HTTP 402` (ou em caso de timeout/indisponibilidade), a Lambda registra `WARNING` no CloudWatch (`Hugging Face respondeu 402...`) e conclui normalmente a classificação por limiar e a gravação no RDS PostgreSQL (`HTTP 201`).
-4. **Persistência e observabilidade:** grava na tabela `ocorrencias` do RDS usando consultas parametrizadas (`%s` no `pg8000`) com SSL obrigatório e devolve HTTP `201`. Leituras críticas geram `WARNING ALERTA CIDADAO` no CloudWatch.
+1. **Validação na entrada.** Ao receber um envio em `POST /ocorrencias`, a função confere o formato JSON, verifica se os números são válidos e finitos, valida o limite de 500 caracteres para relatos e checa a data da medição. Se algo estiver errado, devolve erro 400 e grava um aviso no CloudWatch, sem derrubar a função.
+2. **Classificação local de risco.** Os limiares acima classificam a leitura em normal, atenção ou crítico dentro da própria Lambda, sem depender de serviço externo.
+3. **Análise de relatos com plano de contingência.** O texto de relatos passa pelo modelo multilíngue `cardiffnlp/twitter-xlm-roberta-base-sentiment`, acessado via roteador da Hugging Face usando apenas a biblioteca padrão `urllib` do Python e a variável de ambiente `HF_TOKEN`. Testamos antes o Amazon Comprehend, mas o laboratório AWS Academy bloqueia essa permissão na conta estudantil. O código continua pronto para usar Comprehend caso a conta tenha essa permissão liberada. Na nuvem, validamos o fluxo completo com `HF_TOKEN` ativo: quando a cota gratuita mensal da Hugging Face responde com erro 402 ou o serviço fica fora do ar, a Lambda registra um aviso no CloudWatch e conclui normalmente a gravação da leitura no PostgreSQL com resposta 201.
+4. **Gravação segura e monitoramento.** Todas as consultas SQL usam parâmetros separados para evitar injeção de código e trafegam por conexão cifrada. Toda leitura crítica grava um alerta específico no CloudWatch para facilitar auditoria.
 
-## Evidências ponta a ponta coletadas na AWS
+## Evidências coletadas na AWS
 
-Todas as evidências estão em `docs/evidencias/` (e incluídas em `deliverables/07-cloud-serverless.zip`):
+Os cinco registros visuais do ambiente publicado estão em `docs/evidencias/` e empacotados em `deliverables/07-cloud-serverless.zip`:
 
-1. `07_aws_lambda_env.png`: console da Lambda `respiracidadao-central` exibindo todas as variáveis de ambiente (`AI_PROVIDER`, `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `HF_MODEL`, `HF_API_URL`, `DB_PASSWORD` e `HF_TOKEN`, com ambos os segredos ocultados por segurança).
-2. `07_aws_simulador.png`: terminal executando `GET /health` (`ia_ativa: true`), `POST /ocorrencias` inválido (`400`), `simulador_dispositivo.py --cenario normal --lugar ubs`, `--cenario queimada --lugar escola` (escalando até `critico << ALERTA`) e `GET /ocorrencias`.
-3. `07_aws_cloudwatch.png`: console do CloudWatch Logs (`/aws/lambda/respiracidadao-central`) mostrando `PAYLOAD RECEBIDO`, chamada HTTPS real à Hugging Face com fallback resiliente (`WARNING Hugging Face respondeu 402`), `CLASSIFICACAO`, `ALERTA CIDADAO` (`WARNING`) e `GRAVADO NO RDS`.
-4. `07_aws_rds_console.png` e `07_aws_rds_select.png`: console do RDS `respiracidadao-db` (`Available`, PostgreSQL 18.3, `StorageEncrypted=True`) e consulta `run_sql.py --consultas` exibindo as 15 ocorrências persistidas e agregadas por sensor.
+1. `07_aws_lambda_env.png`: painel da Lambda mostrando todas as variáveis de ambiente configuradas, com a senha do banco e o token da Hugging Face ocultados.
+2. `07_aws_simulador.png`: terminal executando a checagem de saúde com IA ativa, um teste de erro 400 proposital, o simulador em cenário normal na UBS, o cenário de queimada na escola até o nível crítico e a consulta das ocorrências gravadas.
+3. `07_aws_cloudwatch.png`: logs reais no CloudWatch exibindo a leitura recebida, a chamada externa para a Hugging Face com contingência registrada, a classificação de risco, o alerta cidadão e a confirmação de gravação no RDS.
+4. `07_aws_rds_console.png` e `07_aws_rds_select.png`: painel do banco PostgreSQL 18.3 ativo e cifrado na AWS e a consulta direta retornando as 15 ocorrências persistidas e resumidas por sensor.
 
-## Como reproduzir
+## Como testar
 
-### Teste local (sem AWS)
+### Teste local, sem conta na AWS
 
 ```bash
-python3 teste_local.py                       # 8 verificacoes automatizadas
-python3 servidor_local.py                    # simula a Lambda com SQLite
+python3 teste_local.py
+python3 servidor_local.py
 FUNCTION_URL=http://127.0.0.1:8099 python3 simulador_dispositivo.py --cenario queimada
 ```
 
 ### Publicação e validação na AWS
 
-Com credenciais configuradas em `~/.aws/credentials` (AWS Academy Learner Lab ou conta própria):
+Com as credenciais da AWS configuradas em `~/.aws/credentials`:
 
 ```bash
 DB_PASSWORD='sua-senha-forte' ./deploy_aws.sh
-# opcional, para ativar analise de sentimento externa:
+# Para ativar tambem a chamada externa de analise de relatos:
 # HF_TOKEN='hf_...' DB_PASSWORD='sua-senha-forte' ./deploy_aws.sh
 ```
 
-Validação direta na Function URL publicada:
+Validação direta na função publicada:
 
 ```bash
 export FUNCTION_URL="https://6diultpyclfbww5yyqt2oki7bi0ipglh.lambda-url.us-east-1.on.aws"
@@ -76,9 +77,7 @@ DB_HOST="respiracidadao-db.co6giv33mf2r.us-east-1.rds.amazonaws.com" DB_NAME="re
 
 ## Escolhas de arquitetura e segurança
 
-- **Lambda fora da VPC:** permite saída direta para a API de IA sem custo fixo de NAT Gateway.
-- **Banco com SSL e criptografia em repouso:** o RDS PostgreSQL 18.3 exige SSL (`rds.force_ssl=1`) e roda com disco cifrado (`StorageEncrypted=True`), acessível apenas na porta TCP `5432` pelo Security Group `respiracidadao-db-sg`. Para uso contínuo em produção municipal, banco e Lambda entram juntos em sub-rede privada com VPC Endpoint / NAT.
-- **SQL parametrizado:** todas as queries usam placeholders `%s` via `pg8000`, prevenindo SQL Injection.
+Deixamos a Lambda fora da rede privada para permitir saída direta até a API de IA sem pagar o custo fixo de um NAT Gateway no ambiente estudantil. O banco compensa essa exposição exigindo conexão cifrada obrigatória, disco criptografado, senha isolada em variável de ambiente e acesso restrito à porta 5432 pelo grupo de segurança do banco. Em implantação definitiva numa prefeitura, tanto a função quanto o banco passariam para sub-redes privadas.
 
 ## Limpeza dos recursos após a avaliação
 
