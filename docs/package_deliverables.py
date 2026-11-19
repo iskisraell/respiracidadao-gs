@@ -52,6 +52,10 @@ def main():
         (DOCS / "03-cognitive-cybersecurity" / "03_RespiraCidadao_Cybersecurity.docx", "03_RespiraCidadao_Cybersecurity.docx"),
         (APPS / "api" / "app" / "security.py", "evidencias/security.py"),
         (APPS / "api" / "tests" / "test_api.py", "evidencias/test_api.py"),
+        (DOCS / "evidencias" / "03_limite_chave.png", "evidencias/03_limite_chave.png"),
+        (DOCS / "evidencias" / "03_selo.png", "evidencias/03_selo.png"),
+        (DOCS / "evidencias" / "03_pytest.png", "evidencias/03_pytest.png"),
+        (DOCS / "evidencias" / "07_aws_rds_console.png", "evidencias/07_aws_rds_console.png"),
     ])
 
     make_zip("04-cognitive-data-science-oracle.zip", [
@@ -87,6 +91,11 @@ def main():
         (PKGS / "cloud-serverless" / "run_sql.py", "run_sql.py"),
         (PKGS / "cloud-serverless" / "requirements.txt", "requirements.txt"),
         (PKGS / "cloud-serverless" / "README.md", "README.md"),
+        (DOCS / "evidencias" / "07_aws_lambda_env.png", "evidencias/01_lambda_env.png"),
+        (DOCS / "evidencias" / "07_aws_simulador.png", "evidencias/02_simulador_aws.png"),
+        (DOCS / "evidencias" / "07_aws_cloudwatch.png", "evidencias/03_cloudwatch_logs.png"),
+        (DOCS / "evidencias" / "07_aws_rds_console.png", "evidencias/04_rds_console.png"),
+        (DOCS / "evidencias" / "07_aws_rds_select.png", "evidencias/05_rds_select.png"),
     ])
 
     make_zip("08-redes-neurais-deep-learning.zip", [

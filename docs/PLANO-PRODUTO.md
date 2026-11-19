@@ -53,7 +53,7 @@ Tudo no produto existe para essa frase ser verdadeira, rápida e confiável.
 ### 4. Sensor e nuvem [feito]
 - [x] ESP32 no Wokwi com print dos 3 estados (`packages/iot-aicss/evidencias/`).
 - [x] `receiver_csv.py` e `run_3_cenarios.py` no contrato novo, um sensor por lugar.
-- [x] Kit de nuvem: Lambda no contrato novo, `deploy_aws.sh`, `run_sql.py`, SSL no banco, caminho do banco testado num PostgreSQL local.
+- [x] Central na nuvem publicada e validada na AWS (`us-east-1`): AWS Lambda (`respiracidadao-central`, Function URL pública), Amazon RDS PostgreSQL 18.3 (`respiracidadao-db`, SSL obrigatório e volume cifrado), CloudWatch Logs e 5 prints reais em `docs/evidencias/07_aws_*.png`.
 
 ### 5. Entregas [feito]
 - [x] Reescrever os textos de cada entrega na voz do produto, com prints reais e gráficos.

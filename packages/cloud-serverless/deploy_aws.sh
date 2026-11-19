@@ -38,8 +38,8 @@ if ! aws rds describe-db-instances --db-instance-identifier "$BANCO" >/dev/null 
   aws rds create-db-instance --db-instance-identifier "$BANCO" --engine postgres \
     --db-instance-class db.t3.micro --allocated-storage 20 --db-name "$DB_NAME" \
     --master-username "$DB_USER" --master-user-password "$DB_PASSWORD" \
-    --vpc-security-group-ids "$SG" --publicly-accessible --backup-retention-period 0 \
-    --no-multi-az >/dev/null
+    --vpc-security-group-ids "$SG" --publicly-accessible --storage-encrypted \
+    --backup-retention-period 0 --no-multi-az >/dev/null
   echo "criando o banco (leva de 5 a 10 minutos)..."
 fi
 aws rds wait db-instance-available --db-instance-identifier "$BANCO"
@@ -80,6 +80,8 @@ URL=$(aws lambda get-function-url-config --function-name "$FUNCAO" --query Funct
   || aws lambda create-function-url-config --function-name "$FUNCAO" --auth-type NONE --query FunctionUrl --output text)
 aws lambda add-permission --function-name "$FUNCAO" --statement-id url-publica \
   --action lambda:InvokeFunctionUrl --principal '*' --function-url-auth-type NONE >/dev/null 2>&1 || true
+aws lambda add-permission --function-name "$FUNCAO" --statement-id url-publica-invoke \
+  --action lambda:InvokeFunction --principal '*' --invoked-via-function-url >/dev/null 2>&1 || true
 rm -f "$AQUI/funcao.zip"
 
 cat <<FIM

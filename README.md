@@ -13,7 +13,7 @@ O RespiraCidadão avisa escolas, UBS e famílias quando o ar perto delas piora. 
 | `apps/web` | O app (React + TypeScript). Telas "Agora" e "Como funciona". |
 | `apps/api` | A central (FastAPI). Recebe leituras, decide o nível, guarda em CSV e SQLite, serve o app. |
 | `packages/iot-aicss` | O sensor: firmware ESP32, circuito Wokwi, receptor em Python e prints dos 3 estados. |
-| `packages/cloud-serverless` | A central na nuvem: função AWS Lambda, tabela PostgreSQL e um script que publica tudo. |
+| `packages/cloud-serverless` | A central na nuvem publicada na AWS (`us-east-1`): AWS Lambda com Function URL, RDS PostgreSQL 18.3, CloudWatch, simulador e evidências. |
 | `packages/ml-modelling` | Como o modelo da central foi escolhido (notebook com 6 modelos comparados). |
 | `packages/neural-networks` | A segunda opinião: rede neural em PyTorch. |
 | `packages/stats-r-python` | A estatística que mostra que o sensor barato explica o monóxido real. |

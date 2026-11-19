@@ -23,7 +23,7 @@
       "value": "Giovanni Henrique Pereira Hessel (RM 570574)\nSuellen Pereira da Silva (RM 573862)\nIsrael Carneiro de Toledo (RM 573854)"
     }
   ],
-  "output_dir": "/home/agent/projects/respiracidadao-gs/docs/01-ai-challenges",
+  "output_dir": "/home/agent/.t3/worktrees/respiracidadao-gs/t3-8e5d4313-ba7e8d34c0a31b13/docs/01-ai-challenges",
   "filename": "01_RespiraCidadao_Dossie_Integrador",
   "sections": [
     {
@@ -59,12 +59,12 @@
       ],
       "images": [
         {
-          "path": "/home/agent/projects/respiracidadao-gs/docs/assets/arquitetura_uml_respiracidadao.png",
+          "path": "/home/agent/.t3/worktrees/respiracidadao-gs/t3-8e5d4313-ba7e8d34c0a31b13/docs/assets/arquitetura_uml_respiracidadao.png",
           "caption": "Figura 1: Componentes do produto e por onde a leitura passa.",
           "width": 165
         },
         {
-          "path": "/home/agent/projects/respiracidadao-gs/docs/assets/uml_sequencia_leitura.png",
+          "path": "/home/agent/.t3/worktrees/respiracidadao-gs/t3-8e5d4313-ba7e8d34c0a31b13/docs/assets/uml_sequencia_leitura.png",
           "caption": "Figura 2: Diagrama de sequência UML de uma leitura de ar ruim. Foi com ele que fechamos o contrato JSON entre sensor, central e app antes de escrever código.",
           "width": 165
         }
@@ -89,13 +89,13 @@
             ],
             [
               "Central na nuvem",
-              "A mesma central sem servidor ligado: função + banco gerenciado. Pronta para publicar, testada localmente; ainda não está no ar",
-              "07 Cloud: Lambda, PostgreSQL, script de publicação"
+              "A mesma central sem servidor ligado: AWS Lambda (Function URL) + RDS PostgreSQL 18.3 + CloudWatch Logs, publicada e validada ponta a ponta na us-east-1",
+              "07 Cloud: Lambda, RDS SSL+KMS, simulador, 4+ prints reais AWS"
             ],
             [
               "Proteções",
-              "Limite de envios, chave para apagar, texto limpo, selo de integridade",
-              "03 Cybersecurity: testes que provam cada proteção"
+              "Limite de envios, chave para apagar, texto limpo, selo HMAC, HTTPS + SSL + disco cifrado na AWS",
+              "03 Cybersecurity: 24 testes + evidências locais e AWS"
             ],
             [
               "Modelo da central",
@@ -128,17 +128,17 @@
       ],
       "images": [
         {
-          "path": "/home/agent/projects/respiracidadao-gs/docs/assets/app_agora.png",
+          "path": "/home/agent/.t3/worktrees/respiracidadao-gs/t3-8e5d4313-ba7e8d34c0a31b13/docs/assets/app_agora.png",
           "caption": "Figura 3: Tela Agora com a escola em ar ruim e a central concordando com 93% de confiança.",
           "width": 160
         },
         {
-          "path": "/home/agent/projects/respiracidadao-gs/docs/assets/app_horario_relatos.png",
+          "path": "/home/agent/.t3/worktrees/respiracidadao-gs/t3-8e5d4313-ba7e8d34c0a31b13/docs/assets/app_horario_relatos.png",
           "caption": "Figura 4: Melhor horário calculado da base real e relato de vizinho marcado como urgente.",
           "width": 160
         },
         {
-          "path": "/home/agent/projects/respiracidadao-gs/packages/iot-aicss/evidencias/wokwi_3_ar_ruim.png",
+          "path": "/home/agent/.t3/worktrees/respiracidadao-gs/t3-8e5d4313-ba7e8d34c0a31b13/packages/iot-aicss/evidencias/wokwi_3_ar_ruim.png",
           "caption": "Figura 5: O sensor no simulador Wokwi com o LED vermelho aceso.",
           "width": 160
         }
@@ -160,9 +160,14 @@
               "Placa física com bateria solar e rádio LoRa onde não há Wi-Fi"
             ],
             [
-              "Central",
-              "API local com modelo, histórico, relatos e padrão por hora",
-              "Publicar na nuvem com o script pronto (falta só a conta AWS)"
+              "Central local",
+              "API FastAPI com modelo, histórico CSV/SQLite, relatos, padrão por hora e 24 testes",
+              "Integrar painel web diretamente ao endpoint gerenciado na nuvem"
+            ],
+            [
+              "Central na nuvem",
+              "AWS Lambda com Function URL pública, CloudWatch Logs e Amazon RDS PostgreSQL 18.3 (SSL + disco cifrado) validados ponta a ponta",
+              "Colocar banco e Lambda em sub-rede privada com NAT/VPC Endpoint e ativar token HF_TOKEN em produção"
             ],
             [
               "Modelo",
@@ -176,15 +181,15 @@
             ]
           ],
           "col_widths": [
-            26,
-            80,
-            74
+            28,
+            82,
+            70
           ]
         }
       ],
       "body": [
         "Gestão: dividimos o trabalho em três frentes que se encontram no mesmo contrato de dados. Uma cuidou do sensor e da nuvem, outra da estatística e dos modelos, e a terceira da central, do app e das proteções. Registramos cada decisão, com o motivo, num plano único no repositório (docs/PLANO-PRODUTO.md) e só fechávamos uma fase com os testes automáticos da central passando.",
-        "Duas dificuldades mudaram o projeto. A primeira: o modelo com 11 medidas de laboratório acertava mais, mas nenhuma escola teria aquele equipamento. Cortamos para as 4 medidas que o ESP32 tem e aceitamos perder alguns pontos. A segunda: o Wokwi gratuito não alcança um servidor fora do navegador. Em vez de esconder isso, fizemos o sensor tratar a falta de rede como caso normal, com a luz local funcionando, e provamos o envio com um receptor em Python."
+        "Duas dificuldades mudaram o projeto. A primeira: o modelo com 11 medidas de laboratório acertava mais, mas nenhuma escola teria aquele equipamento. Cortamos para as 4 medidas que o ESP32 tem e aceitamos perder alguns pontos. A segunda: o Wokwi gratuito não alcança um servidor fora do navegador. Em vez de esconder isso, fizemos o sensor tratar a falta de rede como caso normal, com a luz local funcionando, e provamos o envio com um receptor em Python e com o simulador batendo na AWS Lambda real."
       ]
     },
     {
@@ -195,7 +200,7 @@
           "level": 0
         },
         {
-          "text": "Segurança: limite de 30 envios por minuto por endereço, chave obrigatória para apagar dados, texto de relato limpo antes de gravar e selo digital em cada leitura.",
+          "text": "Segurança: limite de 30 envios por minuto por endereço, chave obrigatória para apagar dados, texto de relato limpo antes de gravar, selo HMAC em cada leitura e criptografia em trânsito (HTTPS/SSL) e em repouso (KMS) na AWS.",
           "level": 0
         },
         {
@@ -203,8 +208,75 @@
           "level": 0
         },
         {
-          "text": "Sustentabilidade: modelos pequenos que rodam numa máquina comum, sensor de baixo consumo e nuvem que só cobra quando recebe leitura.",
+          "text": "Sustentabilidade: modelos pequenos que rodam numa máquina comum, sensor de baixo consumo e nuvem serverless que só cobra quando recebe leitura.",
           "level": 0
+        }
+      ]
+    },
+    {
+      "title": "6. PONTE DIRETA COM OS ENUNCIADOS DA GS 2026.2",
+      "body": [
+        "Cada requisito dos enunciados oficiais da Global Solution 2026.2 está conectado diretamente a um artefato verificável no repositório e na pasta do grupo no Google Drive:"
+      ],
+      "tables": [
+        {
+          "headers": [
+            "Disciplina",
+            "Exigência central do enunciado",
+            "Evidência entregue"
+          ],
+          "rows": [
+            [
+              "01 AI Challenges",
+              "Vídeo integrador (até 7 min), UML, problema/ODS, live, gestão e demo",
+              "Dossiê PDF, roteiro de narração, UML arquitetura e sequência, app rodando"
+            ],
+            [
+              "02 AICSS (IoT)",
+              "ESP32 + 2 sensores + atuador + JSON para Python + CSV + 3 estados",
+              "sketch.ino, diagram.json, 3 prints Wokwi, receiver_csv.py, print JSON/CSV"
+            ],
+            [
+              "03 Cybersecurity",
+              "5 camadas, >=5 riscos, controles, LGPD, engenharia social, >=1 controle vivo",
+              "PDF consultoria, 5 controles vivos, 24 testes pytest, provas terminal + AWS"
+            ],
+            [
+              "04 Data Science",
+              "Standalone Oracle SQL (Inclusive Mobility Rover), envio individual SurveyMonkey",
+              "queries_inclusive_mobility_rover.sql com as 5 consultas e aliases exatos"
+            ],
+            [
+              "05 Python API",
+              "API REST POST/GET + CSV + >=1 indicador + 3 cenários integrados ao IoT",
+              "FastAPI apps/api, CSV com timestamp, GET /indicadores, 24 testes e prints"
+            ],
+            [
+              "06 Machine Learning",
+              "Comparar >=2 modelos + baseline + tuning + feature importance + slides + pitch",
+              "Notebook 6 modelos, RandomizedSearchCV, slides .pptx, resumo PDF, gráficos"
+            ],
+            [
+              "07 Cloud Serverless",
+              "Lambda Function URL (fora VPC) + RDS PostgreSQL + CloudWatch + IA + 4 prints",
+              "Lambda e RDS ativos na AWS (us-east-1), simulador, 5 prints reais AWS/SQL"
+            ],
+            [
+              "08 Redes Neurais",
+              "MLP/CNN/RNN nas 8 etapas + regularização comparada + demo em vídeo",
+              "Notebook PyTorch 8 etapas, rede A vs B (Dropout/BN/EarlyStop), card no app"
+            ],
+            [
+              "09 Estatística",
+              "Base real + Normal + 2 testes Z (6%/9%) + Reg. Simples/Múltipla/Logística (upload direto)",
+              "air_quality_clean.csv, analise_estatistica.py e relatório PDF (3 arquivos soltos)"
+            ]
+          ],
+          "col_widths": [
+            34,
+            76,
+            70
+          ]
         }
       ]
     }

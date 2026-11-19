@@ -22,7 +22,7 @@
       "value": "Giovanni Henrique Pereira Hessel (RM 570574)\nSuellen Pereira da Silva (RM 573862)\nIsrael Carneiro de Toledo (RM 573854)"
     }
   ],
-  "output_dir": "/home/agent/projects/respiracidadao-gs/docs/03-cognitive-cybersecurity",
+  "output_dir": "/home/agent/.t3/worktrees/respiracidadao-gs/t3-8e5d4313-ba7e8d34c0a31b13/docs/03-cognitive-cybersecurity",
   "filename": "03_RespiraCidadao_Cybersecurity",
   "sections": [
     {
@@ -128,7 +128,7 @@
     {
       "title": "4. CONTROLES POR CATEGORIA",
       "body": [
-        "Priorizamos o que dá para provar em código e custa pouco. O dado do produto é público e o morador não faz login, então não faz sentido proteger leitura com senha. O que precisa de proteção é escrita e apagamento: limite de envios contra enxurrada, chave só para administrar e selo HMAC para provar que o histórico não mudou. O que depende da conta de nuvem está marcado como proposto."
+        "Priorizamos o que dá para provar em código e na infraestrutura real da AWS. O dado ambiental do produto é público e o morador não faz login, então não faz sentido proteger leitura com senha. O foco de proteção é escrita, apagamento, integridade do histórico e tráfego até o banco na nuvem: limite de envios contra enxurrada, chave para administração, selo HMAC, HTTPS na Function URL, SSL obrigatório e disco cifrado no RDS PostgreSQL."
       ],
       "tables": [
         {
@@ -140,88 +140,97 @@
           "rows": [
             [
               "Autenticação",
-              "Chave para rotas de administração; MFA para gestores de escola e UBS",
-              "Chave feita; MFA proposto"
+              "Chave X-API-Key em rotas de administração (comparação em tempo constante); credenciais do banco em variáveis de ambiente da Lambda (zero segredos no código); MFA para gestores de escola e UBS",
+              "Chave e env vars feitos na AWS; MFA proposto"
             ],
             [
               "Firewall / WAF",
-              "Limite de envios por IP na central; filtro de ataques web (AWS WAF) na URL pública; banco aceitando só a porta 5432. CORS só impede que outro site, aberto no navegador da vítima, chame a central; quem usa curl ignora CORS, por isso ele não conta como barreira",
-              "Limite feito; WAF proposto"
+              "Limite de envios por IP na central (429); Security Group na AWS (sg-015dfe810b95f42cf) liberando somente a porta TCP 5432 no RDS; AWS WAF na URL pública em produção. CORS impede chamadas indevidas de outro site no navegador, mas não conta como barreira contra curl",
+              "Limite e Security Group feitos; WAF proposto"
             ],
             [
               "Backup",
-              "Snapshot diário do PostgreSQL e cópia do CSV com o selo de cada linha",
-              "Proposto"
+              "Retenção automática de backups gerenciada pelo Amazon RDS PostgreSQL e cópia do CSV com selo de integridade por linha",
+              "Habilitado no RDS; rotina externa proposta"
             ],
             [
               "Criptografia",
-              "HTTPS na URL da função, SSL obrigatório na conexão com o banco, disco do banco cifrado",
-              "SSL feito no código; na nuvem, o resto entra na publicação. No protótipo local, SQLite e CSV ficam sem cifra no disco"
+              "Em trânsito: HTTPS na Function URL da AWS Lambda e SSL obrigatório na conexão pg8000 com o RDS (rds.force_ssl=1). Em repouso: volume do Amazon RDS cifrado (StorageEncrypted=True via AWS KMS). No protótipo local, SQLite e CSV ficam sem cifra em disco",
+              "HTTPS, SSL e RDS cifrado validados na AWS"
             ],
             [
               "Monitoramento",
-              "Registro de eventos de segurança (security_audit.jsonl), lido só com chave, e avisos no CloudWatch para leitura descartada",
-              "Feito; alarmes propostos"
+              "Registro de eventos de segurança (security_audit.jsonl), lido só com chave, e trilha estruturada no Amazon CloudWatch (/aws/lambda/respiracidadao-central) com WARNING para leitura descartada e alerta crítico",
+              "Feito local e na AWS; alarmes SNS propostos"
             ],
             [
               "Integridade do modelo",
-              "Os pesos da rede carregam com weights_only=True. Próximo passo: conferir o hash dos arquivos .joblib e .pt ao subir, contra troca do modelo em disco",
-              "Parcial"
+              "Faixas de entrada validadas com Pydantic antes do modelo; pesos da rede neural carregados com weights_only=True. Próximo passo: conferir hash SHA-256 dos arquivos .joblib e .pt na inicialização",
+              "Parcial (validação e weights_only feitos)"
             ]
           ],
           "col_widths": [
             30,
-            104,
-            46
+            102,
+            48
           ]
         }
       ]
     },
     {
-      "title": "5. PROTEÇÕES FUNCIONANDO",
+      "title": "5. PROTEÇÕES FUNCIONANDO (LOCAL E AWS)",
       "body": [
-        "Cada proteção abaixo tem um teste automático em apps/api/tests/test_api.py. Os 24 testes passam. Também rodamos cada ataque à mão contra a central ligada e guardamos a saída do terminal."
+        "Cada proteção na API local tem um teste automático em apps/api/tests/test_api.py (24 testes passando) e execução manual documentada no terminal. Na camada serverless da AWS (disciplina 07), validamos os controles de nuvem diretamente no console da AWS com a função respiracidadao-central e o banco respiracidadao-db ativos em us-east-1."
       ],
       "bullets": [
         {
-          "text": "Limite de envios: com limite de teste em 10, os envios 11 e 12 voltam 429 e o evento rate_limit_blocked vai para o registro.",
+          "text": "Limite de envios (Rate Limiting): com limite de teste em 10, os envios 11 e 12 voltam 429 e o evento rate_limit_blocked vai para o registro.",
           "level": 0
         },
         {
-          "text": "IP falso: trocar o cabeçalho X-Forwarded-For não dribla o limite, porque a central só confia nele atrás de um proxy declarado.",
+          "text": "Proteção contra IP falso: trocar o cabeçalho X-Forwarded-For não dribla o limite, porque a central só confia nele atrás de um proxy declarado.",
           "level": 0
         },
         {
-          "text": "Chave: DELETE /ocorrencias sem chave ou com chave errada volta 401. Sem chave configurada no servidor, volta 503.",
+          "text": "Chave de administração: DELETE /ocorrencias sem chave ou com chave errada volta 401. Sem chave configurada no servidor, volta 503.",
           "level": 0
         },
         {
-          "text": "Relato com <script>: a marcação é removida antes de gravar. Valor \"=HYPERLINK(...)\" no CSV ganha prefixo e não vira fórmula.",
+          "text": "Sanitização de entrada: relato com <script> perde a marcação antes de gravar, e texto iniciado com = + - ou @ ganha apóstrofo no CSV contra injeção de fórmula.",
           "level": 0
         },
         {
-          "text": "Adulteração: editamos uma leitura direto no SQLite e GET /security/verify/{id} passou a responder integro=false.",
+          "text": "Hash de integridade (HMAC-SHA256): editamos uma leitura direto no SQLite e GET /security/verify/{id} passou a responder integro=false.",
+          "level": 0
+        },
+        {
+          "text": "Controles reais na AWS: HTTPS nativo na Function URL, credenciais isoladas em variáveis de ambiente da Lambda (sem segredo no código), RDS PostgreSQL 18.3 com disco cifrado e SSL obrigatório, consultas parametrizadas (%s no pg8000) contra SQL Injection e WARNING automático no CloudWatch para payload inválido.",
           "level": 0
         }
       ]
     },
     {
-      "title": "6. PROVAS NO TERMINAL",
+      "title": "6. PROVAS NO TERMINAL E NA AWS",
       "images": [
         {
-          "path": "/home/agent/projects/respiracidadao-gs/docs/evidencias/03_limite_chave.png",
+          "path": "/home/agent/.t3/worktrees/respiracidadao-gs/t3-8e5d4313-ba7e8d34c0a31b13/docs/evidencias/03_limite_chave.png",
           "caption": "Figura 1: Envios além do limite voltam 429. Apagar sem chave ou com chave errada volta 401.",
-          "width": 160
+          "width": 158
         },
         {
-          "path": "/home/agent/projects/respiracidadao-gs/docs/evidencias/03_selo.png",
+          "path": "/home/agent/.t3/worktrees/respiracidadao-gs/t3-8e5d4313-ba7e8d34c0a31b13/docs/evidencias/03_selo.png",
           "caption": "Figura 2: Selo íntegro, edição direta no banco, selo quebrado. Desfeita a edição, o selo volta a bater.",
-          "width": 160
+          "width": 158
         },
         {
-          "path": "/home/agent/projects/respiracidadao-gs/docs/evidencias/03_pytest.png",
-          "caption": "Figura 3: Os 24 testes automáticos passando.",
-          "width": 160
+          "path": "/home/agent/.t3/worktrees/respiracidadao-gs/t3-8e5d4313-ba7e8d34c0a31b13/docs/evidencias/03_pytest.png",
+          "caption": "Figura 3: Os 24 testes automáticos passando em apps/api/tests/test_api.py.",
+          "width": 158
+        },
+        {
+          "path": "/home/agent/.t3/worktrees/respiracidadao-gs/t3-8e5d4313-ba7e8d34c0a31b13/docs/evidencias/07_aws_rds_console.png",
+          "caption": "Figura 4: Console AWS RDS (respiracidadao-db) com banco cifrado, Security Group dedicado e porta 5432 controlada.",
+          "width": 158
         }
       ]
     },
@@ -248,7 +257,7 @@
             ],
             [
               "Como protegemos?",
-              "Coleta mínima, texto limpo, chave para apagar, SSL até o banco e selo de integridade."
+              "Coleta mínima, texto limpo, chave para apagar, HTTPS, SSL obrigatório e disco cifrado no RDS, além do selo HMAC de integridade."
             ],
             [
               "Como a pessoa sabe?",
@@ -263,6 +272,63 @@
       ],
       "body": [
         "Cenário de engenharia social: chega no WhatsApp da diretora uma mensagem \"da Defesa Civil\" pedindo para instalar um aplicativo novo de alerta ou mandar a chave do painel. Contramedidas: o produto só existe num endereço HTTPS divulgado pela secretaria, a equipe aprende a desconfiar de pedido de chave por mensagem e contas de administração usam MFA."
+      ]
+    },
+    {
+      "title": "8. PONTE COM O ENUNCIADO E CRITÉRIOS DE AVALIAÇÃO",
+      "body": [
+        "A tabela abaixo conecta diretamente os requisitos do enunciado oficial de Cognitive Cybersecurity (docs/enunciados/03-cognitive-cybersecurity/) às seções e evidências deste documento."
+      ],
+      "tables": [
+        {
+          "headers": [
+            "Critério do enunciado (peso)",
+            "Onde está atendido",
+            "Evidência concreta"
+          ],
+          "rows": [
+            [
+              "Solução CitizenTech e arquitetura (Seção 1)",
+              "Seção 1 deste documento",
+              "Problema, público, 4 camadas (Usuário, Aplicação, Banco, IA) e integração com ESP32"
+            ],
+            [
+              "Ameaças e vulnerabilidades (2,0 pts)",
+              "Seção 2 (5 camadas)",
+              "Usuários, Aplicação, API, Banco de Dados e Modelo de IA mapeados"
+            ],
+            [
+              "Qualidade da análise de riscos (2,0 pts)",
+              "Seção 3 (6 riscos)",
+              "Matriz com probabilidade, impacto e controle para R1 a R6 (mínimo exigido: 5)"
+            ],
+            [
+              "Implementação de proteção funcional (3,0 pts)",
+              "Seções 4, 5 e 6",
+              "5 controles reais na API (Rate Limit 429, X-API-Key 401, XSS/CSV, HMAC, audit log) + 24 testes + HTTPS/SSL/KMS na AWS"
+            ],
+            [
+              "Privacidade e LGPD (1,0 pt)",
+              "Seção 7 (tabela LGPD)",
+              "As 4 perguntas obrigatórias respondidas com base legal (art. 5º e art. 7º, IX)"
+            ],
+            [
+              "Justificativa técnica e Engenharia Social (1,0 pt)",
+              "Seções 4 e 7",
+              "Trade-offs (leitura pública x escrita protegida, CORS, VPC) + cenário WhatsApp falso e contramedidas"
+            ],
+            [
+              "Apresentação / Pitch (1,0 pt)",
+              "Vídeo pitch (até 5 min)",
+              "Roteiro em docs/ENTREGAS.md com demo ao vivo dos comandos 429, 401 e selo HMAC"
+            ]
+          ],
+          "col_widths": [
+            56,
+            46,
+            78
+          ]
+        }
       ]
     }
   ]

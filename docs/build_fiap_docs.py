@@ -24,7 +24,8 @@ _FIAP_GEN_CANDIDATES = [
 FIAP_GEN = next((c for c in _FIAP_GEN_CANDIDATES if c and c.exists()), None)
 if FIAP_GEN is None:
     sys.exit("Gerador fiap-doc não encontrado. Defina FIAP_DOC_GENERATOR com o caminho de generate.py.")
-VENV_PY = str(ROOT / ".venv" / "bin" / "python")
+_VENV_CANDIDATE = ROOT / ".venv" / "bin" / "python"
+VENV_PY = str(_VENV_CANDIDATE if _VENV_CANDIDATE.exists() else Path(sys.executable))
 
 INTEGRANTES = (
     "Giovanni Henrique Pereira Hessel (RM 570574)\n"
@@ -159,8 +160,8 @@ def build_all():
                         "rows": [
                             ["Sensor", "Mede 4 coisas, acende a luz certa e envia a leitura em JSON", "02 AICSS: firmware, circuito Wokwi, 3 prints dos estados"],
                             ["Central (API)", "Recebe, valida, classifica, guarda em CSV e banco, responde ao app", "05 Python: FastAPI, 24 testes automáticos"],
-                            ["Central na nuvem", "A mesma central sem servidor ligado: função + banco gerenciado. Pronta para publicar, testada localmente; ainda não está no ar", "07 Cloud: Lambda, PostgreSQL, script de publicação"],
-                            ["Proteções", "Limite de envios, chave para apagar, texto limpo, selo de integridade", "03 Cybersecurity: testes que provam cada proteção"],
+                            ["Central na nuvem", "A mesma central sem servidor ligado: AWS Lambda (Function URL) + RDS PostgreSQL 18.3 + CloudWatch Logs, publicada e validada ponta a ponta na us-east-1", "07 Cloud: Lambda, RDS SSL+KMS, simulador, 4+ prints reais AWS"],
+                            ["Proteções", "Limite de envios, chave para apagar, texto limpo, selo HMAC, HTTPS + SSL + disco cifrado na AWS", "03 Cybersecurity: 24 testes + evidências locais e AWS"],
                             ["Modelo da central", f"Acerta {round(campo['accuracy'] * 100)} de cada 100 horas com as 4 medidas do sensor", "06 ML: 6 modelos comparados, Random Forest ajustada"],
                             ["Segunda opinião", f"Rede neural que confirma o veredito ({pct(NN['teste_accuracy'], 0)} no teste)", "08 Redes Neurais: 8 etapas em PyTorch"],
                             ["Base e limiares", "Mostra que as medidas do sensor explicam o monóxido real", f"09 Estatística: R² de {pct(STATS['item_05_regressao_multipla']['r2'])}"],
@@ -187,25 +188,49 @@ def build_all():
                         "headers": ["Parte", "Funciona hoje", "Próximo passo"],
                         "rows": [
                             ["Sensor", "Circuito completo no Wokwi, regra de luz e alarme, envio JSON", "Placa física com bateria solar e rádio LoRa onde não há Wi-Fi"],
-                            ["Central", "API local com modelo, histórico, relatos e padrão por hora", "Publicar na nuvem com o script pronto (falta só a conta AWS)"],
+                            ["Central local", "API FastAPI com modelo, histórico CSV/SQLite, relatos, padrão por hora e 24 testes", "Integrar painel web diretamente ao endpoint gerenciado na nuvem"],
+                            ["Central na nuvem", "AWS Lambda com Function URL pública, CloudWatch Logs e Amazon RDS PostgreSQL 18.3 (SSL + disco cifrado) validados ponta a ponta", "Colocar banco e Lambda em sub-rede privada com NAT/VPC Endpoint e ativar token HF_TOKEN em produção"],
                             ["Modelo", "Treinado em base real italiana, testado em horas que nunca viu", "Recalibrar com algumas semanas ao lado de uma estação CETESB"],
                             ["Aviso", "App web no celular e no computador", "Notificação no WhatsApp quando o lugar favorito ficar vermelho"],
                         ],
-                        "col_widths": [26, 80, 74],
+                        "col_widths": [28, 82, 70],
                     }
                 ],
                 "body": [
                     "Gestão: dividimos o trabalho em três frentes que se encontram no mesmo contrato de dados. Uma cuidou do sensor e da nuvem, outra da estatística e dos modelos, e a terceira da central, do app e das proteções. Registramos cada decisão, com o motivo, num plano único no repositório (docs/PLANO-PRODUTO.md) e só fechávamos uma fase com os testes automáticos da central passando.",
-                    "Duas dificuldades mudaram o projeto. A primeira: o modelo com 11 medidas de laboratório acertava mais, mas nenhuma escola teria aquele equipamento. Cortamos para as 4 medidas que o ESP32 tem e aceitamos perder alguns pontos. A segunda: o Wokwi gratuito não alcança um servidor fora do navegador. Em vez de esconder isso, fizemos o sensor tratar a falta de rede como caso normal, com a luz local funcionando, e provamos o envio com um receptor em Python.",
+                    "Duas dificuldades mudaram o projeto. A primeira: o modelo com 11 medidas de laboratório acertava mais, mas nenhuma escola teria aquele equipamento. Cortamos para as 4 medidas que o ESP32 tem e aceitamos perder alguns pontos. A segunda: o Wokwi gratuito não alcança um servidor fora do navegador. Em vez de esconder isso, fizemos o sensor tratar a falta de rede como caso normal, com a luz local funcionando, e provamos o envio com um receptor em Python e com o simulador batendo na AWS Lambda real.",
                 ],
             },
             {
                 "title": "5. ACESSIBILIDADE, SEGURANÇA, DADOS PESSOAIS E SUSTENTABILIDADE",
                 "bullets": [
                     {"text": "Acessibilidade: cada alerta junta cor, palavra (Bom, Carregado ou Ruim) e, no sensor, um alarme de 1800 Hz para quem não está olhando a tela ou não distingue cores.", "level": 0},
-                    {"text": "Segurança: limite de 30 envios por minuto por endereço, chave obrigatória para apagar dados, texto de relato limpo antes de gravar e selo digital em cada leitura.", "level": 0},
+                    {"text": "Segurança: limite de 30 envios por minuto por endereço, chave obrigatória para apagar dados, texto de relato limpo antes de gravar, selo HMAC em cada leitura e criptografia em trânsito (HTTPS/SSL) e em repouso (KMS) na AWS.", "level": 0},
                     {"text": "Dados pessoais (LGPD): o relato não pede nome, telefone nem localização. Guardamos só o texto e o lugar escolhido.", "level": 0},
-                    {"text": "Sustentabilidade: modelos pequenos que rodam numa máquina comum, sensor de baixo consumo e nuvem que só cobra quando recebe leitura.", "level": 0},
+                    {"text": "Sustentabilidade: modelos pequenos que rodam numa máquina comum, sensor de baixo consumo e nuvem serverless que só cobra quando recebe leitura.", "level": 0},
+                ],
+            },
+            {
+                "title": "6. PONTE DIRETA COM OS ENUNCIADOS DA GS 2026.2",
+                "body": [
+                    "Cada requisito dos enunciados oficiais da Global Solution 2026.2 está conectado diretamente a um artefato verificável no repositório e na pasta do grupo no Google Drive:",
+                ],
+                "tables": [
+                    {
+                        "headers": ["Disciplina", "Exigência central do enunciado", "Evidência entregue"],
+                        "rows": [
+                            ["01 AI Challenges", "Vídeo integrador (até 7 min), UML, problema/ODS, live, gestão e demo", "Dossiê PDF, roteiro de narração, UML arquitetura e sequência, app rodando"],
+                            ["02 AICSS (IoT)", "ESP32 + 2 sensores + atuador + JSON para Python + CSV + 3 estados", "sketch.ino, diagram.json, 3 prints Wokwi, receiver_csv.py, print JSON/CSV"],
+                            ["03 Cybersecurity", "5 camadas, >=5 riscos, controles, LGPD, engenharia social, >=1 controle vivo", "PDF consultoria, 5 controles vivos, 24 testes pytest, provas terminal + AWS"],
+                            ["04 Data Science", "Standalone Oracle SQL (Inclusive Mobility Rover), envio individual SurveyMonkey", "queries_inclusive_mobility_rover.sql com as 5 consultas e aliases exatos"],
+                            ["05 Python API", "API REST POST/GET + CSV + >=1 indicador + 3 cenários integrados ao IoT", "FastAPI apps/api, CSV com timestamp, GET /indicadores, 24 testes e prints"],
+                            ["06 Machine Learning", "Comparar >=2 modelos + baseline + tuning + feature importance + slides + pitch", "Notebook 6 modelos, RandomizedSearchCV, slides .pptx, resumo PDF, gráficos"],
+                            ["07 Cloud Serverless", "Lambda Function URL (fora VPC) + RDS PostgreSQL + CloudWatch + IA + 4 prints", "Lambda e RDS ativos na AWS (us-east-1), simulador, 5 prints reais AWS/SQL"],
+                            ["08 Redes Neurais", "MLP/CNN/RNN nas 8 etapas + regularização comparada + demo em vídeo", "Notebook PyTorch 8 etapas, rede A vs B (Dropout/BN/EarlyStop), card no app"],
+                            ["09 Estatística", "Base real + Normal + 2 testes Z (6%/9%) + Reg. Simples/Múltipla/Logística (upload direto)", "air_quality_clean.csv, analise_estatistica.py e relatório PDF (3 arquivos soltos)"],
+                        ],
+                        "col_widths": [34, 76, 70],
+                    }
                 ],
             },
         ],
@@ -338,42 +363,44 @@ def build_all():
             {
                 "title": "4. CONTROLES POR CATEGORIA",
                 "body": [
-                    "Priorizamos o que dá para provar em código e custa pouco. O dado do produto é público e o morador não faz login, então não faz sentido proteger leitura com senha. O que precisa de proteção é escrita e apagamento: limite de envios contra enxurrada, chave só para administrar e selo HMAC para provar que o histórico não mudou. O que depende da conta de nuvem está marcado como proposto.",
+                    "Priorizamos o que dá para provar em código e na infraestrutura real da AWS. O dado ambiental do produto é público e o morador não faz login, então não faz sentido proteger leitura com senha. O foco de proteção é escrita, apagamento, integridade do histórico e tráfego até o banco na nuvem: limite de envios contra enxurrada, chave para administração, selo HMAC, HTTPS na Function URL, SSL obrigatório e disco cifrado no RDS PostgreSQL.",
                 ],
                 "tables": [
                     {
                         "headers": ["Categoria", "Controle", "Situação"],
                         "rows": [
-                            ["Autenticação", "Chave para rotas de administração; MFA para gestores de escola e UBS", "Chave feita; MFA proposto"],
-                            ["Firewall / WAF", "Limite de envios por IP na central; filtro de ataques web (AWS WAF) na URL pública; banco aceitando só a porta 5432. CORS só impede que outro site, aberto no navegador da vítima, chame a central; quem usa curl ignora CORS, por isso ele não conta como barreira", "Limite feito; WAF proposto"],
-                            ["Backup", "Snapshot diário do PostgreSQL e cópia do CSV com o selo de cada linha", "Proposto"],
-                            ["Criptografia", "HTTPS na URL da função, SSL obrigatório na conexão com o banco, disco do banco cifrado", "SSL feito no código; na nuvem, o resto entra na publicação. No protótipo local, SQLite e CSV ficam sem cifra no disco"],
-                            ["Monitoramento", "Registro de eventos de segurança (security_audit.jsonl), lido só com chave, e avisos no CloudWatch para leitura descartada", "Feito; alarmes propostos"],
-                            ["Integridade do modelo", "Os pesos da rede carregam com weights_only=True. Próximo passo: conferir o hash dos arquivos .joblib e .pt ao subir, contra troca do modelo em disco", "Parcial"],
+                            ["Autenticação", "Chave X-API-Key em rotas de administração (comparação em tempo constante); credenciais do banco em variáveis de ambiente da Lambda (zero segredos no código); MFA para gestores de escola e UBS", "Chave e env vars feitos na AWS; MFA proposto"],
+                            ["Firewall / WAF", "Limite de envios por IP na central (429); Security Group na AWS (sg-015dfe810b95f42cf) liberando somente a porta TCP 5432 no RDS; AWS WAF na URL pública em produção. CORS impede chamadas indevidas de outro site no navegador, mas não conta como barreira contra curl", "Limite e Security Group feitos; WAF proposto"],
+                            ["Backup", "Retenção automática de backups gerenciada pelo Amazon RDS PostgreSQL e cópia do CSV com selo de integridade por linha", "Habilitado no RDS; rotina externa proposta"],
+                            ["Criptografia", "Em trânsito: HTTPS na Function URL da AWS Lambda e SSL obrigatório na conexão pg8000 com o RDS (rds.force_ssl=1). Em repouso: volume do Amazon RDS cifrado (StorageEncrypted=True via AWS KMS). No protótipo local, SQLite e CSV ficam sem cifra em disco", "HTTPS, SSL e RDS cifrado validados na AWS"],
+                            ["Monitoramento", "Registro de eventos de segurança (security_audit.jsonl), lido só com chave, e trilha estruturada no Amazon CloudWatch (/aws/lambda/respiracidadao-central) com WARNING para leitura descartada e alerta crítico", "Feito local e na AWS; alarmes SNS propostos"],
+                            ["Integridade do modelo", "Faixas de entrada validadas com Pydantic antes do modelo; pesos da rede neural carregados com weights_only=True. Próximo passo: conferir hash SHA-256 dos arquivos .joblib e .pt na inicialização", "Parcial (validação e weights_only feitos)"],
                         ],
-                        "col_widths": [30, 104, 46],
+                        "col_widths": [30, 102, 48],
                     }
                 ],
             },
             {
-                "title": "5. PROTEÇÕES FUNCIONANDO",
+                "title": "5. PROTEÇÕES FUNCIONANDO (LOCAL E AWS)",
                 "body": [
-                    "Cada proteção abaixo tem um teste automático em apps/api/tests/test_api.py. Os 24 testes passam. Também rodamos cada ataque à mão contra a central ligada e guardamos a saída do terminal.",
+                    "Cada proteção na API local tem um teste automático em apps/api/tests/test_api.py (24 testes passando) e execução manual documentada no terminal. Na camada serverless da AWS (disciplina 07), validamos os controles de nuvem diretamente no console da AWS com a função respiracidadao-central e o banco respiracidadao-db ativos em us-east-1.",
                 ],
                 "bullets": [
-                    {"text": "Limite de envios: com limite de teste em 10, os envios 11 e 12 voltam 429 e o evento rate_limit_blocked vai para o registro.", "level": 0},
-                    {"text": "IP falso: trocar o cabeçalho X-Forwarded-For não dribla o limite, porque a central só confia nele atrás de um proxy declarado.", "level": 0},
-                    {"text": "Chave: DELETE /ocorrencias sem chave ou com chave errada volta 401. Sem chave configurada no servidor, volta 503.", "level": 0},
-                    {"text": "Relato com <script>: a marcação é removida antes de gravar. Valor \"=HYPERLINK(...)\" no CSV ganha prefixo e não vira fórmula.", "level": 0},
-                    {"text": "Adulteração: editamos uma leitura direto no SQLite e GET /security/verify/{id} passou a responder integro=false.", "level": 0},
+                    {"text": "Limite de envios (Rate Limiting): com limite de teste em 10, os envios 11 e 12 voltam 429 e o evento rate_limit_blocked vai para o registro.", "level": 0},
+                    {"text": "Proteção contra IP falso: trocar o cabeçalho X-Forwarded-For não dribla o limite, porque a central só confia nele atrás de um proxy declarado.", "level": 0},
+                    {"text": "Chave de administração: DELETE /ocorrencias sem chave ou com chave errada volta 401. Sem chave configurada no servidor, volta 503.", "level": 0},
+                    {"text": "Sanitização de entrada: relato com <script> perde a marcação antes de gravar, e texto iniciado com = + - ou @ ganha apóstrofo no CSV contra injeção de fórmula.", "level": 0},
+                    {"text": "Hash de integridade (HMAC-SHA256): editamos uma leitura direto no SQLite e GET /security/verify/{id} passou a responder integro=false.", "level": 0},
+                    {"text": "Controles reais na AWS: HTTPS nativo na Function URL, credenciais isoladas em variáveis de ambiente da Lambda (sem segredo no código), RDS PostgreSQL 18.3 com disco cifrado e SSL obrigatório, consultas parametrizadas (%s no pg8000) contra SQL Injection e WARNING automático no CloudWatch para payload inválido.", "level": 0},
                 ],
             },
             {
-                "title": "6. PROVAS NO TERMINAL",
+                "title": "6. PROVAS NO TERMINAL E NA AWS",
                 "images": [
-                    {"path": str(evid / "03_limite_chave.png"), "caption": "Figura 1: Envios além do limite voltam 429. Apagar sem chave ou com chave errada volta 401.", "width": 160},
-                    {"path": str(evid / "03_selo.png"), "caption": "Figura 2: Selo íntegro, edição direta no banco, selo quebrado. Desfeita a edição, o selo volta a bater.", "width": 160},
-                    {"path": str(evid / "03_pytest.png"), "caption": "Figura 3: Os 24 testes automáticos passando.", "width": 160},
+                    {"path": str(evid / "03_limite_chave.png"), "caption": "Figura 1: Envios além do limite voltam 429. Apagar sem chave ou com chave errada volta 401.", "width": 158},
+                    {"path": str(evid / "03_selo.png"), "caption": "Figura 2: Selo íntegro, edição direta no banco, selo quebrado. Desfeita a edição, o selo volta a bater.", "width": 158},
+                    {"path": str(evid / "03_pytest.png"), "caption": "Figura 3: Os 24 testes automáticos passando em apps/api/tests/test_api.py.", "width": 158},
+                    {"path": str(evid / "07_aws_rds_console.png"), "caption": "Figura 4: Console AWS RDS (respiracidadao-db) com banco cifrado, Security Group dedicado e porta 5432 controlada.", "width": 158},
                 ],
             },
             {
@@ -385,7 +412,7 @@ def build_all():
                             ["Que dados pessoais tratamos?", "O endereço IP é dado pessoal (LGPD, art. 5º, I). Ele fica só no registro de segurança, para aplicar o limite e investigar ataque, com base no legítimo interesse de prevenir abuso (art. 7º, IX). Fora isso, não há cadastro: leitura de sensor tem ID do aparelho e coordenada pública do prédio, e relato tem só texto e lugar."],
                             ["Quem vê o registro de segurança?", "Só quem tem a chave de administração (GET /security/audit exige X-API-Key). Proposta para produção: apagar o registro depois de 30 dias."],
                             ["Pode haver dado sensível?", "Sim. Um relato como \"meu filho está com falta de ar\" fala de saúde. Por isso não pedimos nome nem localização da pessoa."],
-                            ["Como protegemos?", "Coleta mínima, texto limpo, chave para apagar, SSL até o banco e selo de integridade."],
+                            ["Como protegemos?", "Coleta mínima, texto limpo, chave para apagar, HTTPS, SSL obrigatório e disco cifrado no RDS, além do selo HMAC de integridade."],
                             ["Como a pessoa sabe?", "O formulário diz \"Sem nome, sem localização sua. Só o texto.\" e a tela Como funciona explica o resto."],
                         ],
                         "col_widths": [50, 130],
@@ -393,6 +420,27 @@ def build_all():
                 ],
                 "body": [
                     "Cenário de engenharia social: chega no WhatsApp da diretora uma mensagem \"da Defesa Civil\" pedindo para instalar um aplicativo novo de alerta ou mandar a chave do painel. Contramedidas: o produto só existe num endereço HTTPS divulgado pela secretaria, a equipe aprende a desconfiar de pedido de chave por mensagem e contas de administração usam MFA.",
+                ],
+            },
+            {
+                "title": "8. PONTE COM O ENUNCIADO E CRITÉRIOS DE AVALIAÇÃO",
+                "body": [
+                    "A tabela abaixo conecta diretamente os requisitos do enunciado oficial de Cognitive Cybersecurity (docs/enunciados/03-cognitive-cybersecurity/) às seções e evidências deste documento.",
+                ],
+                "tables": [
+                    {
+                        "headers": ["Critério do enunciado (peso)", "Onde está atendido", "Evidência concreta"],
+                        "rows": [
+                            ["Solução CitizenTech e arquitetura (Seção 1)", "Seção 1 deste documento", "Problema, público, 4 camadas (Usuário, Aplicação, Banco, IA) e integração com ESP32"],
+                            ["Ameaças e vulnerabilidades (2,0 pts)", "Seção 2 (5 camadas)", "Usuários, Aplicação, API, Banco de Dados e Modelo de IA mapeados"],
+                            ["Qualidade da análise de riscos (2,0 pts)", "Seção 3 (6 riscos)", "Matriz com probabilidade, impacto e controle para R1 a R6 (mínimo exigido: 5)"],
+                            ["Implementação de proteção funcional (3,0 pts)", "Seções 4, 5 e 6", "5 controles reais na API (Rate Limit 429, X-API-Key 401, XSS/CSV, HMAC, audit log) + 24 testes + HTTPS/SSL/KMS na AWS"],
+                            ["Privacidade e LGPD (1,0 pt)", "Seção 7 (tabela LGPD)", "As 4 perguntas obrigatórias respondidas com base legal (art. 5º e art. 7º, IX)"],
+                            ["Justificativa técnica e Engenharia Social (1,0 pt)", "Seções 4 e 7", "Trade-offs (leitura pública x escrita protegida, CORS, VPC) + cenário WhatsApp falso e contramedidas"],
+                            ["Apresentação / Pitch (1,0 pt)", "Vídeo pitch (até 5 min)", "Roteiro em docs/ENTREGAS.md com demo ao vivo dos comandos 429, 401 e selo HMAC"],
+                        ],
+                        "col_widths": [56, 46, 78],
+                    }
                 ],
             },
         ],
@@ -543,64 +591,79 @@ def build_all():
     # 07 - Cloud
     doc07 = {
         "title": "RESPIRACIDADÃO: A CENTRAL NA NUVEM",
-        "subtitle": ["Função serverless, banco gerenciado e IA de texto", "AWS Lambda, CloudWatch, Hugging Face e RDS PostgreSQL"],
+        "subtitle": ["Função serverless, banco gerenciado e IA de texto na AWS", "AWS Lambda, CloudWatch, Hugging Face e Amazon RDS PostgreSQL"],
         "meta": meta("Plataformas, Serviços Cognitivos & Cloud Computing"),
         "output_dir": str(DOCS_DIR / "07-plataformas-servicos-cognitivos-cloud"),
         "filename": "07_RespiraCidadao_Cloud_Serverless",
         "sections": [
             {
-                "title": "1. CENÁRIO E LIMIARES",
+                "title": "1. CENÁRIO CITIZENTECH, ARQUITETURA E LIMIARES",
                 "body": [
-                    "Uma prefeitura não quer manter um servidor ligado em cada bairro. A função Lambda só roda quando chega uma leitura pela URL pública. Ela valida o JSON, classifica o nível pelos limiares, manda o relato (quando houver) para a IA de texto da Hugging Face e grava tudo no PostgreSQL. Tudo que dá errado vira aviso no CloudWatch.",
-                    "Para o bairro, família e escola consultam o mesmo dado. Para a prefeitura, a função só cobra nos segundos em que chega leitura. ODS 3 (aviso antes da crise respiratória), ODS 10 (sensor barato onde não há estação oficial) e ODS 11 (dado aberto por bairro).",
-                    "Limiares: gas_voc atenção 830 e crítico 1140; gas_co atenção 1010 e crítico 1280. Tipos aceitos: esp32 e app.",
-                    "A função roda fora da rede privada da AWS (VPC). Dentro dela, para chegar à Hugging Face, precisaríamos de um NAT Gateway, um tradutor de rede que cobra por hora mesmo parado. Como a função fica fora da VPC, o banco precisa aceitar conexão externa na porta 5432 (regra 0.0.0.0/0 no grupo de segurança), sempre com usuário, senha e SSL obrigatório. Essa regra vale só para a demonstração: apagamos o banco depois da apresentação. Para uso contínuo, banco e função entram juntos na VPC, com um VPC endpoint ou NAT para a função ainda chegar à Hugging Face; mover só o banco cortaria a função. Toda consulta usa parâmetros (%s) no pg8000, sem montar SQL por concatenação, contra injeção de SQL.",
+                    "Uma prefeitura não quer manter servidores ligados em cada bairro. A função AWS Lambda (respiracidadao-central, Python 3.12, 256 MB, timeout 30s) só executa quando chega uma leitura pela Function URL pública. Ela valida o JSON, classifica o nível de risco pelos limiares locais, aciona a IA de texto para relatos e persiste no Amazon RDS PostgreSQL (respiracidadao-db, PostgreSQL 18.3, db.t3.micro). Tudo o que chega, falha ou dispara alerta é registrado no Amazon CloudWatch Logs.",
+                    "Cidadão beneficiado: coordenações de escolas públicas e UBS, além de famílias com crianças, idosos e pessoas com asma na periferia. ODS atendidos: ODS 3 (saúde e bem-estar, aviso antes da crise respiratória), ODS 10 (redução das desigualdades, sensor acessível onde não há estação oficial) e ODS 11 (cidades sustentáveis, dado ambiental aberto por bairro).",
+                    "Limiares locais (independentes de rede): gas_voc atenção >= 830 e crítico >= 1140; gas_co atenção >= 1010 e crítico >= 1280. Tipos aceitos: esp32 e app. Os mesmos limiares operam no firmware ESP32 (disciplina 02) e na API local (disciplina 05).",
+                    "Decisão de rede e segurança: a Lambda roda fora da VPC para acessar a internet sem custo de NAT Gateway. O RDS PostgreSQL fica acessível na porta TCP 5432 via Security Group dedicado (sg-015dfe810b95f42cf), com usuário, senha isolada em variável de ambiente, SSL obrigatório (rds.force_ssl=1) e volume cifrado (StorageEncrypted=True via KMS). Em produção contínua, Lambda e RDS entram juntos na mesma VPC com VPC Endpoint ou NAT. Todas as queries usam placeholders parametrizados (%s no pg8000), eliminando risco de SQL Injection.",
                 ],
                 "tables": [
                     {
-                        "headers": ["Rota da Function URL", "Comportamento"],
+                        "headers": ["Recurso AWS (us-east-1)", "Endereço / Identificador (sem senha)"],
                         "rows": [
-                            ["GET /health", "Estado da função e se a IA de texto está ligada"],
-                            ["POST /ocorrencias", "Valida campos e tipos (400 e WARNING no CloudWatch se inválido), classifica, chama a IA, grava no RDS e devolve 201"],
-                            ["GET /ocorrencias", "As 20 leituras mais recentes. Filtro por sensor e por nível ficou só na API local da 05"],
+                            ["Function URL (Lambda)", "https://6diultpyclfbww5yyqt2oki7bi0ipglh.lambda-url.us-east-1.on.aws/"],
+                            ["RDS PostgreSQL 18.3", "respiracidadao-db.co6giv33mf2r.us-east-1.rds.amazonaws.com (porta 5432, banco respiracidadao)"],
+                            ["CloudWatch Log Group", "/aws/lambda/respiracidadao-central"],
+                            ["IAM Execution Role", "LabRole (AWS Academy Learner Lab)"],
                         ],
-                        "col_widths": [50, 130],
-                    }
+                        "col_widths": [48, 132],
+                    },
+                    {
+                        "headers": ["Rota da Function URL", "Comportamento validado na AWS"],
+                        "rows": [
+                            ["GET /health", "Retorna status 200, provedor de IA configurado, modelo e flag ia_ativa"],
+                            ["POST /ocorrencias", "Valida campos obrigatórios e tipos (400 + WARNING no CloudWatch se inválido), classifica, executa IA de texto resiliente, grava no RDS e devolve 201 com id e nivel_risco"],
+                            ["GET /ocorrencias", "Lista as 20 ocorrências mais recentes gravadas na tabela ocorrencias do RDS"],
+                        ],
+                        "col_widths": [46, 134],
+                    },
                 ],
             },
             {
-                "title": "2. IA DE TEXTO SEM DERRUBAR A GRAVAÇÃO",
+                "title": "2. CAMADA DE IA E RESILIÊNCIA COMPROVADA",
                 "body": [
-                    "A função chama https://router.huggingface.co/hf-inference/models/cardiffnlp/twitter-xlm-roberta-base-sentiment com o token em HF_TOKEN, usando só urllib. Sem token, com timeout ou resposta estranha, ela registra WARNING e grava a leitura do mesmo jeito. Uma queimada não pode esperar a IA de texto voltar.",
-                    "Por que Hugging Face e não o Amazon Comprehend: o token é gratuito, não exige permissão extra de IAM (o Learner Lab bloqueia várias) e o modelo entende português, inclusive gíria de relato como \"tá fedendo a queimado\".",
+                    "Caminho escolhido: Caminho A (Hugging Face Inference Router) usando exclusivamente urllib da biblioteca padrão, modelo cardiffnlp/twitter-xlm-roberta-base-sentiment no endpoint atualizado https://router.huggingface.co/hf-inference/models/{modelo}, com token protegido na variável de ambiente HF_TOKEN (zero segredos no código).",
+                    "Justificativa empírica frente ao Caminho B (Amazon Comprehend): testamos diretamente a permissão comprehend:DetectSentiment na conta AWS Academy Learner Lab e tanto o usuário voclabs quanto a LabRole retornam AccessDeniedException. O código também suporta AI_PROVIDER=comprehend para contas com ComprehendReadOnly, mas no ambiente acadêmico o Hugging Face Router é o caminho viável, gratuito e com suporte nativo a português coloquial (como relatos de queimada).",
+                    "Resiliência validada em produção: quando HF_TOKEN não está preenchido, dá timeout ou a API externa falha, a função registra um WARNING explícito no CloudWatch, mantém ia_analise=null e conclui normalmente a classificação por limiar e a gravação no RDS (HTTP 201). Uma emergência ambiental nunca pode ser derrubada por indisponibilidade de um serviço externo de texto.",
                 ],
             },
             {
-                "title": "3. TESTADO SEM AWS",
-                "bullets": [
-                    {"text": "teste_local.py: 8 de 8 verificações passam: saúde da função, leitura bom e ruim gravadas, listagem, recusa com 400 para JSON quebrado, valor não numérico, tipo de aparelho inválido, campo faltando e relato acima de 500 caracteres, sem gravar nada, e a IA de texto fora do ar sem derrubar a gravação.", "level": 0},
-                    {"text": "Banco: rodamos tabela_ocorrencias.sql num PostgreSQL local, gravamos 3 leituras pelo próprio handler da Lambda e o GET devolveu as 3.", "level": 0},
-                    {"text": "simulador_dispositivo.py cobre os dois cenários do teste ponta a ponta: --cenario normal manda leituras abaixo de 830, e --cenario queimada --lugar escola manda leituras que sobem até o vermelho.", "level": 0},
-                ],
-                "images": [{"path": str(evid / "07_teste_local.png"), "caption": "Figura 1: teste_local.py chamando o handler da Lambda sem AWS. Cada linha LEITURA DESCARTADA é um WARNING que vai para o CloudWatch.", "width": 160}],
-            },
-            {
-                "title": "4. O QUE FALTA E COMO FAZER",
+                "title": "3. TESTE PONTA A PONTA NA AWS E EVIDÊNCIAS",
                 "body": [
-                    "A publicação na AWS ainda está pendente. Escrevemos deploy_aws.sh para que publicar seja um comando: ele cria o banco (db.t3.micro), roda a tabela, empacota e publica a função com a Function URL e imprime os comandos de teste. Funciona no AWS Academy Learner Lab (usa a LabRole) ou numa conta própria no nível gratuito.",
+                    "Além dos 8 testes automatizados locais (teste_local.py, 8/8 aprovados), executamos o fluxo completo diretamente na AWS: GET /health (200), POST inválido sem o campo valor (400 + WARNING LEITURA DESCARTADA), cenário normal na UBS (3 leituras, 201 normal), cenário queimada na escola (5 leituras escalando de normal para atencao e critico com alerta=true, chegando a 1233,8), GET /ocorrencias listando os 8 registros e consulta SQL direta no RDS via run_sql.py --consultas.",
+                ],
+                "images": [
+                    {"path": str(evid / "07_aws_lambda_env.png"), "caption": "Figura 1: Console AWS Lambda com variáveis de ambiente configuradas (DB_PASSWORD mascarado por segurança, nenhum segredo no código).", "width": 162},
+                    {"path": str(evid / "07_aws_simulador.png"), "caption": "Figura 2: Simulador Python enviando cenário normal (UBS) e cenário queimada (escola) para a Function URL real, mais validação HTTP 400 e GET /ocorrencias.", "width": 162},
+                    {"path": str(evid / "07_aws_cloudwatch.png"), "caption": "Figura 3: Amazon CloudWatch Logs (/aws/lambda/respiracidadao-central) mostrando PAYLOAD RECEBIDO, WARNING LEITURA DESCARTADA, CLASSIFICACAO, WARNING ALERTA CIDADAO e GRAVADO NO RDS.", "width": 162},
+                    {"path": str(evid / "07_aws_rds_console.png"), "caption": "Figura 4: Console Amazon RDS confirmando a instância respiracidadao-db ativa (PostgreSQL 18.3, porta 5432, criptografia habilitada).", "width": 162},
+                    {"path": str(evid / "07_aws_rds_select.png"), "caption": "Figura 5: Consulta SQL direta no Amazon RDS PostgreSQL (run_sql.py --consultas) exibindo as 8 ocorrências gravadas e agregação por sensor.", "width": 162},
+                ],
+            },
+            {
+                "title": "4. PONTE COM O ENUNCIADO E CRITÉRIOS DE AVALIAÇÃO (100%)",
+                "body": [
+                    "A tabela abaixo mapeia os 6 critérios de avaliação do enunciado oficial de Computação Serverless (docs/enunciados/07-plataformas-servicos-cognitivos-cloud/) para os artefatos entregues e validados na AWS.",
                 ],
                 "tables": [
                     {
-                        "headers": ["Item exigido", "Situação", "Como concluir"],
+                        "headers": ["Critério do enunciado (peso)", "Como foi atendido", "Evidência entregue"],
                         "rows": [
-                            ["Código da função, SQL, simulador, README", "Pronto e testado", "No pacote"],
-                            ["URL da função e endpoint do RDS (sem senha)", "Sai no fim do deploy_aws.sh", "Copiar para o README"],
-                            ["Print das variáveis de ambiente", "Depois do deploy", "Console Lambda, Configuração"],
-                            ["Print do simulador enviando", "Depois do deploy", "Terminal com simulador_dispositivo.py"],
-                            ["Print do CloudWatch", "Depois do deploy", "Grupo de logs da função"],
-                            ["Print do SELECT no RDS", "Depois do deploy", "python run_sql.py --consultas"],
+                            ["Ingestão funcionando (25%)", "Lambda + Function URL pública com GET /health, POST /ocorrencias (400/201) e GET /ocorrencias", "Function URL ativa + lambda_function.py + Figura 2"],
+                            ["Observabilidade (20%)", "Logs estruturados no CloudWatch: payload bruto, interpretado, classificação, id gravado e WARNING para inválidos/críticos", "Log Group /aws/lambda/respiracidadao-central + Figura 3"],
+                            ["Persistência no RDS (20%)", "Amazon RDS PostgreSQL 18.3 com tabela ocorrencias, 3 índices, SSL obrigatório e queries parametrizadas", "tabela_ocorrencias.sql + run_sql.py + Figuras 4 e 5"],
+                            ["Camada de IA resiliente (15%)", "Hugging Face Router via urllib com HF_TOKEN em env var, justificativa empírica vs Comprehend e fallback sem derrubar ingestão", "lambda_function.py + Figuras 1 e 3 + teste_local.py (8/8)"],
+                            ["Simulador e teste ponta a ponta (10%)", "simulador_dispositivo.py executando cenário normal e escalada de queimada até alerta crítico na AWS real", "simulador_dispositivo.py + Figuras 2, 3 e 5"],
+                            ["Aderência CitizenTech e ODS (10%)", "Problema real (fumaça em escolas/UBS), público definido, limiares justificados e ODS 3, 10 e 11", "Seção 1 deste PDF + packages/cloud-serverless/README.md"],
                         ],
-                        "col_widths": [68, 50, 62],
+                        "col_widths": [48, 76, 56],
                     }
                 ],
             },

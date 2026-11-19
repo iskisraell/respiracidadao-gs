@@ -23,6 +23,7 @@ logger.setLevel(logging.INFO)
 HF_MODEL = os.environ.get("HF_MODEL", "cardiffnlp/twitter-xlm-roberta-base-sentiment")
 HF_API_URL = os.environ.get("HF_API_URL", "https://router.huggingface.co/hf-inference/models")
 HF_TOKEN = os.environ.get("HF_TOKEN", "").strip()
+AI_PROVIDER = os.environ.get("AI_PROVIDER", "huggingface").strip().lower()  # huggingface | comprehend | none
 
 # Índices dos sensores de gás, na escala da base real de 6.941 horas.
 LIMIARES = {
@@ -121,10 +122,7 @@ def classificar_risco(metrica, valor):
     return "normal"
 
 
-def analisar_relato(texto):
-    if not texto or not HF_TOKEN:
-        return None, None
-
+def _analisar_huggingface(texto):
     url = f"{HF_API_URL.rstrip('/')}/{HF_MODEL}"
     corpo = json.dumps({"inputs": texto}).encode("utf-8")
     req = urllib.request.Request(
@@ -155,6 +153,34 @@ def analisar_relato(texto):
     except (KeyError, IndexError, TypeError, ValueError, AttributeError) as erro:
         logger.warning("Resposta inesperada do Hugging Face (%s): ingestao segue normalmente.", erro)
         return None, None
+
+
+def _analisar_comprehend(texto):
+    try:
+        import boto3
+    except ImportError:
+        return None, None
+    try:
+        cliente = boto3.client("comprehend", region_name=os.environ.get("AWS_REGION", "us-east-1"))
+        res = cliente.detect_sentiment(Text=texto[:4500], LanguageCode="pt")
+        sentimento = str(res["Sentiment"]).lower()
+        chave_score = sentimento.capitalize()
+        score = float(res.get("SentimentScore", {}).get(chave_score, 0.0))
+        return sentimento, round(score, 4)
+    except Exception as erro:
+        logger.warning("Falha ao chamar Amazon Comprehend (%s): ingestao segue normalmente.", erro)
+        return None, None
+
+
+def analisar_relato(texto):
+    if not texto or AI_PROVIDER == "none":
+        return None, None
+    if AI_PROVIDER == "comprehend":
+        return _analisar_comprehend(texto)
+    if not HF_TOKEN:
+        logger.warning("HF_TOKEN nao configurado nas variaveis de ambiente: analise de sentimento ignorada, ingestao segue normalmente.")
+        return None, None
+    return _analisar_huggingface(texto)
 
 
 def _numero(valor, nome, obrigatorio=False):
@@ -337,7 +363,17 @@ def lambda_handler(evento, contexto):
 
     try:
         if caminho == "/health":
-            return resposta(200, {"status": "ok", "modelo": HF_MODEL, "ia_ativa": bool(HF_TOKEN)})
+            provedor = (
+                "comprehend" if AI_PROVIDER == "comprehend"
+                else "huggingface" if (AI_PROVIDER == "huggingface" and HF_TOKEN)
+                else "resiliente-sem-token"
+            )
+            return resposta(200, {
+                "status": "ok",
+                "provedor_ia": provedor,
+                "modelo": HF_MODEL if AI_PROVIDER != "comprehend" else "amazon-comprehend-pt",
+                "ia_ativa": provedor in ("huggingface", "comprehend"),
+            })
         if caminho == "/ocorrencias" and metodo == "POST":
             return rota_ingestao(evento)
         if caminho == "/ocorrencias" and metodo == "GET":
