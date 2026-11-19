@@ -18,7 +18,7 @@ O RespiraCidadão avisa escolas, UBS e famílias quando o ar perto delas piora. 
 | `packages/neural-networks` | A segunda opinião: rede neural em PyTorch. |
 | `packages/stats-r-python` | A estatística que mostra que o sensor barato explica o monóxido real. |
 | `data` | Base real UCI Air Quality, bruta e limpa. |
-| `docs` | Plano do produto, documentos de entrega e o diagrama do caminho da informação. |
+| `docs` | Plano do produto, enunciados originais da GS (`docs/enunciados`), documentos de entrega, roteiro de narração e diagramas. |
 
 ## Rodar no seu computador
 

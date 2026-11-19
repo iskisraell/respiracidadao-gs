@@ -1,0 +1,75 @@
+{
+  "title": "RESPIRACIDADÃO: ROTEIRO DE NARRAÇÃO",
+  "subtitle": [
+    "Apresentação Integradora",
+    "Global Solution 2026.2"
+  ],
+  "subtitle_note": "Leia no seu ritmo, com o rosto aparecendo, sem música de fundo e com 2 segundos de pausa entre cada bloco",
+  "meta": [
+    {
+      "label": "Sala:",
+      "value": "1TIAPZ1"
+    },
+    {
+      "label": "Matéria:",
+      "value": "AI Challenges"
+    },
+    {
+      "label": "Grupo:",
+      "value": "Perceptron"
+    },
+    {
+      "label": "Integrantes:",
+      "value": "Giovanni Henrique Pereira Hessel (RM 570574)\nSuellen Pereira da Silva (RM 573862)\nIsrael Carneiro de Toledo (RM 573854)"
+    }
+  ],
+  "output_dir": "/home/agent/.t3/worktrees/respiracidadao-gs/t3-741ae426-31aa4b13bad9b8e1/docs/01-ai-challenges",
+  "filename": "01_RespiraCidadao_Roteiro_Narracao_AIC",
+  "sections": [
+    {
+      "title": "1. A CENA DAS 7H40 E O PROBLEMA (0:00 A 0:50)",
+      "body": [
+        "Olá! Eu sou a Suellen, do grupo Perceptron, com o Giovanni e o Israel. Esse é o RespiraCidadão. Imagine uma diretora de escola na periferia abrindo o celular às sete e quarenta e lendo: Ar ruim perto da escola agora. Feche as janelas e deixe a educação física para depois do almoço.",
+        "A OMS estima sete milhões de mortes por ano ligadas à poluição do ar. Queimadas e trânsito pioram crises de asma e bronquite primeiro em crianças, idosos e pacientes longe das estações oficiais, onde o boletim da cidade chega tarde.",
+        "Atendemos escolas, postos de saúde, famílias e vizinhos, ligados aos ODS 3, 10 e 11. Da live sobre tecnologia cidadã, trouxemos uma regra simples: funcionar sem treinamento. Por isso o app fala de ar, lugar, horário e ação."
+      ]
+    },
+    {
+      "title": "2. A JORNADA DO DADO, MATÉRIA POR MATÉRIA (0:50 A 2:10)",
+      "body": [
+        "Para entregar um sistema completo de ponta a ponta, começamos pela arquitetura e pelo caminho de uma leitura, fechando um formato único de mensagem antes de programar. A jornada nasce na parede da escola: em Sensores e Sistemas, um sensor simples mede fumaça e gases, monóxido de carbono, temperatura e umidade, mudando a luz e tocando o alarme na hora, mesmo sem internet.",
+        "Em Estatística, quase sete mil horas reais provaram que essas quatro medidas baratas explicam 88% do monóxido de laboratório, definindo limites e horários. A leitura segue para a central em Python, que valida, salva o histórico e calcula os indicadores. Em Computação em Nuvem, essa engrenagem roda sob demanda, gravando em banco de dados e analisando a urgência dos relatos.",
+        "Sobre essas quatro medidas entram duas inteligências artificiais: em Aprendizado de Máquina, o modelo principal acerta 87 de cada 100 horas; em Redes Neurais, uma segunda rede independente confirma com 86%. E Cibersegurança fecha todo o percurso com trava de envios, senha para apagar, limpeza de texto e selo digital."
+      ]
+    },
+    {
+      "title": "3. O PRODUTO RODANDO DE PONTA A PONTA (2:10 A 3:25)",
+      "body": [
+        "Veja tudo trabalhando junto. No simulador, disparamos uma queimada perto da escola: fumaça alta, 31 graus e ar seco. A luz vermelha acende, o alarme toca e a leitura atravessa a central.",
+        "Na tela Agora do app, aparecem UBS Vila Esperança em verde, Praça da Sé em amarelo e Escola Jardim Primavera em vermelho. Ao tocar na escola, o cartão diz: Ar ruim agora. Mostra o que fazer, como cancelar atividades ao ar livre, fechar janelas e avisar quem tem asma, e a central confirma: Ruim, com 93% de confiança.",
+        "Logo abaixo, o melhor horário usa as quase sete mil horas reais e indica o turno das 14 às 17 horas, quando o ar ruim cai para 19%, contra 49% às oito da manhã. Ao lado, um vizinho avisa sobre cheiro de queimada no portão: sem pedir nome nem localização, a central limpa o texto e marca como urgente, separado do sensor."
+      ]
+    },
+    {
+      "title": "4. CONFIANÇA, TESTE AO VIVO E SEGURANÇA (3:25 A 4:20)",
+      "body": [
+        "Na tela Como funciona, abrimos os números reais de teste em português simples. A luz do sensor acerta 84 de cada 100 horas sozinha. A central sobe para 87 e mantém 85 em meses inéditos. Em mais de mil e trezentas horas de teste, nunca confundiu ar bom com ar ruim.",
+        "Ali dá para testar uma leitura ao vivo: mudando de Manhã limpa para Queimada perto, sensor, modelo principal e rede neural concordam no vermelho na hora. E a segurança está provada em 24 testes automáticos: acima de 30 envios por minuto bloqueia, apagar sem senha é recusado e qualquer edição no banco quebra o selo digital."
+      ]
+    },
+    {
+      "title": "5. GESTÃO DO TIME E DECISÕES DIFÍCEIS (4:20 A 5:05)",
+      "body": [
+        "Dividimos o grupo em três frentes: sensor e nuvem; estatística e inteligência artificial; central em Python, app e segurança. Todas presas ao mesmo formato de mensagem e a um plano único, fechando cada fase só com os 24 testes passando.",
+        "Duas escolhas deixaram o sistema mais real. Primeiro: onze medidas de laboratório acertavam um ponto a mais, mas nenhuma escola tem esse equipamento; cortamos para as quatro medidas do sensor barato. Segundo: no simulador sem acesso externo, a falta de internet virou rotina com luz e alarme locais ativos, provando o envio num receptor em Python."
+      ]
+    },
+    {
+      "title": "6. PRÓXIMOS PASSOS E FECHAMENTO (5:05 A 5:50)",
+      "body": [
+        "Com a solução completa de ponta a ponta pronta em software e simulação, nossos próximos passos levam o RespiraCidadão para a rua: montar a placa física com bateria solar e rádio para áreas sem Wi-Fi, calibrar ao lado de uma estação oficial da CETESB e enviar avisos no WhatsApp.",
+        "Fechamos cuidando do uso real: acessibilidade com cor, palavra e alarme sonoro; privacidade e LGPD com relato anônimo sem nome nem localização; e sustentabilidade com modelos leves e nuvem cobrada só quando chega leitura. Esse é o RespiraCidadão: ciência, dados e inteligência artificial virando uma frase simples, na hora certa, para proteger quem mais precisa. Muito obrigada!"
+      ]
+    }
+  ]
+}

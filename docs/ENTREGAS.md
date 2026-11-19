@@ -12,7 +12,7 @@ Prazo: 19/11/2026 às 23:55. Mandem até as 17h para ter folga se o portal trava
 
 | Entrega | Como enviar | Arquivos |
 |---|---|---|
-| 01 AI Challenges | Link do YouTube (não listado) | Vídeo de até 7 min. O PDF `01_...Dossie_Integrador` serve de roteiro visual. |
+| 01 AI Challenges | Link do YouTube (não listado) | Vídeo de até 7 min. Roteiro de narração para a Suellen em `docs/01-ai-challenges/01_RespiraCidadao_Roteiro_Narracao_AIC.pdf` e dossiê visual em `01_...Dossie_Integrador.pdf`. Enunciados originais das 9 disciplinas em `docs/enunciados/`. |
 | 02 AICSS | Upload de `deliverables/02-aicss-iot.zip` | PDF, `sketch.ino`, `diagram.json`, `libraries.txt`, `receiver_csv.py`, `run_3_cenarios.py`, prints do Wokwi. Capa com RMs já está no PDF. |
 | 03 Cybersecurity | PDF + link do vídeo | `03_...Cybersecurity.pdf` (4 páginas) e pitch de até 5 min. |
 | 04 Data Science | **Individual**, SurveyMonkey | Cada um roda o `CRIACAO_CARGA_ORACLE.sql`, confere os nomes das colunas e cola as 5 consultas de `packages/data-science-oracle`. Nada no portal. |
