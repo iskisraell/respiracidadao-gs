@@ -1,16 +1,18 @@
-$ DB_HOST=respiracidadao-db.co6giv33mf2r.us-east-1.rds.amazonaws.com DB_NAME=respiracidadao DB_USER=respira DB_SSL=1 python3 run_sql.py --consultas
+$ python packages/cloud-serverless/run_sql.py --consultas
 Últimas leituras
   id | dispositivo_id | valor | gas_co | nivel_risco | sentimento | criado_em
+  15 | esp32-escola-zona-norte | 1243.3 | 1375.8 | critico | None | 2026-11-19 03:33:53.544737+00:00
+  14 | esp32-escola-zona-norte | 1125.7 | 1273.8 | atencao | None | 2026-11-19 03:33:52.509044+00:00
+  13 | esp32-escola-zona-norte | 1000.5 | 1179.5 | atencao | None | 2026-11-19 03:33:51.444784+00:00
+  12 | esp32-escola-zona-norte | 890.8 | 1105.4 | atencao | None | 2026-11-19 03:33:50.472925+00:00
+  11 | esp32-escola-zona-norte | 773.9 | 1005.3 | normal | None | 2026-11-19 03:33:49.328623+00:00
+  10 | esp32-ubs-vila-maria | 697.8 | 909.1 | normal | None | 2026-11-19 03:33:48.605005+00:00
+  9 | esp32-ubs-vila-maria | 698.0 | 922.7 | normal | None | 2026-11-19 03:33:47.534039+00:00
   8 | esp32-escola-zona-norte | 1233.8 | 1379.3 | critico | None | 2026-11-19 03:00:44.356911+00:00
   7 | esp32-escola-zona-norte | 1108.3 | 1259.0 | atencao | None | 2026-11-19 03:00:43.357001+00:00
   6 | esp32-escola-zona-norte | 994.6 | 1189.7 | atencao | None | 2026-11-19 03:00:42.182730+00:00
-  5 | esp32-escola-zona-norte | 892.4 | 1096.0 | atencao | None | 2026-11-19 03:00:41.097084+00:00
-  4 | esp32-escola-zona-norte | 754.5 | 961.2 | normal | None | 2026-11-19 03:00:40.021523+00:00
-  3 | esp32-ubs-vila-maria | 706.4 | 941.5 | normal | None | 2026-11-19 03:00:39.252757+00:00
-  2 | esp32-ubs-vila-maria | 702.6 | 928.6 | normal | None | 2026-11-19 03:00:38.216808+00:00
-  1 | esp32-ubs-vila-maria | 688.5 | 934.1 | normal | None | 2026-11-19 03:00:37.117192+00:00
 
 Resumo por sensor
   dispositivo_id | leituras | media | pico | ruins
-  esp32-escola-zona-norte | 5 | 996.7 | 1233.8 | 1
-  esp32-ubs-vila-maria | 3 | 699.2 | 706.4 | 0
+  esp32-escola-zona-norte | 10 | 1001.8 | 1243.3 | 2
+  esp32-ubs-vila-maria | 5 | 698.7 | 706.4 | 0

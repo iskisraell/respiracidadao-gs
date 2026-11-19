@@ -31,17 +31,17 @@ sensor ESP32 / simulador --HTTPS--> AWS Lambda (Function URL, fora da VPC) --> A
 3. **Camada de IA resiliente (sem segredo no código):**
    - **Caminho escolhido: Hugging Face (`cardiffnlp/twitter-xlm-roberta-base-sentiment`)** via `https://router.huggingface.co/hf-inference/models/{modelo}`, usando apenas `urllib` da biblioteca padrão e token Read na variável de ambiente `HF_TOKEN`.
    - **Por que Hugging Face e não Amazon Comprehend:** testamos `comprehend:DetectSentiment` pela `LabRole` do AWS Academy Learner Lab e o laboratório bloqueia a permissão com `AccessDeniedException`. O código ainda suporta `AI_PROVIDER=comprehend` para contas com a política `ComprehendReadOnly`, mas o padrão é Hugging Face por ser gratuito, entender português informal de relato e não exigir permissão extra de IAM.
-   - **Resiliência comprovada:** sem `HF_TOKEN`, com timeout ou resposta inesperada, a Lambda registra `WARNING` no CloudWatch e grava a leitura normalmente no RDS PostgreSQL.
+   - **Resiliência comprovada na AWS:** com `HF_TOKEN` cadastrado na Lambda (`GET /health` -> `"ia_ativa": true`), cada relato dispara a chamada HTTPS real para `router.huggingface.co`. Quando a cota gratuita mensal de Inference Providers retorna `HTTP 402` (ou em caso de timeout/indisponibilidade), a Lambda registra `WARNING` no CloudWatch (`Hugging Face respondeu 402...`) e conclui normalmente a classificação por limiar e a gravação no RDS PostgreSQL (`HTTP 201`).
 4. **Persistência e observabilidade:** grava na tabela `ocorrencias` do RDS usando consultas parametrizadas (`%s` no `pg8000`) com SSL obrigatório e devolve HTTP `201`. Leituras críticas geram `WARNING ALERTA CIDADAO` no CloudWatch.
 
 ## Evidências ponta a ponta coletadas na AWS
 
 Todas as evidências estão em `docs/evidencias/` (e incluídas em `deliverables/07-cloud-serverless.zip`):
 
-1. `07_aws_lambda_env.png`: console da Lambda `respiracidadao-central` exibindo as variáveis de ambiente (`DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `AI_PROVIDER`, `HF_MODEL`, `HF_API_URL`, com `DB_PASSWORD` ocultada por segurança).
-2. `07_aws_simulador.png`: terminal executando `GET /health`, `POST /ocorrencias` inválido (`400`), `simulador_dispositivo.py --cenario normal --lugar ubs` (3 leituras `normal`) e `--cenario queimada --lugar escola` (5 leituras evoluindo até `critico << ALERTA`).
-3. `07_aws_cloudwatch.png`: console do CloudWatch Logs (`/aws/lambda/respiracidadao-central`) mostrando `PAYLOAD RECEBIDO`, `LEITURA DESCARTADA` (`WARNING`), `DISPOSITIVO=...`, `CLASSIFICACAO`, `ALERTA CIDADAO` (`WARNING`) e `GRAVADO NO RDS id=8`.
-4. `07_aws_rds_console.png` e `07_aws_rds_select.png`: console do RDS `respiracidadao-db` (`Available`, PostgreSQL 18.3, `StorageEncrypted=True`) e consulta `run_sql.py --consultas` exibindo as 8 ocorrências persistidas e agregadas por sensor.
+1. `07_aws_lambda_env.png`: console da Lambda `respiracidadao-central` exibindo todas as variáveis de ambiente (`AI_PROVIDER`, `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `HF_MODEL`, `HF_API_URL`, `DB_PASSWORD` e `HF_TOKEN`, com ambos os segredos ocultados por segurança).
+2. `07_aws_simulador.png`: terminal executando `GET /health` (`ia_ativa: true`), `POST /ocorrencias` inválido (`400`), `simulador_dispositivo.py --cenario normal --lugar ubs`, `--cenario queimada --lugar escola` (escalando até `critico << ALERTA`) e `GET /ocorrencias`.
+3. `07_aws_cloudwatch.png`: console do CloudWatch Logs (`/aws/lambda/respiracidadao-central`) mostrando `PAYLOAD RECEBIDO`, chamada HTTPS real à Hugging Face com fallback resiliente (`WARNING Hugging Face respondeu 402`), `CLASSIFICACAO`, `ALERTA CIDADAO` (`WARNING`) e `GRAVADO NO RDS`.
+4. `07_aws_rds_console.png` e `07_aws_rds_select.png`: console do RDS `respiracidadao-db` (`Available`, PostgreSQL 18.3, `StorageEncrypted=True`) e consulta `run_sql.py --consultas` exibindo as 15 ocorrências persistidas e agregadas por sensor.
 
 ## Como reproduzir
 

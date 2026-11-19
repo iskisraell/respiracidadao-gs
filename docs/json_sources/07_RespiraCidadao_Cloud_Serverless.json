@@ -91,30 +91,30 @@
     {
       "title": "2. CAMADA DE IA E RESILIÊNCIA COMPROVADA",
       "body": [
-        "Caminho escolhido: Caminho A (Hugging Face Inference Router) usando exclusivamente urllib da biblioteca padrão, modelo cardiffnlp/twitter-xlm-roberta-base-sentiment no endpoint atualizado https://router.huggingface.co/hf-inference/models/{modelo}, com token protegido na variável de ambiente HF_TOKEN (zero segredos no código).",
-        "Justificativa empírica frente ao Caminho B (Amazon Comprehend): testamos diretamente a permissão comprehend:DetectSentiment na conta AWS Academy Learner Lab e tanto o usuário voclabs quanto a LabRole retornam AccessDeniedException. O código também suporta AI_PROVIDER=comprehend para contas com ComprehendReadOnly, mas no ambiente acadêmico o Hugging Face Router é o caminho viável, gratuito e com suporte nativo a português coloquial (como relatos de queimada).",
-        "Resiliência validada em produção: quando HF_TOKEN não está preenchido, dá timeout ou a API externa falha, a função registra um WARNING explícito no CloudWatch, mantém ia_analise=null e conclui normalmente a classificação por limiar e a gravação no RDS (HTTP 201). Uma emergência ambiental nunca pode ser derrubada por indisponibilidade de um serviço externo de texto."
+        "Caminho escolhido: Caminho A (Hugging Face Inference Router) usando exclusivamente urllib da biblioteca padrão, modelo cardiffnlp/twitter-xlm-roberta-base-sentiment no endpoint atualizado https://router.huggingface.co/hf-inference/models/{modelo}, com token Read cadastrado na variável de ambiente HF_TOKEN da Lambda (zero segredos no código; GET /health responde provedor_ia=\"huggingface\" e ia_ativa=true).",
+        "Justificativa empírica frente ao Caminho B (Amazon Comprehend): testamos diretamente a permissão comprehend:DetectSentiment na conta AWS Academy Learner Lab e tanto o usuário voclabs quanto a LabRole retornam AccessDeniedException. O código também suporta AI_PROVIDER=comprehend para contas com ComprehendReadOnly, mas no ambiente acadêmico o Hugging Face Router é o caminho viável, com suporte nativo a português coloquial (como relatos de queimada).",
+        "Resiliência validada ao vivo na AWS: com HF_TOKEN configurado e a Lambda fora da VPC, cada relato do simulador dispara a chamada HTTPS real para router.huggingface.co. Quando a cota gratuita mensal de Inference Providers retorna HTTP 402 (ou em caso de timeout/indisponibilidade), a função captura o erro, registra WARNING explícito no CloudWatch (\"Hugging Face respondeu 402...\"), mantém sentimento=null e conclui normalmente a classificação por limiar e a gravação no RDS (HTTP 201). Uma emergência ambiental nunca pode ser derrubada por indisponibilidade ou limite de cota de uma API externa."
       ]
     },
     {
       "title": "3. TESTE PONTA A PONTA NA AWS E EVIDÊNCIAS",
       "body": [
-        "Além dos 8 testes automatizados locais (teste_local.py, 8/8 aprovados), executamos o fluxo completo diretamente na AWS: GET /health (200), POST inválido sem o campo valor (400 + WARNING LEITURA DESCARTADA), cenário normal na UBS (3 leituras, 201 normal), cenário queimada na escola (5 leituras escalando de normal para atencao e critico com alerta=true, chegando a 1233,8), GET /ocorrencias listando os 8 registros e consulta SQL direta no RDS via run_sql.py --consultas."
+        "Além dos 8 testes automatizados locais (teste_local.py, 8/8 aprovados), executamos o fluxo completo diretamente na AWS com HF_TOKEN ativo: GET /health (200, ia_ativa=true), POST inválido sem o campo valor (400 + WARNING LEITURA DESCARTADA), cenário normal na UBS (201 normal), cenário queimada na escola (5 leituras escalando de normal para atencao e critico com alerta=true, chegando a 1243,3, com relatos acionando a chamada HTTPS à Hugging Face e comprovando o fallback resiliente no CloudWatch), GET /ocorrencias e consulta SQL direta no RDS via run_sql.py --consultas (15 ocorrências persistidas)."
       ],
       "images": [
         {
           "path": "/home/agent/.t3/worktrees/respiracidadao-gs/t3-8e5d4313-ba7e8d34c0a31b13/docs/evidencias/07_aws_lambda_env.png",
-          "caption": "Figura 1: Console AWS Lambda com variáveis de ambiente configuradas (DB_PASSWORD mascarado por segurança, nenhum segredo no código).",
+          "caption": "Figura 1: Console AWS Lambda com todas as variáveis de ambiente cadastradas, incluindo HF_TOKEN e DB_* (DB_PASSWORD e HF_TOKEN mascarados por segurança).",
           "width": 162
         },
         {
           "path": "/home/agent/.t3/worktrees/respiracidadao-gs/t3-8e5d4313-ba7e8d34c0a31b13/docs/evidencias/07_aws_simulador.png",
-          "caption": "Figura 2: Simulador Python enviando cenário normal (UBS) e cenário queimada (escola) para a Function URL real, mais validação HTTP 400 e GET /ocorrencias.",
+          "caption": "Figura 2: Simulador Python validando GET /health (ia_ativa=true), HTTP 400, cenário normal (UBS), cenário queimada (escola) e GET /ocorrencias na Function URL real.",
           "width": 162
         },
         {
           "path": "/home/agent/.t3/worktrees/respiracidadao-gs/t3-8e5d4313-ba7e8d34c0a31b13/docs/evidencias/07_aws_cloudwatch.png",
-          "caption": "Figura 3: Amazon CloudWatch Logs (/aws/lambda/respiracidadao-central) mostrando PAYLOAD RECEBIDO, WARNING LEITURA DESCARTADA, CLASSIFICACAO, WARNING ALERTA CIDADAO e GRAVADO NO RDS.",
+          "caption": "Figura 3: Amazon CloudWatch Logs (/aws/lambda/respiracidadao-central) mostrando PAYLOAD RECEBIDO, chamada real à Hugging Face com fallback resiliente (WARNING 402), CLASSIFICACAO, WARNING ALERTA CIDADAO e GRAVADO NO RDS.",
           "width": 162
         },
         {
@@ -124,7 +124,7 @@
         },
         {
           "path": "/home/agent/.t3/worktrees/respiracidadao-gs/t3-8e5d4313-ba7e8d34c0a31b13/docs/evidencias/07_aws_rds_select.png",
-          "caption": "Figura 5: Consulta SQL direta no Amazon RDS PostgreSQL (run_sql.py --consultas) exibindo as 8 ocorrências gravadas e agregação por sensor.",
+          "caption": "Figura 5: Consulta SQL direta no Amazon RDS PostgreSQL (run_sql.py --consultas) exibindo as ocorrências gravadas e a agregação por sensor.",
           "width": 162
         }
       ]

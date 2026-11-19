@@ -80,7 +80,7 @@ export FUNCTION_URL="https://6diultpyclfbww5yyqt2oki7bi0ipglh.lambda-url.us-east
 .venv/bin/python packages/cloud-serverless/run_sql.py --consultas
 ```
 
-*Opcional antes de gravar:* se quiser que a IA externa retorne sentimento vivo do Hugging Face no vídeo, basta colar um token gratuito (`Read`) na variável `HF_TOKEN` da Lambda no Console AWS (sem mexer no código). Sem ele, a resiliência continua comprovada no CloudWatch com `WARNING` e ingestão `201`.
+*Sobre `HF_TOKEN`:* o token Read já está cadastrado na Lambda `respiracidadao-central` (`GET /health` retorna `ia_ativa: true`). A conta atual da Hugging Face está com a cota gratuita mensal de Inference Providers esgotada (`HTTP 402`), o que gera uma excelente demonstração real de resiliência no CloudWatch (`WARNING` + gravação `201` mantida no RDS). Se quiser que a IA retorne sentimento vivo no vídeo, basta trocar o `HF_TOKEN` por uma conta com créditos gratuitos/PRO disponíveis, sem mexer no código.
 
 **08 Redes Neurais.** Percorra as 8 etapas no notebook `respira_neural_network.ipynb`. Mostre a rede A decorando (5,2 pontos entre treino e teste) e a B regularizada com 1,1 ponto. Termine com o card "Segunda opinião" no app.
 

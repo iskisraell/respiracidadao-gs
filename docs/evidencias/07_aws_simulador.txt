@@ -1,20 +1,21 @@
 $ curl -s https://6diultpyclfbww5yyqt2oki7bi0ipglh.lambda-url.us-east-1.on.aws/health
-{"status": "ok", "provedor_ia": "resiliente-sem-token", "modelo": "cardiffnlp/twitter-xlm-roberta-base-sentiment", "ia_ativa": false}
+{"status": "ok", "provedor_ia": "huggingface", "modelo": "cardiffnlp/twitter-xlm-roberta-base-sentiment", "ia_ativa": true}
 
-$ curl -s -X POST https://6diultpyclfbww5yyqt2oki7bi0ipglh.lambda-url.us-east-1.on.aws/ocorrencias -H 'Content-Type: application/json' -d '{"dispositivo_id":"esp32-escola-zona-norte"}'
-# HTTP 400 (gera WARNING LEITURA DESCARTADA no CloudWatch)
-{"erro": "campos obrigatorios ausentes", "campos": ["valor"]}
+$ curl -s -X POST https://6diultpyclfbww5yyqt2oki7bi0ipglh.lambda-url.us-east-1.on.aws/ocorrencias -H 'Content-Type: application/json' -d '{"dispositivo_id":"esp32-teste","metrica":"gas_voc"}'  # falta valor -> 400
+{"erro": "campos obrigatorios ausentes", "campos": ["valor"]} (HTTP 400)
 
-$ FUNCTION_URL=https://6diultpyclfbww5yyqt2oki7bi0ipglh.lambda-url.us-east-1.on.aws python3 simulador_dispositivo.py --cenario normal --lugar ubs --leituras 3
+$ python packages/cloud-serverless/simulador_dispositivo.py --cenario normal --lugar ubs --leituras 2 --intervalo 0.5
 Sensor esp32-ubs-vila-maria -> https://6diultpyclfbww5yyqt2oki7bi0ipglh.lambda-url.us-east-1.on.aws/ocorrencias (normal)
-[1/3] gases   688.5 -> HTTP 201 nível normal
-[2/3] gases   702.6 -> HTTP 201 nível normal
-[3/3] gases   706.4 -> HTTP 201 nível normal
+[1/2] gases   698.0 -> HTTP 201 nível normal
+[2/2] gases   697.8 -> HTTP 201 nível normal
 
-$ FUNCTION_URL=https://6diultpyclfbww5yyqt2oki7bi0ipglh.lambda-url.us-east-1.on.aws python3 simulador_dispositivo.py --cenario queimada --lugar escola --leituras 5
+$ python packages/cloud-serverless/simulador_dispositivo.py --cenario queimada --lugar escola --leituras 5 --intervalo 0.5
 Sensor esp32-escola-zona-norte -> https://6diultpyclfbww5yyqt2oki7bi0ipglh.lambda-url.us-east-1.on.aws/ocorrencias (queimada)
-[1/5] gases   754.5 -> HTTP 201 nível normal
-[2/5] gases   892.4 -> HTTP 201 nível atencao
-[3/5] gases   994.6 -> HTTP 201 nível atencao
-[4/5] gases  1108.3 -> HTTP 201 nível atencao
-[5/5] gases  1233.8 -> HTTP 201 nível critico  << ALERTA
+[1/5] gases   773.9 -> HTTP 201 nível normal
+[2/5] gases   890.8 -> HTTP 201 nível atencao
+[3/5] gases  1000.5 -> HTTP 201 nível atencao
+[4/5] gases  1125.7 -> HTTP 201 nível atencao
+[5/5] gases  1243.3 -> HTTP 201 nível critico  << ALERTA
+
+$ curl -s https://6diultpyclfbww5yyqt2oki7bi0ipglh.lambda-url.us-east-1.on.aws/ocorrencias | python -c "import sys,json; d=json.load(sys.stdin); print('registros:', len(d['ocorrencias']), '| ultimo:', d['ocorrencias'][0])"
+registros: 15 | ultimo: {'id': 15, 'dispositivo_id': 'esp32-escola-zona-norte', 'tipo_dispositivo': 'esp32', 'metrica': 'gas_voc', 'valor': 1243.3, 'gas_co': 1375.8, 'nivel_risco': 'critico', 'sentimento': None, 'confianca': None, 'relato': None, 'medido_em': '2026-11-19T03:33:53+00:00', 'criado_em': '2026-11-19T03:33:53.544737+00:00'}
